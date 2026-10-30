@@ -2,13 +2,18 @@ import { useSyncExternalStore } from 'react';
 import { STATION_IDS, type GameConfig, type Item, type LogEntry, type Player, type Rec, type StationId } from '../shared/types';
 import { newPlayer, vocabScore } from '../shared/adapt';
 import { api } from './api';
+import { DEMO } from './demo';
 
 interface State { player: Player | null; config: GameConfig; online: boolean; lastOk: number }
 const allOpen = (v: boolean) => Object.fromEntries(STATION_IDS.map((s) => [s, v])) as Record<StationId, boolean>;
 const DEFAULT_CONFIG: GameConfig = { open: allOpen(false), attention: false, message: '', ai: true };
+function allOpenConfig(): GameConfig { return { open: allOpen(true), attention: false, message: '', ai: true }; }
 const LS_KEY = 'tq-player-v1';
 const load = (): Player | null => { try { const s = localStorage.getItem(LS_KEY); return s ? (JSON.parse(s) as Player) : null; } catch { return null; } };
-let state: State = { player: load(), config: DEFAULT_CONFIG, online: true, lastOk: Date.now() };
+// 演示版：一个本地的“访客”，所有章节都开着，不保存
+let state: State = DEMO
+  ? { player: newPlayer('demo', 'demo', '访客', '演示版', 3), config: { ...allOpenConfig(), ai: true }, online: true, lastOk: Date.now() }
+  : { player: load(), config: DEFAULT_CONFIG, online: true, lastOk: Date.now() };
 const subs = new Set<() => void>();
 const set = (patch: Partial<State>) => { state = { ...state, ...patch }; subs.forEach((f) => f()); };
 export const useGame = <T,>(sel: (s: State) => T): T => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => sel(state));
@@ -32,8 +37,9 @@ export const toast = (t: Omit<Toast, 'id'>) => toastSubs.forEach((f) => f({ ...t
 // ---------------- 持久化与同步 ----------------
 let dirty = false;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
-const save = (p: Player) => { try { localStorage.setItem(LS_KEY, JSON.stringify(p)); } catch { /* 存不了就算了 */ } };
+const save = (p: Player) => { if (DEMO) return; try { localStorage.setItem(LS_KEY, JSON.stringify(p)); } catch { /* 存不了就算了 */ } };
 export const syncNow = async () => {
+  if (DEMO) return;
   const p = state.player;
   if (!p || !dirty) return;
   dirty = false;
@@ -55,6 +61,7 @@ const mutate = (f: (p: Player) => void) => {
   syncTimer = setTimeout(syncNow, 700);
 };
 export const pollConfig = async () => {
+  if (DEMO) return;
   try { const c = await api.config(state.player?.pid); set({ config: c, online: true, lastOk: Date.now() }); if (dirty) syncNow(); } catch { set({ online: false }); }
 };
 export const setAiLeft = (n: number) => set({ config: { ...state.config, aiLeft: n } });

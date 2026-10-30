@@ -13,6 +13,8 @@ import { api } from '../game/api';
 import { sfx } from '../game/sound';
 import ItemView from '../items/ItemView';
 import { Msg } from '../items/steps';
+import { DEMO } from '../game/demo';
+import { DEMO_EXAMPLES } from '../game/demoExamples';
 
 export const go = (path: string) => { window.location.hash = path; };
 
@@ -27,6 +29,7 @@ export function StoryMap() {
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-6">
       <div className="mb-5 flex items-end gap-4"><div className="kai text-4xl">两个故事</div><div className="pb-1 text-ink2">跟着故事往下走，题就在故事里。哪里不明白，就点开让“老师”多讲一点。</div></div>
+      {DEMO && <div className="mb-5 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-3 text-amber-900">这是演示版：不用登录，也不保存记录（刷新页面就从头开始）。现在能玩的是中文第一回和英文第一章。课堂版里 AI 会现场举例、给学生写的句子评分；演示版里的 AI 例子是事先生成好的，写句子不评分。</div>}
       <div className="grid gap-6 lg:grid-cols-2">
         {lines.map((L) => (
           <div key={L.id} className="card overflow-hidden p-0">
@@ -179,6 +182,12 @@ export function TeachPanel({ it, color, onContinue, review }: { it: Item; color:
   const askAi = async () => {
     if (!node || aiBusy) return;
     setAiBusy(true); setAiErr(''); logOpen(it, 'AI 再举例');
+    if (DEMO) { // 演示版：用事先生成好的例子，每次给两个
+      await new Promise((r) => setTimeout(r, 700));
+      const all = DEMO_EXAMPLES[node.id] ?? [], more = all.slice(aiEx.length, aiEx.length + 2);
+      if (more.length) { setAiEx((x) => [...x, ...more]); sfx('hint'); } else setAiErr('演示版里事先准备的例子就这些了；课堂版里 AI 会现场再举。');
+      setAiBusy(false); return;
+    }
     try { const r = await api.examples({ pid: p.pid, token: p.token, node: node.id, item: it.id, seen: aiEx.map((e) => e.s) }); setAiEx((x) => [...x, ...r.examples]); setAiLeft(r.left); sfx('hint'); }
     catch (e) { setAiErr(String((e as Error).message || e)); } finally { setAiBusy(false); }
   };
@@ -224,7 +233,7 @@ export function TeachPanel({ it, color, onContinue, review }: { it: Item; color:
         )}
         {(aiEx.length > 0 || aiErr) && (
           <div className="mt-4 rounded-2xl border-2 border-sky-200 bg-sky-50/70 px-4 py-3">
-            <div className="mb-1 flex items-center gap-1.5 text-sm font-black text-sky-800"><Sparkles size={15} />AI 现场举的例子（AI 也会出错，觉得不对可以问老师）</div>
+            <div className="mb-1 flex items-center gap-1.5 text-sm font-black text-sky-800"><Sparkles size={15} />{DEMO ? 'AI 举的例子（演示版：事先用 AI 生成好的）' : 'AI 现场举的例子（AI 也会出错，觉得不对可以问老师）'}</div>
             {aiEx.map((e, i) => <div key={i} className="mt-2"><div className="text-[17px] font-bold">{i + 1}. {e.s}</div><div className="text-sm text-ink2">{e.note}</div></div>)}
             {aiErr && <div className="text-rose-700">{aiErr}</div>}
           </div>

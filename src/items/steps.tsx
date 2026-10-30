@@ -10,6 +10,7 @@ import { Art, Btn, LETTERS, Rich, isEnter, shuffleIdx } from '../components/ui';
 import { addBonus, getState, logAnswer, setAiLeft, toast, useGame } from '../game/store';
 import { api } from '../game/api';
 import { sfx } from '../game/sound';
+import { DEMO } from '../game/demo';
 
 export interface StepProps<S> { it: Item; s: S; onDone: (score: number) => void; color: string }
 const triesScore = (t: number) => (t <= 1 ? 1 : t === 2 ? 0.67 : 0.34);
@@ -314,9 +315,11 @@ export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
   const [done, setDone] = useState(false);
   const isEn = s.lang === 'en';
   const finish = (score: number) => { if (done) return; setDone(true); onDone(score); };
+  const [demoShown, setDemoShown] = useState(false);
   const submit = async () => {
     const t = text.trim();
     if (!t || busy || !p) return;
+    if (DEMO) { logAnswer(it, { q: s.key, v: t, ok: null }); setDemoShown(true); sfx('hint'); if (!s.bonus) finish(1); return; } // 演示版不评分：算完成，不要求变式练习
     setBusy(true); setErr('');
     try {
       const r = await api.judge({ pid: p.pid, token: p.token, item: it.id, step: s.key, text: t });
@@ -376,6 +379,7 @@ export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
         </div>
       )}
       {err && <Msg ok={false}>{err}</Msg>}
+      {demoShown && <Msg ok={null}><b>演示版没有连接 AI，不能现场评分。</b>课堂版里，AI 会判断“很好 / 有小错 / 有大问题”，有错先让你自己找。<div className="mt-1">参考写法：{s.examples.map((e) => <div key={e} className="font-bold">· {e}</div>)}</div></Msg>}
       {zh && (
         <Msg ok={zh.grade >= 2 ? true : null}>
           <div className="flex items-center gap-2 font-black">AI 评委：{Array.from({ length: 3 }, (_, i) => <span key={i} className={i < zh.grade ? '' : 'opacity-25'}>✒️</span>)} <span className="text-sm font-bold text-ink2">（妙笔 {zh.grade} 分{s.role === 'use' ? (zh.correct ? '，成语用对了' : '，成语用得不对') : ''}）</span></div>

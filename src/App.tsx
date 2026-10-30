@@ -4,6 +4,7 @@ import { TopBar, FlyLayer, Toasts, AttentionOverlay } from './components/ui';
 import { JoinPage, MePage } from './pages/pages';
 import { StoryMap, ChapterPage } from './pages/story';
 import Teacher from './teacher/Teacher';
+import { DEMO } from './game/demo';
 import { CHAPTER_BY_ID } from './shared/story';
 
 const useHash = () => {
@@ -19,7 +20,7 @@ const useHash = () => {
 export default function App() {
   const route = useHash();
   const player = useGame((s) => s.player);
-  const isTeacher = route.startsWith('/teacher');
+  const isTeacher = !DEMO && route.startsWith('/teacher');
   useEffect(() => {
     if (isTeacher) return;
     pollConfig();

@@ -6,6 +6,7 @@ import { soundOn, setSound, sfx } from '../game/sound';
 import { starsOf } from '../shared/adapt';
 import { renderArt } from '../art/ink';
 import type { Art as ArtSpec } from '../shared/types';
+import { DEMO } from '../game/demo';
 
 // ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行 ----------------
 export const Rich = ({ text, className = '', fill, fills }: { text: string; className?: string; fill?: string; fills?: string[] }) => {
@@ -129,8 +130,9 @@ export const TopBar = () => {
           {!online && <span className="flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-700" title="进度先存在这台电脑上，连上后自动同步"><WifiOff size={16} />离线中</span>}
           <StarCounter />
           <button onClick={() => { setSound(!snd); setSnd(!snd); }} className="rounded-full border-2 border-[#E6DCC6] bg-white/90 p-2 text-ink2" title={snd ? '关闭声音' : '打开声音'}>{snd ? <Volume2 size={20} /> : <VolumeX size={20} />}</button>
+          {DEMO ? <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-800" title="不用登录、不保存记录；刷新页面就从头开始">演示版</span> : <>
           <a href="#/me" className="flex items-center gap-2 pl-1"><Avatar i={p.avatar} size={40} /><div className="leading-tight"><div className="font-black">{p.name}</div><div className="text-xs text-ink2">{p.sid}</div></div></a>
-          <button className="ml-1 text-xs text-ink2 underline" onClick={() => { if (confirm('确定要退出吗？进度已经保存，用同样的姓名和学校可以重新进入。')) logout(); }}>退出</button>
+          <button className="ml-1 text-xs text-ink2 underline" onClick={() => { if (confirm('确定要退出吗？进度已经保存，用同样的姓名和学校可以重新进入。')) logout(); }}>退出</button></>}
         </div>
       </div>
     </div>
