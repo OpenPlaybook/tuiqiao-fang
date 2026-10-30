@@ -37,7 +37,10 @@ export const syncNow = async () => {
   const p = state.player;
   if (!p || !dirty) return;
   dirty = false;
-  try { await api.sync(p); set({ online: true, lastOk: Date.now() }); } catch { dirty = true; set({ online: false }); }
+  try { await api.sync(p); set({ online: true, lastOk: Date.now() }); } catch (e) {
+    if (String((e as Error).message).includes('清空')) { logout(); return; } // 老师清空了记录：这台电脑上的旧记录作废
+    dirty = true; set({ online: false });
+  }
 };
 const mutate = (f: (p: Player) => void) => {
   const p = state.player;

@@ -192,6 +192,7 @@ const server = http.createServer(async (req, res) => {
       const old = players.get(inc.pid);
       if (!old) {
         if (!String(inc.name ?? '').trim() || !String(inc.sid ?? '').trim()) return send(res, 400, 'bad player');
+        if ((Number(inc.createdAt) || 0) < (config.resetAt ?? 0)) return send(res, 410, '老师已经清空了记录，请重新登录');
         const s = sanitize(inc);
         players.set(s.pid, { ...s, token: String(inc.token).slice(0, 64) });
       } else {
@@ -233,6 +234,7 @@ const server = http.createServer(async (req, res) => {
         flush();
         if (fs.existsSync(PLAYERS_FILE)) fs.copyFileSync(PLAYERS_FILE, path.join(DATA, 'backup', `players-before-reset-${Date.now()}.json`));
         players.clear(); dirty = true; flush(); ai.resetUsage();
+        config.resetAt = Date.now(); saveConfig();
         return send(res, 200, { ok: true });
       }
     }

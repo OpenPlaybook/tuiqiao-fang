@@ -118,6 +118,7 @@ export interface GameConfig {
   attention: boolean;
   message: string;
   ai: boolean;
+  resetAt?: number; // 老师清空数据的时间：比它早建的、服务器上没有的学生，浏览器会自动退出
   aiReady?: boolean;
   aiLeft?: number;
 }
