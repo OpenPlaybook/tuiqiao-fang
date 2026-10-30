@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  --font-kai: "Kaiti SC", "STKaiti", "KaiTi", "BiauKai", serif;
+  --color-ink: #2B2722;
+  --color-ink2: #5B544B;
+  --color-paper: #FBF7EE;
+  --color-zhu: #B8352A;
+  --color-gold: #D9A441;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 10% 15%, rgba(217, 164, 65, .16) 0 220px, transparent 221px),
+    radial-gradient(circle at 92% 85%, rgba(184, 53, 42, .08) 0 260px, transparent 261px),
+    linear-gradient(170deg, #F6F0E2 0%, #F3ECDC 60%, #EFE6D2 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.kai { font-family: var(--font-kai); }
+
+.btn3d {
+  position: relative; border-radius: 999px; font-weight: 800;
+  transition: transform .08s ease, box-shadow .08s ease, filter .15s;
+  box-shadow: 0 4px 0 var(--sh, rgba(0, 0, 0, .25)), 0 8px 18px rgba(43, 39, 34, .12);
+}
+.btn3d:hover:not(:disabled) { filter: brightness(1.06); }
+.btn3d:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--sh, rgba(0, 0, 0, .25)); }
+.btn3d:disabled { filter: grayscale(.6); opacity: .55; }
+
+.card {
+  background: #FFFDF8;
+  border-radius: 22px;
+  border: 2px solid rgba(43, 39, 34, .08);
+  box-shadow: 0 4px 0 rgba(43, 39, 34, .05), 0 14px 34px rgba(43, 39, 34, .08);
+}
+.chunky { box-shadow: 0 4px 0 rgba(43, 39, 34, .1); }
+.blank { display: inline-block; min-width: 3.2em; border-bottom: 3px solid currentColor; margin: 0 .2em; text-align: center; color: var(--color-zhu); font-weight: 800; }
+.art svg { display: block; }
+.seg { border-radius: 8px; padding: 2px 3px; transition: background .12s, box-shadow .12s; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.seg-click { cursor: pointer; }
+.seg-click:hover { background: rgba(217, 164, 65, .25); box-shadow: 0 0 0 2px rgba(217, 164, 65, .3); }
+.no-scrollbar::-webkit-scrollbar { display: none; }
