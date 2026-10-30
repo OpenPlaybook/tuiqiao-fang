@@ -49,7 +49,7 @@ export default function Teacher() {
       {tab === 'players' && (
         <div className="card mt-4 overflow-x-auto p-0">
           <table className="w-full text-sm">
-            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星', '加权分', '妙笔', '完成', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', '词汇', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
+            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星', '加权分', '妙笔', '完成', '变式练习（对/做）', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', '词汇', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
             <tbody>
               {st.players.map((p, i) => (
                 <tr key={p.pid} className="border-t border-[#EFE6D2]">
@@ -60,6 +60,7 @@ export default function Teacher() {
                   <td className="px-2.5 py-1.5 text-base font-black">{p.weighted}</td>
                   <td className="px-2.5 py-1.5">{p.bonus || ''}</td>
                   <td className="px-2.5 py-1.5">{p.done}</td>
+                  <td className="px-2.5 py-1.5">{p.prac?.n ? `${p.prac.ok}/${p.prac.n}` : ''}</td>
                   <td className="px-2.5 py-1.5">{lvText(p.avgLv)}</td>
                   {TRACKS.map((t) => <td key={t.id} className="px-2.5 py-1.5"><span className="inline-block h-2 rounded-full bg-amber-400 align-middle" style={{ width: (p.theta[t.id] - 1) * 18 + 4 }} /> {p.theta[t.id].toFixed(1)}</td>)}
                   <td className="px-2.5 py-1.5">{p.unsure || ''}</td>
@@ -80,11 +81,12 @@ export default function Teacher() {
           {STATIONS.map((s) => (
             <div key={s.id} className="card p-0">
               <div className="px-4 py-2 text-lg font-black" style={{ color: s.color }}>{s.emoji} {s.name}</div>
-              <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['题', '难度', '做过', '完成', '平均星', '第一次就对', '不确定', '选得最多的错答'].map((h) => <th key={h} className="px-3 py-1.5 font-black">{h}</th>)}</tr></thead>
+              <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['题', '难度', '做过', '完成', '平均星', '第一次就对', '不确定', '选得最多的错答', '学生点开的“不明白”'].map((h) => <th key={h} className="px-3 py-1.5 font-black">{h}</th>)}</tr></thead>
                 <tbody>{st.items.filter((x) => x.st === s.id).map((x) => (
                   <tr key={x.id} className="border-t border-[#EFE6D2]"><td className="px-3 py-1.5 font-bold">{x.label}</td><td className="px-3 py-1.5">{LV_NAME[x.lv as Lv]}</td><td className="px-3 py-1.5">{x.n || ''}</td><td className="px-3 py-1.5">{x.done || ''}</td><td className="px-3 py-1.5">{x.done ? x.avgStars.toFixed(1) : ''}</td>
                     <td className="px-3 py-1.5">{x.firstN ? `${Math.round((100 * x.firstOk) / x.firstN)}%` : ''}</td><td className="px-3 py-1.5">{x.unsure || ''}</td>
-                    <td className="px-3 py-1.5 text-rose-800">{x.wrong.map((w) => `${w.v.slice(0, 26)}（${w.n}）`).join('；')}</td></tr>
+                    <td className="px-3 py-1.5 text-rose-800">{x.wrong.map((w) => `${w.v.slice(0, 26)}（${w.n}）`).join('；')}</td>
+                    <td className="px-3 py-1.5 text-sky-800">{(x.opens ?? []).map((w) => `${w.v.slice(0, 20)}（${w.n}）`).join('；')}</td></tr>
                 ))}</tbody></table>
             </div>
           ))}
@@ -98,7 +100,7 @@ export default function Teacher() {
             <button key={i} onClick={() => setBig(g.text)} className="card p-4 text-left hover:shadow-lg">
               <div className="text-xs text-ink2">{g.name} · {g.item} · {ago(g.t, st.now)}</div>
               <div className="mt-1 text-lg font-bold">{g.text}</div>
-              {g.out && 'praise' in g.out && g.out.praise && <div className="mt-1 text-sm text-emerald-800">👍 {g.out.praise}</div>}
+              {g.out && 'praise' in g.out && !!g.out.praise && <div className="mt-1 text-sm text-emerald-800">👍 {g.out.praise}</div>}
               {g.out && 'comment' in g.out && <div className="mt-1 text-sm text-emerald-800">{g.out.comment}</div>}
             </button>
           ))}

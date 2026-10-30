@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { STATION_IDS, type GameConfig, type Player, type Rec, type StationId } from '../src/shared/types';
 import { ITEMS, ITEM_BY_ID } from '../src/shared/bank';
-import { STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
+import { STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, pracOf, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
 import { createAi } from './ai';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -56,7 +56,10 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => { dirty 
 const better = (a: Rec | undefined, b: Rec): Rec => {
   if (!a) return b;
   if ((a.status === 'done') !== (b.status === 'done')) return a.status === 'done' ? a : b;
-  if (a.status === 'done') return (a.t1 ?? 0) <= (b.t1 ?? 0) ? a : b; // 都做完了：留先做完的那份（星星不会被后来的覆盖）
+  if (a.status === 'done') { // 都做完了：星星、完成时间留先做完的那份；记录（点开的“不明白”等）取更长的，妙笔分取高的
+    const first = (a.t1 ?? 0) <= (b.t1 ?? 0) ? a : b;
+    return { ...first, log: b.log.length >= a.log.length ? b.log : a.log, bonus: Math.max(a.bonus || 0, b.bonus || 0), data: b.data ?? a.data };
+  }
   return b.log.length >= a.log.length ? b : a;
 };
 const num = (v: unknown, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number(v) || 0));
@@ -66,7 +69,7 @@ const sanitize = (p: Player): Player => {
     const it = ITEM_BY_ID[id];
     if (!it || !r) continue;
     recs[id] = {
-      id, st: it.st, status: r.status === 'done' ? 'done' : 'doing',
+      id, st: r.prac ? 'p' : it.st, ...(r.prac ? { prac: true } : {}), status: r.status === 'done' ? 'done' : 'doing',
       stars: num(r.stars, 0, 3), perf: num(r.perf, 0, 1), unsure: num(r.unsure, 0, 20), bonus: num(r.bonus, 0, 9),
       tries: Object.fromEntries(Object.entries(r.tries || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), num(v, 0, 50)])),
       log: Array.isArray(r.log) ? r.log.slice(-200).map((e) => ({ q: String(e.q).slice(0, 40), v: String(e.v).slice(0, 600), ok: e.ok === null ? null : !!e.ok, t: Number(e.t) || 0 })) : [],
@@ -95,7 +98,7 @@ const currentOf = (p: Player) => {
 };
 const summary = (p: Player) => ({
   pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
-  done: doneRecs(p).length, avgLv: avgLvOf(p),
+  done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p), prac: pracOf(p),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
   stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
   vocab: p.vocab?.score, lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
@@ -105,18 +108,19 @@ const teacherState = () => {
   const items = ITEMS.map((it) => {
     const rs = ps.map((p) => p.recs[it.id]).filter(Boolean) as Rec[];
     const dn = rs.filter((r) => r.status === 'done');
-    const wrong = new Map<string, number>();
+    const wrong = new Map<string, number>(), opens = new Map<string, number>();
     let firstN = 0, firstOk = 0;
     for (const r of rs) {
       const seen = new Set<string>();
       for (const e of r.log) {
+        if (e.q === 'open') { opens.set(e.v, (opens.get(e.v) ?? 0) + 1); continue; }
         if (e.ok === null) continue;
         if (!seen.has(e.q)) { seen.add(e.q); firstN++; if (e.ok) firstOk++; }
         if (!e.ok) wrong.set(e.v, (wrong.get(e.v) ?? 0) + 1);
       }
     }
-    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([v, n]) => ({ v, n })) };
-  });
+    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
+  }).filter((x) => x.n > 0 || STATIONS.some((s) => s.id === x.st));
   return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), now: Date.now(), ai: ai.status() };
 };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
@@ -197,6 +201,10 @@ const server = http.createServer(async (req, res) => {
       lastSeen.set(inc.pid, Date.now());
       dirty = true;
       return send(res, 200, { ok: true, player: players.get(inc.pid) });
+    }
+    if (route === 'ai/examples' && req.method === 'POST') {
+      if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');
+      return void (await ai.handleExamples((await readBody(req)) as Record<string, unknown>, (code, body) => send(res, code, body)));
     }
     if (route === 'ai/judge' && req.method === 'POST') {
       if (!config.ai) return send(res, 403, '老师暂时关闭了 AI 评分');

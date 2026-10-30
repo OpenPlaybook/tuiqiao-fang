@@ -67,8 +67,12 @@ export const join = async (name: string, sid: string, avatar: number) => {
 export const logout = () => { try { localStorage.removeItem(LS_KEY); } catch { /* */ } set({ player: null }); };
 
 // ---------------- 题目进度 ----------------
-const ensure = (p: Player, it: Item): Rec => (p.recs[it.id] ??= { id: it.id, st: it.st, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now() });
-export const startItem = (it: Item) => { if (!state.player?.recs[it.id]) mutate((p) => { ensure(p, it); }); };
+// 变式练习的记录 st 记成 'p'，不算进章节的题数
+const pracIds = new Set<string>();
+const ensure = (p: Player, it: Item): Rec => (p.recs[it.id] ??= { id: it.id, st: pracIds.has(it.id) ? 'p' : it.st, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now(), ...(pracIds.has(it.id) ? { prac: true } : {}) });
+export const startItem = (it: Item, prac = false) => { if (prac) pracIds.add(it.id); if (!state.player?.recs[it.id]) mutate((p) => { ensure(p, it); }); };
+/** 记一笔“点开了什么”（哪里不明白、一家人、AI 举例）：老师在后台看全班卡在哪 */
+export const logOpen = (it: Item, what: string) => mutate((p) => { ensure(p, it).log.push({ q: 'open', v: what.slice(0, 80), ok: null, t: Date.now() }); });
 export const logAnswer = (it: Item, e: Omit<LogEntry, 't'>, tries?: [string, number]) => mutate((p) => {
   const r = ensure(p, it);
   r.log.push({ ...e, v: e.v.slice(0, 600), t: Date.now() });

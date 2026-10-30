@@ -4,9 +4,11 @@ import { CY } from './cy';
 import { BJ } from './bj';
 import { ZJ } from './zj';
 import { EN1, EN2 } from './en';
+import { STORY_ITEMS } from '../story';
 
 export { ROOMS, SLOTS, FINAL_LINE, FINAL_NOTE } from './zj';
-export const ITEMS: Item[] = [...CI, ...CY, ...BJ, ...ZJ, ...EN1, ...EN2];
+// 旧版六个关卡的题现在是题库：故事里的变式练习从这里挑
+export const ITEMS: Item[] = [...STORY_ITEMS, ...CI, ...CY, ...BJ, ...ZJ, ...EN1, ...EN2];
 export const ITEM_BY_ID: Record<string, Item> = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 
 /** 英语词汇热身：9 个真词分三档，3 个是编出来的（点了要扣分） */

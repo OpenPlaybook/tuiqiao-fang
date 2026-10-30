@@ -250,6 +250,11 @@ const SCENES: Record<string, Scene> = {
     + `<path d="M0,320 L800,320 L800,500 L0,500 Z" fill="#D9CCAC"/>` + Array.from({ length: 34 }, (_, i) => figure(430 + (i % 12) * 30, 360 + Math.floor(i / 12) * 44, 0.62, 'robe', 0.75)).join('')
     + Array.from({ length: 6 }, (_, i) => `<g transform="translate(${450 + i * 60},90)"><line x1="0" y1="0" x2="0" y2="20" stroke="${INK}"/><ellipse cx="0" cy="34" rx="12" ry="15" fill="${RED}" opacity=".85"/></g>`).join('') + mist(id, 400, 10, 400, 0)
     + `<text x="110" y="420" font-size="20" fill="${INK}" opacity=".6" style="font-family:KaiTi, STKaiti, serif">巷子空了</text><text x="560" y="300" font-size="20" fill="${INK}" opacity=".6" style="font-family:KaiTi, STKaiti, serif">大街上满了</text>`,
+  piaomu: (id) => ridge(id, { y: 190, amp: 50, seed: 161, tone: 0.16 }) + wallGate(620, 250, 380, 0.7, 0.55) + mist(id, 255, 40)
+    + `<rect x="0" y="270" width="800" height="230" fill="#E4DCC6" opacity=".55"/>` + water(61, 285, 470, 800, 34, 0.32)
+    + willow(11, 90, 300, 0.85, 0.6) + figure(160, 300, 0.85, 'robe', 0.9) + `<path d="M172,262 Q240,250 300,330" stroke="${INK}" stroke-width="2" fill="none"/><line x1="300" y1="330" x2="300" y2="345" stroke="${INK}" stroke-width="1"/>`
+    + [0, 1, 2].map((i) => `<g transform="translate(${430 + i * 90},${360 + (i % 2) * 14})">${figure(0, 0, 0.6, 'sit', 0.8)}<path d="M8,4 q24,6 44,0" stroke="#F7F2E6" stroke-width="5" fill="none"/></g>`).join('')
+    + `<g transform="translate(250,300)"><ellipse cx="0" cy="0" rx="14" ry="6" fill="#6B4A2E"/><path d="M-10,-4 q10,-12 20,0" fill="#F7F2E6"/></g>` + vtext(712, 60, '一饭千金', 24) + seal(696, 180, '淮阴'),
   tuiqiao: (id) => `<rect width="800" height="500" fill="#3A3F4A" opacity=".5"/>` + moon(600, 100, 34, id) + ridge(id, { y: 300, amp: 90, seed: 151, tone: 0.45, color: '#1E2228' })
     + `<rect x="230" y="250" width="200" height="170" fill="#5A5048" opacity=".8"/><path d="M200,250 Q330,220 460,250 L450,262 Q330,236 210,262 Z" fill="#1E2228"/><rect x="290" y="300" width="80" height="120" fill="#2B2722"/><line x1="330" y1="300" x2="330" y2="420" stroke="#5A5048" stroke-width="2"/>`
     + figure(400, 430, 1.05, 'robe', 0.95, -1) + bareTree(5, 120, 440, 1.3, 0.7) + `<g transform="translate(130,330)">${geese(0, 0, 1, 1.2)}</g>` + water(21, 450, 495, 800, 10, 0.25)
@@ -329,7 +334,7 @@ const scapeArt = (k: string) => svg(800, 500, (id) => {
 });
 
 // ---------------- 英语：Ben 的扁平插画 ----------------
-const BG: Record<string, [string, string]> = { class: ['#DCEBFF', '🏫'], cafe: ['#FCE8D5', '☕'], park: ['#DDF3E4', '🌳'], home: ['#F3E8FF', '🏠'], phone: ['#E0F2FE', '📱'], hall: ['#EEF2F7', '🚪'], cinema: ['#2B2D42', '🎬'], shop: ['#FFF4D6', '📚'], canteen: ['#FFE8E0', '🍜'] };
+const BG: Record<string, [string, string]> = { hall: ['#E0E7FF', '🏆'], class: ['#DCEBFF', '🏫'], cafe: ['#FCE8D5', '☕'], park: ['#DDF3E4', '🌳'], home: ['#F3E8FF', '🏠'], phone: ['#E0F2FE', '📱'], cinema: ['#2B2D42', '🎬'], shop: ['#FFF4D6', '📚'], canteen: ['#FFE8E0', '🍜'] };
 const benArt = (place: string, mood: string) => {
   const [bg, icon] = BG[place] ?? BG.class;
   const mouth = mood === 'happy' ? `<path d="M-16,22 q16,16 32,0" stroke="#3B2A20" stroke-width="4" fill="none" stroke-linecap="round"/>`
@@ -349,6 +354,15 @@ ${brow}${eyes}<circle cx="-30" cy="14" r="7" fill="#F2A3A0" opacity=".6"/><circl
 <text x="-185" y="115" font-size="22" fill="${place === 'cinema' ? '#fff' : '#1F2937'}" font-weight="800" style="font-family:system-ui, sans-serif">Ben</text></svg>`;
 };
 
+// ---------------- 英语故事的场景（扁平插画） ----------------
+const enScene = (k: string) => {
+  const W = 800, H = 500;
+  if (k === 'hall') return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="800" height="500" fill="#2B2D52"/><path d="M0,0 h800 v60 h-800z" fill="#8B1E2D"/>${Array.from({ length: 10 }, (_, i) => `<path d="M${i * 80},60 q40,30 80,0" fill="#A12838"/>`).join('')}<rect x="0" y="60" width="90" height="300" fill="#8B1E2D"/><rect x="710" y="60" width="90" height="300" fill="#8B1E2D"/><rect x="0" y="360" width="800" height="140" fill="#6B4A2E"/><rect x="0" y="352" width="800" height="12" fill="#4A321F"/><ellipse cx="400" cy="250" rx="230" ry="140" fill="#FFF1C1" opacity=".18"/><rect x="300" y="270" width="200" height="90" rx="6" fill="#F3F0E8"/><rect x="300" y="262" width="200" height="14" rx="4" fill="#D8D2C4"/><ellipse cx="400" cy="262" rx="44" ry="8" fill="none" stroke="#B8A47A" stroke-width="3" stroke-dasharray="6 5"/><text x="400" y="240" font-size="40" text-anchor="middle">❓</text><text x="400" y="110" font-size="30" font-weight="800" text-anchor="middle" fill="#FFE7A0" font-family="system-ui, sans-serif">ENGLISH FESTIVAL</text><text x="400" y="146" font-size="20" text-anchor="middle" fill="#F3F0E8" font-family="system-ui, sans-serif">Best Story Award · The Golden Panda</text>${Array.from({ length: 14 }, (_, i) => `<circle cx="${40 + i * 56}" cy="470" r="18" fill="#1E1F3A"/><rect x="${22 + i * 56}" y="482" width="36" height="30" rx="8" fill="#1E1F3A"/>`).join('')}</svg>`;
+  if (k === 'guard') return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="800" height="500" fill="#DDE6EE"/><rect x="0" y="330" width="800" height="170" fill="#B9C4CF"/><rect x="520" y="60" width="220" height="270" fill="#9FB0C0"/><rect x="540" y="80" width="180" height="230" fill="#E8F0F7"/><line x1="630" y1="80" x2="630" y2="310" stroke="#9FB0C0" stroke-width="6"/><rect x="120" y="250" width="360" height="40" rx="6" fill="#6B4A2E"/><rect x="140" y="290" width="20" height="120" fill="#4A321F"/><rect x="440" y="290" width="20" height="120" fill="#4A321F"/><circle cx="300" cy="150" r="46" fill="#F2C9A0"/><path d="M252,140 q48,-62 96,0 v-16 q-48,-46 -96,0z" fill="#1F2A44"/><rect x="246" y="118" width="108" height="16" rx="6" fill="#1F2A44"/><rect x="236" y="196" width="128" height="60" rx="20" fill="#2F4A6B"/><circle cx="284" cy="150" r="4" fill="#2B2722"/><circle cx="316" cy="150" r="4" fill="#2B2722"/><path d="M288,172 q12,6 24,0" stroke="#2B2722" stroke-width="3" fill="none"/><rect x="330" y="214" width="46" height="74" rx="8" fill="#111827" transform="rotate(-14 353 250)"/><rect x="335" y="221" width="36" height="58" rx="4" fill="#22C55E" transform="rotate(-14 353 250)"/><text x="350" y="258" font-size="18" text-anchor="middle" transform="rotate(-14 353 250)">⚽</text><text x="120" y="80" font-size="26" font-weight="800" fill="#2F4A6B" font-family="system-ui, sans-serif">SECURITY</text></svg>`;
+  if (k === 'note') return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="800" height="500" fill="#8A6A4A"/>${Array.from({ length: 8 }, (_, i) => `<path d="M0,${i * 64 + 20} q400,${(i % 2) * 18 - 9} 800,0" stroke="#7A5C3E" stroke-width="3" fill="none"/>`).join('')}<g transform="rotate(-6 400 250)"><rect x="240" y="120" width="320" height="270" fill="#FFE66D"/><rect x="240" y="120" width="320" height="34" fill="#F5D84E"/><text x="268" y="220" font-size="38" fill="#1F2937" font-family="'Comic Sans MS', 'Marker Felt', cursive">Lent the panda.</text><text x="268" y="282" font-size="38" fill="#1F2937" font-family="'Comic Sans MS', 'Marker Felt', cursive">Back at 3.</text><text x="430" y="350" font-size="40" fill="#1F2937" font-family="'Comic Sans MS', 'Marker Felt', cursive">— M</text></g></svg>`;
+  return '';
+};
+
 // ---------------- 统一入口 ----------------
 export const renderArt = (spec: string | { k: string; p?: Record<string, unknown> }): string => {
   const k = typeof spec === 'string' ? spec : spec.k, p = (typeof spec === 'string' ? {} : spec.p ?? {}) as Record<string, string>;
@@ -360,6 +374,7 @@ export const renderArt = (spec: string | { k: string; p?: Record<string, unknown
   if (k === 'walk') return walkArt(p.k);
   if (k === 'scape') return scapeArt(p.k);
   if (k === 'ben') return benArt(p.place ?? 'class', p.mood ?? 'happy');
+  if (k === 'en') return enScene(p.k);
   return '';
 };
 export const ART_KEYS = { ink: Object.keys(SCENES), idiom: Object.keys(IDIOMS) };

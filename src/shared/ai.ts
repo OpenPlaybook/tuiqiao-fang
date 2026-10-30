@@ -98,3 +98,25 @@ export const cleanEn = (j: Partial<EnJudge>, text: string): EnJudge => {
   const verdict = v === 'minor' && real.length === 0 && errors.length > 0 ? 'perfect' : v;
   return { verdict, errors, natural: String(j.natural ?? '').slice(0, 200), comment: String(j.comment ?? '').slice(0, 80) };
 };
+
+// ---------------- AI 再举例 ----------------
+export const EX_SYSTEM = `你是初中老师的助手。一个初一、初二的学生学一个知识点还不太明白，点了“再举两个例子”。请你再举 2 个新的例子。
+要求：
+- 例子贴近初中生的生活（学校、家里、同学、运动、节日、天气），一看就懂；如果用古文，必须是真实存在、初中生学过的原句，拿不准就不要用古文，改用现代的情境。
+- 每个例子一句话。英语的知识点，例句用英语；语文的知识点，例句用中文。
+- 每个例句都必须用到要讲的词或语法；“必须出现的词”如果给了，每句至少用一个。
+- 每个例子配一句中文说明，不超过 40 字：说清为什么这样用，最好点出容易和它混的那个。
+- 不要和“已经有的例子”重复，也不要两个例子说的是同一种情况。
+- 写完以后自己核对一遍：说明里说的主语、方向（谁给谁、从哪到哪）、时间，和例句是不是完全一致；不一致就改。
+- 不聊天，不说多余的话。
+只输出 JSON：{"examples":[{"s":"例句","note":"说明"},{"s":"例句","note":"说明"}]}`;
+export const exUser = (node: { name: string; ai?: { target: string; brief: string; words?: string[] }; teach: { ex?: string[] }; web?: { groups: { items: { t: string }[] }[] } }, intro: string, seen: string[]) => [
+  `知识点：${node.name}（${node.ai?.target ?? ''}）`,
+  `要求：${node.ai?.brief ?? ''}`,
+  node.ai?.words?.length ? `必须出现的词（每句至少一个）：${node.ai.words.join('、')}` : '',
+  `学生刚做的题：${plain(intro)}`,
+  `已经有的例子（不要重复）：\n${[...(node.teach.ex ?? []), ...(node.web?.groups.flatMap((g) => g.items.map((i) => i.t)) ?? []), ...seen].map((e) => `- ${e}`).join('\n') || '（无）'}`,
+].filter(Boolean).join('\n\n');
+export const cleanEx = (j: { examples?: { s?: unknown; note?: unknown }[] }, words?: string[]) =>
+  (Array.isArray(j.examples) ? j.examples : []).slice(0, 3).map((e) => ({ s: String(e?.s ?? '').slice(0, 160), note: String(e?.note ?? '').slice(0, 80) }))
+    .filter((e) => e.s && (!words?.length || words.some((w) => e.s.toLowerCase().includes(w.toLowerCase()))));

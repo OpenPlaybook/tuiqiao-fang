@@ -1,7 +1,7 @@
 // 题目、玩家进度的类型。学生端和服务器共用。
 
-export type StationId = 'ci' | 'cy' | 'bj' | 'zj' | 'en1' | 'en2';
-export type Track = 'zh' | 'gu' | 'en'; // 现代汉语、文言与历史、英语
+export type StationId = string; // 故事的一章（zh1、en1……）；旧题库的题号前缀（ci、cy……）只用作变式练习
+export type Track = 'zh' | 'gu' | 'en'; // 中文、（旧：文言与历史）、英语
 export type Lv = 1 | 2 | 3 | 4; // ★ ★★ ★★★ 👑
 
 /** 画：键名 + 参数，由 art/ 里的画法生成 SVG（网站和竖屏视频共用） */
@@ -56,9 +56,30 @@ export interface Item {
   slot?: number; // 竹简故事里的第几道谜
   slip?: string; // 竹简故事：解开以后拾回的竹简上写的字
   npc?: { good: string; bad: string }; // 英语：Ben 的反应
+  node?: string; // 讲的是哪个知识点（KNode）
 }
 
-// ---------------- 竹简故事 ----------------
+// ---------------- 知识点：老师怎么讲 ----------------
+/** 学生点“哪里还不明白”：一个问题 → 简短的回答（可以带画面、例子） */
+export interface Chip { q: string; a: string; viz?: Art; ex?: string[] }
+/** 知识网里的一项：词、意思、例子 */
+export interface WebItem { t: string; d: string; ex?: string; viz?: Art }
+export interface KNode {
+  id: string;
+  name: string;
+  line: 'zh' | 'en';
+  teach: { viz?: Art; lines: string[]; ex?: string[] }; // 老师讲：画面 + 两三句话 + 例子
+  chips: Chip[];
+  web?: { title: string; groups: { name: string; items: WebItem[] }[] }; // 这个点的一家人
+  practice: string[]; // 变式练习（题号），按能力挑
+  ai?: { target: string; brief: string; words?: string[] }; // AI 再举例：讲什么、有什么要求、例句里必须出现的词
+}
+// ---------------- 故事 ----------------
+export interface Beat { who?: string; t: string; art?: Art }
+/** 一章：一段一段的故事，中间夹着题（同一道题的几个难度版本） */
+export interface Chapter { id: string; line: 'zh' | 'en'; no: number; title: string; sub: string; scene: Art; color: string; flow: (Beat | { task: string[] })[]; end: Beat[]; next?: string }
+
+// ---------------- 竹简故事（旧版） ----------------
 export interface StoryBeat { who?: string; t: string } // 旁白或人物说的话
 export interface StorySlot { no: number; room: number; before: StoryBeat[]; after: StoryBeat[]; slip: string; scene: Art }
 export interface Room { no: number; name: string; time: string; scene: Art }
@@ -74,6 +95,7 @@ export interface Rec {
   unsure: number; // 点“不确定”的次数
   tries: Record<string, number>; // 每一步答了几次
   bonus: number; // 妙笔分
+  prac?: boolean; // 变式练习
   log: LogEntry[];
   data?: Record<string, unknown>;
   t0: number;
@@ -99,4 +121,4 @@ export interface GameConfig {
   aiReady?: boolean;
   aiLeft?: number;
 }
-export const STATION_IDS: StationId[] = ['ci', 'cy', 'bj', 'zj', 'en1', 'en2'];
+export const STATION_IDS: StationId[] = ['zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];

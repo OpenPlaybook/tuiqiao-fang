@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useGame, pollConfig, syncNow } from './game/store';
 import { TopBar, FlyLayer, Toasts, AttentionOverlay } from './components/ui';
-import { JoinPage, MapPage, MePage, StationPage } from './pages/pages';
+import { JoinPage, MePage } from './pages/pages';
+import { StoryMap, ChapterPage } from './pages/story';
 import Teacher from './teacher/Teacher';
-import type { StationId } from './shared/types';
-import { ST } from './shared/adapt';
+import { CHAPTER_BY_ID } from './shared/story';
 
 const useHash = () => {
   const [h, setH] = useState(() => window.location.hash.slice(1) || '/');
@@ -32,7 +32,7 @@ export default function App() {
   if (isTeacher) return <Teacher />;
   if (!player) return <JoinPage />;
   const parts = route.split('/').filter(Boolean);
-  const page = parts[0] === 's' && parts[1] && ST[parts[1] as StationId] ? <StationPage key={parts[1]} st={parts[1] as StationId} /> : parts[0] === 'me' ? <MePage /> : <MapPage />;
+  const page = parts[0] === 'c' && parts[1] && CHAPTER_BY_ID[parts[1]] ? <ChapterPage key={parts[1]} id={parts[1]} /> : parts[0] === 'me' ? <MePage /> : <StoryMap />;
   return (
     <div className="min-h-full pb-16">
       <TopBar />

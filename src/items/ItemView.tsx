@@ -1,5 +1,5 @@
 // 一道题：情境 → 一步一步作答 →（不确定：看图和提示，不扣星）→ 讲解、来历、加分题、竖屏讲解视频。
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { HelpCircle, Lock, PlayCircle } from 'lucide-react';
 import type { Item, Sub } from '../shared/types';
@@ -11,7 +11,7 @@ import { ChoiceView, MatchView, MisView, OrderView, SortView, SpotView, WriteVie
 
 const isScored = (s: Sub) => !(s.kind === 'write' && s.bonus);
 
-const StepView = ({ it, s, color, onDone }: { it: Item; s: Sub; color: string; onDone: (x: number) => void }) => {
+export const StepView = ({ it, s, color, onDone }: { it: Item; s: Sub; color: string; onDone: (x: number) => void }) => {
   switch (s.kind) {
     case 'choice': return <ChoiceView it={it} s={s} color={color} onDone={onDone} />;
     case 'spot': return <SpotView it={it} s={s} color={color} onDone={onDone} />;
@@ -46,9 +46,10 @@ export const VideoPanel = ({ topic, unlocked, color }: { topic: string; unlocked
   );
 };
 
-export default function ItemView({ it, color, k, n, onNext, title }: { it: Item; color: string; k: number; n: number; onNext: () => void; title: string }) {
+/** 一道题。compact：嵌在故事里（没有页眉和右边的视频）；prac：变式练习（只记 0 或 1 颗星）；after：做完以后显示的东西（替换默认的讲解和“下一题”） */
+export default function ItemView({ it, color, k = 0, n = 0, onNext, title = '', compact, prac, after, onFinish }: { it: Item; color: string; k?: number; n?: number; onNext?: () => void; title?: string; compact?: boolean; prac?: boolean; after?: ReactNode; onFinish?: (perf: number) => void }) {
   const rec = useGame((s) => s.player?.recs[it.id]);
-  useEffect(() => { startItem(it); }, [it.id]);
+  useEffect(() => { startItem(it, prac); }, [it.id]);
   const scored = it.steps.filter(isScored);
   const bonus = it.steps.filter((s) => !isScored(s));
   const saved = (rec?.data ?? {}) as { step?: number; scores?: number[] };
@@ -66,11 +67,13 @@ export default function ItemView({ it, color, k, n, onNext, title }: { it: Item;
     const next = i + 1;
     setData(it, { step: next, scores: sc });
     if (next < scored.length) { setTimeout(() => setStep(next), 650); return; }
-    const { stars, perf } = resultOf(sc, rec?.unsure ?? 0);
+    const r0 = resultOf(sc, rec?.unsure ?? 0);
+    const perf = r0.perf, stars = prac ? (perf >= 0.99 ? 1 : 0) : r0.stars;
     setTimeout(() => {
       finishItem(it, stars, perf);
-      sfx('star');
-      const c = centerOf(doneRef.current); fly(c.x, c.y, stars);
+      onFinish?.(perf);
+      sfx(stars ? 'star' : 'flip');
+      const c = centerOf(doneRef.current); if (stars) fly(c.x, c.y, stars);
       setTimeout(() => doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
     }, 500);
   };
@@ -81,13 +84,13 @@ export default function ItemView({ it, color, k, n, onNext, title }: { it: Item;
   const fills = finished && first?.kind === 'choice' && !first.multi && /_{3}/.test(it.intro) && first.ok.length === 1 ? first.opts[first.ok[0]].t.split(/；|……/) : undefined;
 
   return (
-    <div className="mx-auto grid max-w-[1280px] gap-6 px-4 py-6 lg:grid-cols-[1fr_300px]">
+    <div className={compact ? '' : 'mx-auto grid max-w-[1280px] gap-6 px-4 py-6 lg:grid-cols-[1fr_300px]'}>
       <div>
-        <div className="mb-3 flex items-center gap-3">
+        {!compact && <div className="mb-3 flex items-center gap-3">
           <span className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ background: color }}>{title}</span>
           <div className="flex gap-1.5">{Array.from({ length: n }, (_, i) => <span key={i} className="h-2.5 w-7 rounded-full" style={{ background: i < k ? color : i === k ? color + '88' : '#E6DCC6' }} />)}</div>
           <span className="text-sm font-bold text-ink2">第 {k + 1} / {n} 题</span>
-        </div>
+        </div>}
         <div className="card p-6">
           <div className="text-xl leading-relaxed"><Rich text={it.intro} fills={fills} /></div>
           {it.npc && it.pic && typeof it.pic !== 'string' && (() => {
@@ -123,7 +126,8 @@ export default function ItemView({ it, color, k, n, onNext, title }: { it: Item;
         ))}
 
         <div ref={doneRef} />
-        {finished && (
+        {finished && after}
+        {finished && !after && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-4 space-y-4">
             <div className="card flex items-center gap-4 p-5" style={{ borderColor: color + '55' }}>
               <Stars n={rec?.stars ?? 0} size={34} />
@@ -131,14 +135,14 @@ export default function ItemView({ it, color, k, n, onNext, title }: { it: Item;
             </div>
             {it.know && <div className="flex gap-3 rounded-2xl border-2 border-[#D8C08A] bg-[#F7EFD9] px-5 py-4"><span className="text-2xl">📜</span><div className="leading-relaxed"><b>来历 · 涨知识</b><div className="mt-0.5"><Rich text={it.know} /></div></div></div>}
             {bonus.map((s) => <div key={s.key} className="card border-amber-200 p-6"><StepView it={it} s={s} color={color} onDone={() => {}} /></div>)}
-            <div className="flex justify-end"><Btn size="lg" color={color} onClick={onNext}>{k + 1 >= n ? '完成这一关 →' : '下一题 →'}</Btn></div>
+            {onNext && <div className="flex justify-end"><Btn size="lg" color={color} onClick={onNext}>{k + 1 >= n ? '完成这一关 →' : '下一题 →'}</Btn></div>}
           </motion.div>
         )}
       </div>
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      {!compact && <div className="lg:sticky lg:top-24 lg:self-start">
         <VideoPanel topic={it.topic} unlocked={unlocked} color={color} />
         <div className="mt-3 text-center text-sm text-ink2">觉得简单，可以不看。</div>
-      </div>
+      </div>}
     </div>
   );
 }
