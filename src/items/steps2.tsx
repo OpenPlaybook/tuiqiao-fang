@@ -1,16 +1,17 @@
 // 播放式故事用的题：都在画面里做，所以要紧凑。
 // 选项下面直接出反馈的选择题、选词填句、打字短答、碎片拼接；长文本、点出毛病、改错直接在画面里的卡片上做（点那个词，弹出贴着它的小窗）。
 // 每一步做完把“最后的样子”存进记录（data.ans），回来看到的就是自己做过的答案；拓展的步骤用 SaveCtx 加前缀，免得和正题撞名。
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type React from 'react';
-import { motion } from 'motion/react';
-import { Check, Lock, X } from 'lucide-react';
-import type { ChoiceSub, FillSub, FragSub, Item, LongSub, MisSub, SpotSub, Sub, TeachSub, TypeSub } from '../shared/types';
+import { Reorder, motion } from 'motion/react';
+import { GripVertical, Lock, X } from 'lucide-react';
+import type { ChoiceSub, FillSub, FragSub, Item, LongSub, MatchSub, MisSub, SortSub, SpotSub, Sub, TeachSub, TypeSub } from '../shared/types';
 import { Art, Btn, GlossContext, LETTERS, Rich, shuffleIdx } from '../components/ui';
 import { Viz, isViz } from '../components/viz';
 import { getState, logAnswer, setData, useGame } from '../game/store';
 import { sfx } from '../game/sound';
-import { MatchView, OrderView, SortView, WriteView } from './steps';
+import { OrderView, WriteView } from './steps';
 
 const triesScore = (t: number) => (t <= 1 ? 1 : t === 2 ? 0.67 : 0.34);
 
@@ -30,35 +31,54 @@ export const Why = ({ tone, children }: { tone: 'ok' | 'no' | 'mute'; children: 
   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className={`mx-1 rounded-b-lg px-2.5 pb-1.5 pt-1 text-[14px] leading-relaxed ${tone === 'ok' ? 'bg-emerald-50 text-emerald-900' : tone === 'no' ? 'bg-rose-50 text-rose-900' : 'bg-[#F4EFE4] text-ink2'}`}>{children}</motion.div>
 );
 const plain = (t: string) => t.replace(/[⟦⟧⟪⟫*]/g, '');
+/** 改好的样子：~~删掉的~~ 划掉，++加上的++ 绿色 */
+export const Diff = ({ text }: { text: string }) => <>{text.split(/(~~[^~]+~~|\+\+[^+]+\+\+)/).map((p, i) => p.startsWith('~~') ? <s key={i} className="text-rose-500 decoration-2">{p.slice(2, -2)}</s> : p.startsWith('++') ? <b key={i} className="text-emerald-700">{p.slice(2, -2)}</b> : <span key={i}>{p}</span>)}</>;
 
-// ---------------- 选择：反馈写在选项下面 ----------------
+// ---------------- 选择：反馈写在选项下面；单选点一下就算选了，多选才要“确定” ----------------
 type ChoiceSaved = { sc: number; wrong: number[]; pick: number[] };
 export const ChoiceInline = ({ it, s, onDone, color, revealed, compact }: StepProps<ChoiceSub> & { revealed?: boolean; compact?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
-  const [sv, save] = useSaved<ChoiceSaved>(it, s.key);
+  const [saved, save] = useSaved<ChoiceSaved>(it, s.key);
+  const pre = useContext(SaveCtx);
+  // 早先做完、还没存答案的题：从答题记录里把当时点过的选项找回来
+  const sv = useMemo<ChoiceSaved | undefined>(() => {
+    if (saved) return saved;
+    const r = getState().player?.recs[it.id];
+    if (pre || r?.status !== 'done') return undefined;
+    const es: { v: string; ok: boolean | null }[] = [];
+    for (const e of r.log) { if (e.q !== s.key) continue; es.push(e); if (e.ok) break; }
+    const okE = es.find((e) => e.ok); if (!okE) return undefined;
+    const idx = (v: string) => v.split(' / ').map((t) => s.opts.findIndex((o) => o.t === t || plain(o.t) === t)).filter((i) => i >= 0);
+    return { sc: 1, wrong: [...new Set(es.filter((e) => !e.ok).flatMap((e) => idx(e.v)).filter((i) => !s.ok.includes(i)))], pick: idx(okE.v) };
+  }, []);
   const order = useMemo(() => (s.keep ? s.opts.map((_, i) => i) : shuffleIdx(s.opts.length, pid + it.id + s.key)), [pid, it.id, s.key]);
   const [pick, setPick] = useState<number[]>(sv?.pick ?? []);
   const [wrong, setWrong] = useState<number[]>(sv?.wrong ?? []);
   const [tries, setTries] = useState(0);
   const [solved, setSolved] = useState(!!sv);
   const [note, setNote] = useState('');
-  const multi = !!s.multi, reveal = s.reveal ?? 'all';
-  const toggle = (i: number) => { if (solved || wrong.includes(i)) return; sfx('click'); setPick((p) => (multi ? (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]) : [i])); };
+  const multi = !!s.multi, reveal = s.reveal ?? (pre ? 'chosen' : 'all'); // 拓展里一步一问：只在点过的选项下面说为什么，少占地方
   const finish = (sc: number, w: number[], p: number[]) => { setSolved(true); save({ sc, wrong: w, pick: p }); onDone(sc); };
-  const submit = () => {
-    if (!pick.length) return;
+  const submit = (p: number[]) => {
+    if (!p.length) return;
     const t = tries + 1; setTries(t);
-    const right = multi ? pick.length === s.ok.length && pick.every((i) => s.ok.includes(i)) : s.ok.includes(pick[0]);
-    logAnswer(it, { q: s.key, v: pick.map((i) => plain(s.opts[i].t)).join(' / '), ok: right }, [s.key, t]);
-    if (right) { sfx('ok'); setNote(''); finish(triesScore(t), wrong, pick); return; }
+    const right = multi ? p.length === s.ok.length && p.every((i) => s.ok.includes(i)) : s.ok.includes(p[0]);
+    logAnswer(it, { q: s.key, v: p.map((i) => plain(s.opts[i].t)).join(' / '), ok: right }, [s.key, t]);
+    if (right) { sfx('ok'); setNote(''); setPick(p); finish(triesScore(t), wrong, p); return; }
     sfx('no');
-    const bad = multi ? pick.filter((i) => !s.ok.includes(i)) : pick;
+    const bad = multi ? p.filter((i) => !s.ok.includes(i)) : p;
     const w = [...wrong, ...bad];
-    setWrong(w); setPick((p) => p.filter((i) => s.ok.includes(i)));
-    if (multi) { const miss = s.ok.filter((i) => !pick.includes(i)).length; setNote(bad.length ? '' : `还少选了 ${miss} 个。`); }
+    setWrong(w); setPick(p.filter((i) => s.ok.includes(i)));
+    if (multi) { const miss = s.ok.filter((i) => !p.includes(i)).length; setNote(bad.length ? '' : `还少选了 ${miss} 个。`); }
     if (t >= 3) { setPick(s.ok); setNote('答案已经标出来了。'); finish(0.34, w, s.ok); }
   };
-  const showWhy = (i: number) => {
+  const click = (i: number) => {
+    if (solved || wrong.includes(i)) return;
+    sfx('click');
+    if (multi) setPick((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
+    else submit([i]);
+  };
+  const whyOf = (i: number) => {
     const o = s.opts[i], isOk = s.ok.includes(i);
     const body = <><Rich text={o.why} />{o.art && <OptArt a={o.art} />}</>;
     if (wrong.includes(i)) return <Why tone="no">{body}</Why>;
@@ -68,31 +88,28 @@ export const ChoiceInline = ({ it, s, onDone, color, revealed, compact }: StepPr
     if (reveal === 'ext') return <Why tone="mute"><span className="flex items-center gap-1"><Lock size={13} />做完拓展再看</span></Why>;
     return null;
   };
-  const maxLen = Math.max(...s.opts.map((o) => plain(o.t).length));
-  const hasArt = s.opts.some((o) => o.art);
-  const cols = s.cols ?? (compact ? (maxLen <= 8 ? 2 : 1) : maxLen <= 5 && s.opts.length <= 5 && !hasArt ? s.opts.length : maxLen <= 15 ? 2 : 1);
   return (
     <div>
       <Q text={s.q} />
-      <div className="grid items-start gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div className="flex flex-wrap items-start gap-1.5">
         {order.map((i, k) => {
           const o = s.opts[i], on = pick.includes(i), x = wrong.includes(i), good = solved && s.ok.includes(i);
-          const py = s.py?.[o.t];
+          const py = s.py?.[o.t], why = whyOf(i);
           return (
-            <div key={i}>
-              <button onClick={() => toggle(i)} disabled={solved || x}
+            <div key={i} className="max-w-full" style={{ flex: '0 1 auto', minWidth: why ? 'min(100%, 280px)' : undefined }}>
+              <button onClick={() => click(i)} disabled={solved || x}
                 className={`flex w-full items-start gap-2 rounded-lg border-2 px-2.5 py-1.5 text-left leading-snug transition ${compact ? 'text-[15px]' : 'text-[16px]'} ${good ? 'border-emerald-400 bg-emerald-50' : x ? 'border-rose-200 bg-rose-50/70 text-ink2' : on ? 'bg-amber-50' : 'border-[#E6DCC6] bg-white hover:border-[#CDBE9E]'}`}
                 style={on && !good ? { borderColor: color } : {}}>
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black text-white" style={{ background: good ? '#059669' : x ? '#E5A3A3' : on ? color : '#C9BEA7' }}>{multi ? (on || good ? '✓' : '') : LETTERS[k]}</span>
-                <span className={`font-bold ${x ? 'line-through decoration-rose-300' : ''}`}>{py ? <ruby>{o.t}<rt>{py}</rt></ruby> : <Rich text={o.t} />}</span>
+                <span className={`font-bold ${x ? 'line-through decoration-rose-300' : ''}`}><Rich text={o.t} />{py && <span className="ml-1.5 text-[0.85em] font-semibold text-[#7A6A58] no-underline">{py}</span>}</span>
               </button>
-              {showWhy(i)}
+              {why}
             </div>
           );
         })}
       </div>
       {note && <div className="mt-1.5 text-sm font-bold text-rose-700">{note}</div>}
-      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!pick.length} onClick={submit}>确定</Btn>{multi && <span className="text-sm text-ink2">（可以选好几个）</span>}</div>}
+      {!solved && multi && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!pick.length} onClick={() => submit(pick)}>确定</Btn><span className="text-sm text-ink2">（可以选好几个）</span></div>}
     </div>
   );
 };
@@ -171,67 +188,116 @@ export const TypeView = ({ it, s, onDone, color }: StepProps<TypeSub>) => {
   );
 };
 
-// ---------------- 碎片拼接（概括、鉴赏）：缺了哪一层就提醒补上，不点明“三步” ----------------
+// ---------------- 碎片拼接（概括、鉴赏）：一层一层查——先看故事讲对、讲全没有，再看第二层，最后看第三层 ----------------
 type FragSaved = { sc: number; chosen: number[]; ok: boolean };
 export const FragView = ({ it, s, onDone, color }: StepProps<FragSub>) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const [sv, save] = useSaved<FragSaved>(it, s.key);
-  const order = useMemo(() => shuffleIdx(s.frags.length, pid + it.id + s.key), [pid]);
+  const pool = useMemo(() => shuffleIdx(s.frags.length, pid + it.id + s.key), [pid]);
   const [chosen, setChosen] = useState<number[]>(sv?.chosen ?? []);
   const [tries, setTries] = useState(0);
-  const [msg, setMsg] = useState<{ ok: boolean | null; t: React.ReactNode } | null>(sv ? { ok: sv.ok ? true : null, t: <>{sv.ok ? '写得完整！' : ''}<div className="text-ink2">也可以这样写：{s.model}</div></> } : null);
+  const [fb, setFb] = useState<{ ok: boolean | null; lines: React.ReactNode[]; bad: number[]; n: number } | null>(sv ? { ok: sv.ok ? true : null, lines: [sv.ok ? '写得完整！' : '', <span className="text-ink2">也可以这样写：{s.model}</span>], bad: [], n: 0 } : null);
   const [solved, setSolved] = useState(!!sv);
-  const add = (i: number) => { if (solved) return; sfx('click'); setChosen((c) => (c.includes(i) ? c.filter((x) => x !== i) : [...c, i])); setMsg(null); };
+  const add = (i: number) => { if (solved || chosen.includes(i)) return; sfx('click'); setChosen((c) => [...c, i]); };
+  const drop = (i: number) => { if (solved) return; sfx('click'); setChosen((c) => c.filter((x) => x !== i)); };
+  const F = s.frags;
   const check = () => {
     const t = tries + 1; setTries(t);
-    const tags = chosen.map((i) => s.frags[i].tag);
-    const xs = chosen.filter((i) => s.frags[i].tag === 'x');
-    const miss = (['f', 't', 'm'] as const).filter((g) => !tags.includes(g));
-    const ok = !xs.length && !miss.length;
-    logAnswer(it, { q: s.key, v: chosen.map((i) => s.frags[i].t).join('｜'), ok }, [s.key, t]);
+    const L = (n: 1 | 2 | 3) => chosen.filter((i) => F[i].layer === n);
+    const wrongIn = (xs: number[]) => xs.filter((i) => !F[i].ok);
+    const say = (i: number) => <>✗ “{F[i].t}”：{F[i].why ?? '这一句不对。'}</>;
+    let lines: React.ReactNode[] = [], bad: number[] = [], ok = false;
+    const l1 = L(1), w1 = wrongIn(l1), evs = new Set(l1.filter((i) => F[i].ok).map((i) => F[i].ev));
+    const miss = Object.keys(s.events).filter((e) => !evs.has(e));
+    if (!l1.length) lines = [s.need[1]];
+    else if (w1.length) { bad = w1; lines = w1.map(say); }
+    else if (miss.length) lines = [s.events[miss[0]]];
+    else {
+      const l2 = L(2), w2 = wrongIn(l2);
+      if (!l2.length) lines = [s.need[2]];
+      else if (w2.length) { bad = w2; lines = w2.map(say); }
+      else {
+        const l3 = L(3), w3 = wrongIn(l3);
+        if (!l3.length) lines = [s.need[3]];
+        else if (w3.length) { bad = w3; lines = w3.map(say); }
+        else {
+          const layers = chosen.map((i) => F[i].layer);
+          if (layers.some((v, k) => k && v < layers[k - 1])) lines = [s.order];
+          else ok = true;
+        }
+      }
+    }
+    logAnswer(it, { q: s.key, v: chosen.map((i) => F[i].t).join('｜'), ok }, [s.key, t]);
     if (ok) {
       sfx('ok'); setSolved(true);
-      const fi = tags.indexOf('f'), mi = tags.lastIndexOf('m');
-      setMsg({ ok: true, t: <>写得完整！{mi < fi && <span>（先说发生了什么、最后说意义，读起来会更顺。）</span>}<div className="text-ink2">也可以这样写：{s.model}</div></> });
+      setFb({ ok: true, lines: ['写得完整！', <span className="text-ink2">也可以这样写：{s.model}</span>], bad: [], n: t });
       save({ sc: triesScore(t), chosen, ok: true }); onDone(triesScore(t)); return;
     }
     sfx('no');
-    setMsg({ ok: false, t: <>{xs.map((i) => <div key={i}>✗ “{s.frags[i].t}”：{s.frags[i].why ?? '这一句不对。'}</div>)}{!xs.length && miss.length > 0 && <div>{s.need[miss[0]]}</div>}</> });
-    if (t >= 4) { setSolved(true); setMsg({ ok: null, t: <>可以这样写：{s.model}</> }); save({ sc: 0.34, chosen, ok: false }); onDone(0.34); }
+    if (t >= 6) { setSolved(true); setFb({ ok: null, lines: [<>可以这样写：{s.model}</>], bad: [], n: t }); save({ sc: 0.34, chosen, ok: false }); onDone(0.34); return; }
+    setFb({ ok: false, lines, bad, n: t });
   };
   return (
     <div>
       <Q text={s.q} />
-      <div className="min-h-[52px] rounded-lg border-2 border-dashed bg-white/70 px-3 py-2 text-[16px] leading-relaxed" style={{ borderColor: color + '88' }}>
-        {chosen.length ? chosen.map((i, k) => <button key={i} onClick={() => add(i)} disabled={solved} className="mr-0.5 rounded px-0.5 text-left hover:bg-rose-50">{s.frags[i].t}{k === chosen.length - 1 ? '。' : '，'}</button>) : <span className="text-ink2">点下面的碎片，按顺序拼起来；点这里的句子可以拿掉。</span>}
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <div className="mb-1 text-[13px] font-bold text-ink2">你拼的（按住拖动可以换顺序）</div>
+          {chosen.length ? (
+            <Reorder.Group as="div" axis="y" values={chosen} onReorder={(v) => !solved && setChosen(v)} className="space-y-1">
+              {chosen.map((i, k) => (
+                <Reorder.Item as="div" key={i} value={i} dragListener={!solved} className={`flex cursor-grab items-start gap-1.5 rounded-lg border-2 bg-white px-2 py-1 text-[15px] leading-snug active:cursor-grabbing ${fb?.bad.includes(i) ? 'border-rose-300 bg-rose-50' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
+                  {!solved && <GripVertical size={16} className="mt-0.5 shrink-0 text-[#B9AD95]" />}
+                  <span className="shrink-0 font-black" style={{ color }}>{k + 1}</span>
+                  <span className="flex-1">{F[i].t}{k === chosen.length - 1 ? '。' : '，'}</span>
+                  {!solved && <button onPointerDown={(e) => e.stopPropagation()} onClick={() => drop(i)} className="shrink-0 rounded-full p-0.5 text-ink2 hover:bg-rose-100 hover:text-rose-700" aria-label="拿掉"><X size={15} /></button>}
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+          ) : <div className="rounded-lg border-2 border-dashed px-3 py-2 text-[14px] text-ink2" style={{ borderColor: color + '66' }}>点右边的句子，加到这里。</div>}
+        </div>
+        {!solved && (
+          <div>
+            <div className="mb-1 text-[13px] font-bold text-ink2">可以用的句子（不用全用）</div>
+            <div className="flex flex-wrap gap-1">{pool.filter((i) => !chosen.includes(i)).map((i) => <button key={i} onClick={() => add(i)} className="rounded-lg border-2 border-[#E6DCC6] bg-white px-2 py-0.5 text-left text-[14px] font-bold leading-snug hover:border-amber-300">{F[i].t}</button>)}</div>
+          </div>
+        )}
       </div>
-      {!solved && <div className="mt-2 flex flex-wrap gap-1.5">{order.filter((i) => !chosen.includes(i)).map((i) => <button key={i} onClick={() => add(i)} className="rounded-lg border-2 border-[#E6DCC6] bg-white px-2.5 py-1 text-left text-[14px] font-bold hover:border-amber-300">{s.frags[i].t}</button>)}</div>}
-      {msg && <div className="mt-1.5"><Why tone={msg.ok ? 'ok' : msg.ok === false ? 'no' : 'mute'}>{msg.t}</Why></div>}
-      {!solved && <div className="mt-2"><Btn size="sm" color={color} disabled={chosen.length < 2} onClick={check}>写好了</Btn></div>}
+      {fb && <div className="mt-2"><Why tone={fb.ok ? 'ok' : fb.ok === false ? 'no' : 'mute'}>{fb.n > 1 && !fb.ok && <span className="mr-1 text-[12px] opacity-70">第 {fb.n} 次检查：</span>}{fb.lines.map((l, k) => <div key={k}>{l}</div>)}</Why></div>}
+      {!solved && <div className="mt-2"><Btn size="sm" color={color} disabled={!chosen.length} onClick={check}>检查</Btn></div>}
     </div>
   );
 };
 
 // ---------------- 画面里的卡片：长文本、点出毛病、改错都在卡片上做 ----------------
-/** 贴着某个词的小弹窗：位置相对卡片 */
+/** 贴着某个词的小弹窗：放在最上层（不会被画面、拓展弹窗的边裁掉），下面放不下就放到词的上面 */
 const usePop = () => {
   const wrap = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const at = (el: HTMLElement) => {
-    const rs = el.getClientRects(), r = rs[rs.length - 1] ?? el.getBoundingClientRect(), b = wrap.current!.getBoundingClientRect();
-    setPos({ x: r.left - b.left + r.width / 2, y: r.bottom - b.top });
-  };
-  return { wrap, at, pos, setPos };
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  return { wrap, at: (el: HTMLElement) => setAnchor(el), anchor, close: () => setAnchor(null) };
 };
-const Pop = ({ pos, wrap, children, onClose, w = 400 }: { pos: { x: number; y: number } | null; wrap: React.RefObject<HTMLDivElement | null>; children: React.ReactNode; onClose: () => void; w?: number }) => {
-  if (!pos) return null;
-  const W = wrap.current?.clientWidth ?? 800, width = Math.min(w, W - 16);
-  return (
-    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} onClick={(e) => e.stopPropagation()} className="absolute z-30 rounded-xl bg-white p-3 text-left font-sans text-[15px] shadow-2xl ring-2 ring-amber-200" style={{ width, left: Math.max(8, Math.min(W - width - 8, pos.x - width / 2)), top: pos.y + 8 }}>
+const Pop = ({ anchor, children, onClose, w = 400 }: { anchor: HTMLElement | null; children: React.ReactNode; onClose: () => void; w?: number }) => {
+  const [, tick] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+  useEffect(() => {
+    if (!anchor) return;
+    const f = () => tick((x) => x + 1);
+    window.addEventListener('scroll', f, true); window.addEventListener('resize', f);
+    return () => { window.removeEventListener('scroll', f, true); window.removeEventListener('resize', f); };
+  }, [anchor]);
+  useLayoutEffect(() => { const hh = box.current?.offsetHeight ?? 0; if (Math.abs(hh - h) > 2) setH(hh); });
+  if (!anchor || !anchor.isConnected) return null;
+  const rs = anchor.getClientRects(), last = rs[rs.length - 1] ?? anchor.getBoundingClientRect(), first = rs[0] ?? last;
+  const width = Math.min(w, window.innerWidth - 16);
+  const left = Math.max(8, Math.min(window.innerWidth - width - 8, last.left + last.width / 2 - width / 2));
+  const below = last.bottom + 8, up = first.top - h - 8;
+  const top = below + h + 8 <= window.innerHeight || up < 8 ? Math.min(below, Math.max(8, window.innerHeight - h - 8)) : up;
+  return createPortal(
+    <motion.div ref={box} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} onClick={(e) => e.stopPropagation()} className="fixed z-[95] overflow-auto rounded-xl bg-white p-3 text-left font-sans text-[15px] text-ink shadow-2xl ring-2 ring-amber-200" style={{ width, left, top, maxHeight: window.innerHeight - 16 }}>
       <button onClick={onClose} className="absolute right-1.5 top-1.5 rounded-full p-1 text-ink2 hover:bg-black/5" aria-label="关上"><X size={15} /></button>
       {children}
-    </motion.div>
-  );
+    </motion.div>, document.body);
 };
 const Badge = ({ color, children }: { color: string; children: React.ReactNode }) => <span className="ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 align-middle font-sans text-[13px] font-black text-white" style={{ background: color }}>{children}</span>;
 const Note = ({ tone, children }: { tone: 'ok' | 'no' | 'mute'; children: React.ReactNode }) => <div className={`mt-1.5 rounded-lg px-2.5 py-1 font-sans text-[14px] leading-relaxed ${tone === 'ok' ? 'bg-emerald-50 text-emerald-900' : tone === 'no' ? 'bg-rose-50 text-rose-900' : 'bg-[#F4EFE4] text-ink2'}`}>{children}</div>;
@@ -246,9 +312,13 @@ export const LongView = ({ it, s, onDone, color }: StepProps<LongSub>) => {
   const keys = Object.keys(s.qs);
   const doneMap: Record<string, number> = Object.fromEntries(keys.filter((k) => ans[pre + subPre + k]).map((k) => [k, ans[pre + subPre + k].sc]));
   const [active, setActive] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const reported = useRef(!!ans[pre + s.key]);
-  const { wrap, at, pos, setPos } = usePop();
+  const { wrap, at, anchor, close } = usePop();
   const finishOne = (k: string, x: number) => {
+    const q = s.qs[k];
+    setNote(`${k}　${q.kind === 'choice' ? q.opts[q.ok[0]].why : q.why}`);
+    setTimeout(() => { setActive((a) => (a === k ? null : a)); close(); }, 1300); // 做完了，小窗自己关上
     const d = { ...doneMap, [k]: x };
     if (!reported.current && keys.every((q) => d[q] !== undefined)) { reported.current = true; const sc = keys.reduce((a, q) => a + d[q], 0) / keys.length; save({ sc }); onDone(sc); }
   };
@@ -263,13 +333,14 @@ export const LongView = ({ it, s, onDone, color }: StepProps<LongSub>) => {
   const sub = active ? s.qs[active] : null;
   const left = keys.length - Object.keys(doneMap).length;
   return (
-    <div ref={wrap} className="relative" onClick={() => { setActive(null); setPos(null); }}>
+    <div ref={wrap} className="relative" onClick={() => { setActive(null); close(); }}>
       <div className="mb-1 flex items-center font-sans text-xs font-black text-[#8A6A2F]">{s.title}<Badge color={left ? color : '#059669'}>{left ? s.q || `画线的地方各有一问，点一点（还剩 ${left} 个）` : '都做完了 ✓'}</Badge></div>
       <GlossContext.Provider value={{ ...parent, marker }}>
         <div className="kai text-[22px] leading-[2.15]"><Rich text={s.text} /></div>
       </GlossContext.Provider>
+      {note && <Note tone="ok"><Rich text={note} /></Note>}
       {sub && active && (
-        <Pop pos={pos} wrap={wrap} onClose={() => { setActive(null); setPos(null); }} w={440}>
+        <Pop anchor={anchor} onClose={() => { setActive(null); close(); }} w={440}>
           <SaveCtx.Provider value={pre + subPre}>
             {sub.kind === 'choice' ? <ChoiceInline key={active} it={it} s={sub} color={color} compact onDone={(x) => finishOne(active, x)} /> : <TypeView key={active} it={it} s={sub} color={color} onDone={(x) => finishOne(active, x)} />}
           </SaveCtx.Provider>
@@ -290,10 +361,13 @@ export const SpotCard = ({ it, s, onDone, color }: StepProps<SpotSub>) => {
   const [missed, setMissed] = useState<number[]>(sv?.missed ?? []);
   const [msg, setMsg] = useState<{ ok: boolean | null; t: string } | null>(null);
   const [sp, setSp] = useState(sv?.sp ?? 1);
-  const { wrap, at, pos, setPos } = usePop();
+  const { wrap, at, anchor, close } = usePop();
   const [popOpen, setPopOpen] = useState(false);
   const segEls = useRef<(HTMLSpanElement | null)[]>([]);
   useEffect(() => { if (found !== null && segEls.current[found]) at(segEls.current[found]!); }, []);
+  const fixAns = useGame((g) => (g.player?.recs[it.id]?.data?.ans as Ans | undefined)?.[pre + s.key + '.fix']) as { pick?: number[] } | undefined;
+  const fixOpt = s.fix && fixAns?.pick?.length ? s.fix.opts[fixAns.pick[0]] : null;
+  const fixedText = fixOpt && s.fixed?.[fixOpt.t];
   const hit = (i: number, sc: number, m: number[]) => { setFound(i); setSp(sc); if (!s.fix) { save({ sc, missed: m, at: i, sp: sc }); onDone(sc); } else setPopOpen(true); };
   const click = (i: number, el: HTMLElement) => {
     if (found !== null) { if (s.bad.includes(i)) { at(el); setPopOpen(true); } return; }
@@ -307,22 +381,23 @@ export const SpotCard = ({ it, s, onDone, color }: StepProps<SpotSub>) => {
   };
   const latin = s.segs.some((g) => /[a-zA-Z]{2}/.test(g));
   return (
-    <div ref={wrap} className="relative" onClick={() => { setPopOpen(false); setPos(null); }}>
+    <div ref={wrap} className="relative" onClick={() => { setPopOpen(false); close(); }}>
       <div className="text-[22px] leading-[2.1]">
-        {s.segs.map((g, i) => (
+        {fixedText ? <span onClick={(e) => { e.stopPropagation(); at(e.currentTarget); setPopOpen(true); }} className="cursor-pointer"><Diff text={fixedText} /></span> : s.segs.map((g, i) => (
           <span key={i}><span ref={(el) => { segEls.current[i] = el; }} onClick={(e) => { e.stopPropagation(); click(i, e.currentTarget); }} className={`seg ${found === null && !missed.includes(i) ? 'seg-click' : ''} ${found !== null && s.bad.includes(i) ? 'cursor-pointer bg-rose-100 text-rose-800 underline decoration-rose-500 decoration-wavy underline-offset-8' : missed.includes(i) ? 'text-ink2/60' : ''}`}>{g}</span>{latin && i < s.segs.length - 1 ? ' ' : ''}</span>
         ))}
         <Badge color={found !== null && (!s.fix || fixSaved) ? '#059669' : color}>{found !== null && (!s.fix || fixSaved) ? '改好了 ✓' : found !== null ? '找到了，选怎么改' : s.q}</Badge>
       </div>
-      {msg && <Note tone={msg.ok ? 'ok' : msg.ok === false ? 'no' : 'mute'}>{msg.t}</Note>}
+      {msg && !fixOpt && <Note tone={msg.ok ? 'ok' : msg.ok === false ? 'no' : 'mute'}>{msg.t}</Note>}
+      {fixOpt && !popOpen && <Note tone="ok"><b>{fixOpt.t}</b>：<Rich text={fixOpt.why} /></Note>}
       {s.fix && found !== null && popOpen && (
-        <Pop pos={pos} wrap={wrap} onClose={() => setPopOpen(false)}>
+        <Pop anchor={anchor} onClose={() => setPopOpen(false)}>
           <SaveCtx.Provider value={pre + s.key + '.'}>
-            <ChoiceInline it={it} s={s.fix} color={color} compact onDone={(x) => { const sc = (sp + x) / 2; save({ sc, missed, at: found, sp }); onDone(sc); }} />
+            <ChoiceInline it={it} s={s.fix} color={color} compact onDone={(x) => { const sc = (sp + x) / 2; save({ sc, missed, at: found, sp }); onDone(sc); setTimeout(() => { setPopOpen(false); close(); }, 1300); }} />
           </SaveCtx.Provider>
         </Pop>
       )}
-      {s.fix && found !== null && !popOpen && <div className="mt-1 font-sans text-[13px] text-ink2">点画波浪线的地方，{fixSaved ? '看看怎么改的' : '选怎么改'}。</div>}
+      {s.fix && found !== null && !popOpen && <div className="mt-1 font-sans text-[13px] text-ink2">{fixSaved ? '点句子，看看为什么这样改。' : '点画波浪线的地方，选怎么改。'}</div>}
     </div>
   );
 };
@@ -339,7 +414,7 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
   const [msg, setMsg] = useState<{ ok: boolean | null; t: React.ReactNode } | null>(null);
   const [wrongOpt, setWrongOpt] = useState<number[]>([]);
   const done = fixed.length === groups.length;
-  const { wrap, at, pos, setPos } = usePop();
+  const { wrap, at, anchor, close } = usePop();
   const click = (i: number, el: HTMLElement) => {
     const g = s.segs[i];
     if (g.bad) { at(el); setOpen(g.bad.word); setWrongOpt([]); if (!fixed.includes(g.bad.word)) sfx('hint'); return; }
@@ -354,19 +429,20 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
     logAnswer(it, { q: s.key + ':' + word, v: b.opts[k], ok: right });
     if (!right) { sfx('no'); setPenalty((p) => p + 0.15); setWrongOpt((w) => [...w, k]); return; }
     sfx('ok');
-    const f = [...fixed, word]; setFixed(f); setMsg(null);
+    const f = [...fixed, word]; setFixed(f); setOpen(null); close(); // 改对了，小窗关上；为什么写在下面
+    setMsg({ ok: true, t: <><b>{s.src ? word : b.opts[b.ok].replace(/^\*/, '')}</b>：<Rich text={b.why} /></> });
     if (f.length === groups.length) { const sc = Math.max(0.34, 1 - penalty); save({ sc, fixed: f }); onDone(sc); }
   };
-  const giveUp = () => { setFixed(groups); setOpen(null); setPos(null); setMsg({ ok: null, t: '错处都标出来了，点一点，看看每一处为什么错。' }); save({ sc: 0.34, fixed: groups, gave: true }); onDone(0.34); };
+  const giveUp = () => { setFixed(groups); setOpen(null); close(); setMsg({ ok: null, t: '错处都标出来了，点一点，看看每一处为什么错。' }); save({ sc: 0.34, fixed: groups, gave: true }); onDone(0.34); };
   const ob = open ? s.segs.find((g) => g.bad?.word === open)!.bad! : null;
   return (
-    <div ref={wrap} className="relative" onClick={() => { setOpen(null); setPos(null); }}>
+    <div ref={wrap} className="relative" onClick={() => { setOpen(null); close(); }}>
       <div className="text-[20px] leading-[2.05]">
         {s.segs.map((g, i) => {
           const isFixed = g.bad && fixed.includes(g.bad.word);
           return (
             <span key={i} onClick={(e) => { e.stopPropagation(); click(i, e.currentTarget); }} className={`seg ${!done && !isFixed ? 'seg-click' : ''} ${isFixed ? 'cursor-pointer bg-emerald-100' : okClicked.includes(i) ? 'text-ink2/70' : open && g.bad?.word === open ? 'bg-amber-200' : ''}`}>
-              {isFixed ? (g.bad!.fixed ? <b className="text-emerald-800">{g.bad!.fixed}</b> : <><s className="text-rose-500/80">{g.t}</s> <b className="text-emerald-800">{g.bad!.opts[g.bad!.ok]}</b></>) : g.t}
+              {isFixed ? (g.bad!.fixed ? <Diff text={g.bad!.fixed} /> : <><s className="text-rose-500/80">{g.t}</s> <b className="text-emerald-800">{g.bad!.opts[g.bad!.ok]}</b></>) : g.t}
             </span>
           );
         })}
@@ -375,9 +451,9 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
       {msg && <Note tone={msg.ok ? 'ok' : msg.ok === false ? 'no' : 'mute'}>{msg.t}</Note>}
       {!done && fixed.length < groups.length && <div className="mt-1 text-right font-sans text-[13px]"><button onClick={(e) => { e.stopPropagation(); giveUp(); }} className="text-ink2 underline">我找不到了，告诉我</button></div>}
       {ob && open && (
-        <Pop pos={pos} wrap={wrap} onClose={() => { setOpen(null); setPos(null); }} w={380}>
+        <Pop anchor={anchor} onClose={() => { setOpen(null); close(); }} w={380}>
           {fixed.includes(open) ? (
-            <div className="pr-5"><b className="text-emerald-800">{ob.fixed ?? ob.opts[ob.ok]}</b><div className="mt-1 leading-relaxed"><Rich text={ob.why} /></div></div>
+            <div className="pr-5"><b className="text-emerald-800">{ob.opts[ob.ok].replace(/^\*/, '')}</b><div className="mt-1 leading-relaxed"><Rich text={ob.why} /></div></div>
           ) : (
             <>
               <div className="mb-2 pr-5 font-black">{s.src ? <>“<span className="kai text-lg">{open}</span>”在这里是什么意思？</> : <>这里有毛病。怎么改？</>}</div>
@@ -391,16 +467,86 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
   );
 };
 
-// ---------------- 讲：老师讲一段 ----------------
-export const TeachView = ({ s, color, onDone, done }: { s: TeachSub; color: string; onDone: () => void; done: boolean }) => (
-  <div className="rounded-xl border-l-4 bg-[#FBF6EA] px-4 py-3" style={{ borderColor: color }}>
-    {s.q && <div className="mb-1 text-[17px] font-black">{s.q}</div>}
-    <div className="text-[16px] leading-[1.9]"><Rich text={s.t} /></div>
-    {s.art && <div className="mx-auto mt-2 max-w-[560px]">{isViz(s.art) ? <Viz spec={s.art} /> : <Art spec={s.art} className="aspect-[56/22] rounded-lg" />}</div>}
-    {s.ex && <div className="mt-2 space-y-1 border-t border-dashed border-[#E2D5B8] pt-2">{s.ex.map((e, i) => <div key={i} className="text-[16px] leading-relaxed"><Rich text={e} /></div>)}</div>}
-    {!done && <div className="mt-2 text-right"><button onClick={() => { sfx('click'); onDone(); }} className="rounded-full px-4 py-1 text-sm font-black text-white" style={{ background: color }}>接着 ›</button></div>}
+// ---------------- 讲：老师讲一小段，和后面那一问一起出现 ----------------
+export const TeachView = ({ s, color }: { s: TeachSub; color: string }) => (
+  <div className="rounded-lg border-l-4 bg-[#FBF6EA] px-3.5 py-2 text-[16px] leading-[1.85]" style={{ borderColor: color }}>
+    {s.q && <div className="font-black">{s.q}</div>}
+    <Rich text={s.t} />
+    {s.art && <div className="mx-auto mt-1.5 max-w-[560px]">{isViz(s.art) ? <Viz spec={s.art} /> : <Art spec={s.art} className="aspect-[56/22] rounded-lg" />}</div>}
+    {s.ex && <div className="mt-1 space-y-0.5 border-t border-dashed border-[#E2D5B8] pt-1">{s.ex.map((e, i) => <div key={i}><Rich text={e} /></div>)}</div>}
   </div>
 );
+
+// ---------------- 分类、连线：一项一行，几列并排，省地方 ----------------
+export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { init?: boolean }) => {
+  const pid = useGame((g) => g.player?.pid ?? '');
+  const order = useMemo(() => shuffleIdx(s.cards.length, pid + it.id + s.key), [pid]);
+  const [put, setPut] = useState<Record<number, number>>(init ? Object.fromEntries(s.cards.map((c, i) => [i, c.bin])) : {});
+  const [bad, setBad] = useState<number[]>([]);
+  const [tries, setTries] = useState(0);
+  const [solved, setSolved] = useState(!!init);
+  const all = Object.keys(put).length === s.cards.length;
+  const check = () => {
+    const t = tries + 1; setTries(t);
+    const wrong = s.cards.map((c, i) => (put[i] === c.bin ? -1 : i)).filter((i) => i >= 0);
+    logAnswer(it, { q: s.key, v: s.cards.map((c, i) => `${plain(c.t)}→${s.bins[put[i]]}`).join('；'), ok: !wrong.length }, [s.key, t]);
+    if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setPut(Object.fromEntries(s.cards.map((c, i) => [i, c.bin]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
+    sfx('no'); setBad(wrong);
+  };
+  return (
+    <div>
+      <Q text={s.q} />
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}>
+        {order.map((i) => {
+          const c = s.cards[i];
+          return (
+            <div key={i} className={`rounded-lg border-2 bg-white px-2.5 py-1 ${bad.includes(i) ? 'border-rose-300' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="mr-auto text-[15px] font-bold leading-snug"><Rich text={c.t} /></span>
+                {s.bins.map((b, j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setPut((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-full border-2 px-2 py-0 text-[13px] font-black ${put[i] === j ? 'text-white' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink2'}`} style={put[i] === j ? { background: color, borderColor: color } : {}}>{b}</button>)}
+              </div>
+              {(solved || bad.includes(i)) && <div className={`text-[13px] leading-snug ${bad.includes(i) ? 'text-rose-700' : 'text-emerald-800'}`}>{bad.includes(i) ? '✗ 放错了，再想想。' : <>✓ <Rich text={c.why} /></>}</div>}
+            </div>
+          );
+        })}
+      </div>
+      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">有 {bad.length} 个放错了。</span>}</div>}
+    </div>
+  );
+};
+export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & { init?: boolean }) => {
+  const pid = useGame((g) => g.player?.pid ?? '');
+  const rorder = useMemo(() => shuffleIdx(s.right.length, pid + it.id + s.key + 'r'), [pid]);
+  const [sel, setSel] = useState<Record<number, number>>(init ? Object.fromEntries(s.pairs.map((p, i) => [i, p])) : {});
+  const [bad, setBad] = useState<number[]>([]);
+  const [tries, setTries] = useState(0);
+  const [solved, setSolved] = useState(!!init);
+  const all = Object.keys(sel).length === s.left.length;
+  const check = () => {
+    const t = tries + 1; setTries(t);
+    const wrong = s.left.map((_, i) => (sel[i] === s.pairs[i] ? -1 : i)).filter((i) => i >= 0);
+    logAnswer(it, { q: s.key, v: s.left.map((l, i) => `${plain(l)}→${s.right[sel[i]]}`).join('；'), ok: !wrong.length }, [s.key, t]);
+    if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setSel(Object.fromEntries(s.pairs.map((p, i) => [i, p]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
+    sfx('no'); setBad(wrong);
+  };
+  return (
+    <div>
+      <Q text={s.q} />
+      <div className="divide-y divide-[#EFE6D2] overflow-hidden rounded-lg border-2 border-[#E6DCC6] bg-white">
+        {s.left.map((l, i) => (
+          <div key={i} className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-1.5 ${bad.includes(i) ? 'bg-rose-50' : ''}`}>
+            <div className="min-w-[200px] flex-1 text-[15px] font-bold leading-snug"><Rich text={l} /></div>
+            <div className="flex flex-wrap gap-1">
+              {rorder.map((j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setSel((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-lg border-2 px-2 py-0.5 text-left text-[13px] font-bold ${sel[i] === j ? 'text-white' : solved ? 'hidden' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink'}`} style={sel[i] === j ? { background: solved ? '#059669' : color, borderColor: solved ? '#059669' : color } : {}}>{s.right[j]}</button>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">有 {bad.length} 行不对，再改改。</span>}</div>}
+      {solved && <div className="mt-1.5"><Why tone="ok"><Rich text={s.why} /></Why></div>}
+    </div>
+  );
+};
 
 export interface StepProps<S> { it: Item; s: S; onDone: (score: number) => void; color: string }
 /** 播放式故事里一道题的一步（连线、分类、排序：做完只存分数，回来直接显示正确答案） */
@@ -415,8 +561,8 @@ export const PlayStep = ({ it, s, color, onDone, revealed }: { it: Item; s: Sub;
     case 'long': return <LongView it={it} s={s} color={color} onDone={onDone} />;
     case 'spot': return <SpotCard it={it} s={s} color={color} onDone={onDone} />;
     case 'mis': return <MisCard it={it} s={s} color={color} onDone={onDone} />;
-    case 'sort': return <SortView it={it} s={s} color={color} onDone={keep} init={!!sv} />;
-    case 'match': return <MatchView it={it} s={s} color={color} onDone={keep} init={!!sv} />;
+    case 'sort': return <SortPlay it={it} s={s} color={color} onDone={keep} init={!!sv} />;
+    case 'match': return <MatchPlay it={it} s={s} color={color} onDone={keep} init={!!sv} />;
     case 'order': return <OrderView it={it} s={s} color={color} onDone={keep} />;
     case 'write': return <WriteView it={it} s={s} color={color} onDone={onDone} />;
     case 'teach': return null;

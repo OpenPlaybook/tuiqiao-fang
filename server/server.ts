@@ -99,11 +99,25 @@ const currentOf = (p: Player) => {
 const summary = (p: Player) => ({
   pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
   done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p), prac: pracOf(p),
-  gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
+  gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
   stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
   vocab: p.vocab?.score, lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
 });
+/** 学生点开的字：每一回、每个字词，多少人点开看了意思、多少人又展开看了“在这句话里”（人数，不是次数） */
+const glossList = (ps: Player[]) => {
+  const m = new Map<string, { play: string; w: string; n1: Set<string>; n2: Set<string> }>();
+  for (const p of ps) for (const r of Object.values(p.recs)) {
+    if (!r.id.endsWith('-log')) continue;
+    const play = r.id.replace('-log', '');
+    for (const e of r.log) {
+      if (e.q !== 'gloss' && e.q !== 'gloss2') continue;
+      const k = play + '|' + e.v, g = m.get(k) ?? { play, w: e.v, n1: new Set(), n2: new Set() };
+      (e.q === 'gloss' ? g.n1 : g.n2).add(p.pid); m.set(k, g);
+    }
+  }
+  return [...m.values()].map((g) => ({ play: g.play, w: g.w, n1: g.n1.size, n2: g.n2.size })).sort((a, b) => a.play.localeCompare(b.play) || b.n1 - a.n1);
+};
 /** 学生的提问（和“清楚了 / 没说清 / 好像不对”的反馈） */
 const askList = (ps: Player[]) => {
   const out: { name: string; play: string; q: string; a: string; fb: string; t: number }[] = [];
@@ -133,7 +147,7 @@ const teacherState = () => {
     }
     return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
   }).filter((x) => x.st !== 'log' && (x.n > 0 || STATIONS.some((s) => s.id === x.st)));
-  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), now: Date.now(), ai: ai.status() };
+  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), glosses: glossList(ps), now: Date.now(), ai: ai.status() };
 };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 const exportCsv = () => {

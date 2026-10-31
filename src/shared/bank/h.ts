@@ -13,8 +13,8 @@ export const C = (key: string, q: string, opts: O[], x: Partial<ChoiceSub> = {})
   return { kind: 'choice', key, q, opts: os, ok, ...(fine.length ? { fine } : {}), ...x };
 };
 /** 点出毛病：句子用 | 分段；bad 是有毛病的段（点哪一段都算找到） */
-export const S = (key: string, q: string, segs: string, bad: number[], fix?: ChoiceSub, miss?: Record<number, string>): SpotSub =>
-  ({ kind: 'spot', key, q, segs: segs.split('|'), bad, ...(fix ? { fix } : {}), ...(miss ? { miss } : {}) });
+export const S = (key: string, q: string, segs: string, bad: number[], fix?: ChoiceSub, miss?: Record<number, string>, fixed?: Record<string, string>): SpotSub =>
+  ({ kind: 'spot', key, q, segs: segs.split('|'), bad, ...(fix ? { fix } : {}), ...(miss ? { miss } : {}), ...(fixed ? { fixed } : {}) });
 /** AI 误译：段落是字符串（译对了）或 [AI 的译法, 原文里的字, 选项（* 是对的）, 为什么] */
 export const M = (key: string, q: string, src: string, segs: (string | [string, string, string[], string, string?])[], title?: string): MisSub => ({
   kind: 'mis', key, q, src, ...(title ? { title } : {}),

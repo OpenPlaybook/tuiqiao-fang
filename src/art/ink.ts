@@ -259,7 +259,7 @@ const SCENES: Record<string, Scene> = {
     + `<rect x="0" y="260" width="800" height="240" fill="#D8CFBC" opacity=".55"/>` + water(81, 270, 480, 800, 44, 0.42)
     + `<path d="M-10,500 L-10,330 Q120,300 260,340 Q330,360 360,500 Z" fill="#B7AA8E"/>` + reeds(91, 0, 300, 420, 30, 110, 0.15)
     + figure(190, 340, 1.0, 'soldier', 0.95) + `<g opacity=".9">${horse(110, 372, 0.85)}</g>` + boat(470, 360, 1.3, true)
-    + geese(560, 90, 5, 1) + vtext(712, 60, '不肯过江东', 24) + seal(696, 205, '乌江'),
+    + geese(560, 90, 5, 1) + vtext(712, 60, '乌江', 26) + seal(696, 140, '项王'),
   shiren: (id) => ridge(id, { y: 210, amp: 70, seed: 181, tone: 0.2 }) + mist(id, 230, 50) + water(91, 260, 480, 800, 30, 0.32)
     + `<rect x="0" y="300" width="330" height="200" fill="#E4D9BF" opacity=".7"/>` + `<g transform="translate(200,300)"><rect x="-6" y="-70" width="8" height="70" fill="${INK}" opacity=".8"/><rect x="62" y="-70" width="8" height="70" fill="${INK}" opacity=".8"/><path d="M-30,-70 Q32,-108 100,-70 L92,-62 Q32,-96 -22,-62 Z" fill="${INK}"/></g>`
     + figure(120, 330, 0.9, 'scholar', 0.9) + figure(232, 312, 0.8, 'scholar', 0.75) + figure(300, 340, 0.85, 'robe', 0.8, -1)

@@ -18,12 +18,13 @@ const req = async <T,>(path: string, body?: unknown, headers: Record<string, str
 export interface AiStatus { ready: boolean; mock: boolean; hasKey: boolean; keyTail: string; model: string; models: string[]; quota: number; lastTest: { ok: boolean; msg: string; t: number } | null; active: number; used: number }
 export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { examples: { s: string; note: string }[] } | { a: string } | null; ms: number; ok: boolean; err?: string }
 export interface PlayerSummary {
-  pid: string; name: string; sid: string; avatar: number; stars: number; weighted: number; bonus: number; unsure: number; done: number; avgLv: number; prac?: { n: number; ok: number }; gloss?: number; asks?: number;
+  pid: string; name: string; sid: string; avatar: number; stars: number; weighted: number; bonus: number; unsure: number; done: number; avgLv: number; prac?: { n: number; ok: number }; gloss?: number; gloss2?: number; asks?: number;
   theta: Record<string, number>; stations: Record<string, { stars: number; done: number }>; vocab?: number; lastSeen: number; current: string; createdAt: number; aiLeft: number;
 }
 export interface ItemStat { id: string; st: string; lv: number; label: string; n: number; done: number; avgStars: number; unsure: number; firstN: number; firstOk: number; wrong: { v: string; n: number }[]; opens?: { v: string; n: number }[] }
 export interface AskRow { name: string; play: string; q: string; a: string; fb: string; t: number }
-export interface TeacherState { config: GameConfig; players: PlayerSummary[]; items: ItemStat[]; good: AiLog[]; asks?: AskRow[]; now: number; ai: AiStatus }
+export interface GlossRow { play: string; w: string; n1: number; n2: number }
+export interface TeacherState { config: GameConfig; players: PlayerSummary[]; items: ItemStat[]; good: AiLog[]; asks?: AskRow[]; glosses?: GlossRow[]; now: number; ai: AiStatus }
 
 export const api = {
   join: (name: string, sid: string, avatar: number) => req<{ player: Player }>('api/join', { name, sid, avatar }),

@@ -14,7 +14,8 @@ interface SubBase { key: string; q: string }
 /** reveal：答对以后其他选项的解释怎么显示——'all' 全部显示；'chosen' 只显示点过的（其余“问题不在这儿”）；'ext' 做完拓展才揭开 */
 export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: number[]; multi?: boolean; keep?: boolean; fine?: number[]; cols?: number; master?: boolean; reveal?: 'all' | 'chosen' | 'ext'; py?: Record<string, string> }
 /** 点出毛病：句子切成几段，点出有毛病的那段，再选改法 */
-export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: number[]; miss?: Record<number, string>; fix?: ChoiceSub }
+/** fixed：按选的改法（选项文字）显示改好的句子，~~删掉的~~、++加上的++ */
+export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: number[]; miss?: Record<number, string>; fix?: ChoiceSub; fixed?: Record<string, string> }
 /** 分类：把卡片放进几个格子 */
 export interface SortSub extends SubBase { kind: 'sort'; bins: string[]; cards: { t: string; bin: number; why: string }[] }
 /** 连线：左边每一项配右边一项 */
@@ -22,6 +23,7 @@ export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right
 /** 排序：items 按正确顺序写；tags 是排好以后显示的年份等 */
 export interface OrderSub extends SubBase { kind: 'order'; items: string[]; tags?: string[]; why: string }
 /** AI 误译：AI 的译文切成几段，有错的段写了正确意思 */
+/** fixed：改好以后显示的样子，~~删掉的~~、++加上的++（不写就显示“划掉原文 + 正确意思”） */
 export interface MisSeg { t: string; bad?: { word: string; opts: string[]; ok: number; why: string; fixed?: string } }
 /** src 为空：不是翻译，是一段有毛病的文字（旁白稿），改对以后显示 fixed */
 export interface MisSub extends SubBase { kind: 'mis'; src: string; segs: MisSeg[]; title?: string }
@@ -43,11 +45,13 @@ export interface WriteSub extends SubBase {
 export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: { t: string; a: string; why: string }[] }
 /** 打字短答：accept 里任意一个就算对；near：常见的“差一点”的答案和对应的提醒 */
 export interface TypeSub extends SubBase { kind: 'type'; accept: string[]; near?: Record<string, string>; why: string; ph?: string }
-/** 碎片拼接（概括、鉴赏）：碎片带层次标签 f 事实 / t 特点 / m 意义，x 是干扰；need 是缺了某层时的提醒（不点明“三步”） */
-export interface FragSub extends SubBase { kind: 'frag'; frags: { t: string; tag: 'f' | 't' | 'm' | 'x'; why?: string }[]; need: Record<'f' | 't' | 'm', string>; model: string }
+/** 碎片拼接（概括、鉴赏），三层逐层检查：1 故事 / 内容（要讲对、讲全：ev 是它讲到的事，events 是必须讲到的事和缺了时的提醒）→ 2 人物 / 写法 → 3 更深的意思。
+ *  ok=false 的是干扰（why 说错在哪）；need 是某一层一句都没有时的提醒。学生看不到“层”这个说法。 */
+export interface Frag { t: string; layer: 1 | 2 | 3; ok: boolean; why?: string; ev?: string }
+export interface FragSub extends SubBase { kind: 'frag'; frags: Frag[]; events: Record<string, string>; need: Record<1 | 2 | 3, string>; order: string; model: string }
 /** 长文本：文本里用 ⟨1|这几个字⟩ 把题针对的字、词、句标出来（下划线 + 编号），点哪个做哪个 */
 export interface LongSub extends SubBase { kind: 'long'; text: string; qs: Record<string, ChoiceSub | TypeSub>; title?: string }
-/** 讲：老师讲一段（可以带例子、画面），点“接着”往下 */
+/** 讲：老师讲一小段（可以带例子、画面），和后面那一问一起出现 */
 export interface TeachSub extends SubBase { kind: 'teach'; t: string; ex?: string[]; art?: Art }
 export type Sub = ChoiceSub | SpotSub | SortSub | MatchSub | OrderSub | MisSub | WriteSub | FillSub | TypeSub | FragSub | LongSub | TeachSub;
 
@@ -95,7 +99,8 @@ export interface KNode {
 }
 // ---------------- 播放式故事（画面 + 配音 + 字幕，播到题就停） ----------------
 /** 可点的字（AI 眼镜释义）：文本里写 ⟦词⟧；拼音直接注在字上写 ⟪字⟫。释义在一回的 gloss 表里 */
-export interface Gloss { d: string; py?: string; ex?: string; back?: Back }
+/** 可点的字：d 是这个字词本身的意思（点一下就看到）；s 是放在这句话里怎么理解（再点“在这句话里”才展开）——两层都记下来，老师能看出卡在字词还是卡在整句 */
+export interface Gloss { d: string; s?: string; py?: string; ex?: string; back?: Back }
 export interface Line {
   id?: string; // 回扣用的句号
   who?: string; // 说话人（旁白不写）
