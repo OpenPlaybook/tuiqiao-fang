@@ -11,3 +11,4 @@ data/
 public/shorts/*.mp4
 dist-demo/
 build/
+build/voice-marks/

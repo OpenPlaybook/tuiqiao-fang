@@ -10,8 +10,8 @@ const logItem = (id: string): Item => ({ id: `${id}-log`, st: 'log', lv: 1, type
 export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
 /** 去掉字幕里的标记：⟦词⟧ → 词，⟪字⟫ → 字，**加粗** → 加粗，⟨1⟩ → 空 */
 export const plainText = (t: string) => t.replace(/⟦([^⟧]*)⟧/g, '$1').replace(/⟪([^⟫]*)⟫/g, '$1').replace(/\*\*/g, '').replace(/⟨[^⟩]*⟩/g, '');
-/** 配音念的文字：___ 念成停顿 */
-export const readText = (l: { t: string; read?: string }) => (l.read ?? plainText(l.t)).replace(/_{3,}/g, '，');
+/** 配音念的文字：___ 不念（前后的标点并成一个）；念起来不顺的句子在 read 里另写 */
+export const readText = (l: { t: string; read?: string }) => (l.read ?? plainText(l.t)).replace(/_{3,}/g, '').replace(/[：，、]([。；！？，])/g, '$1');
 /** 配音文件名用的哈希（和 scripts/voice.py 一样：按字符的 FNV-1a） */
 export const fnv = (t: string) => { let h = 2166136261; for (const ch of t) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
 export const VOICES = { n: 'zh-CN-XiaoxiaoNeural', m: 'zh-CN-YunxiNeural', ai: 'zh-CN-XiaoyiNeural' } as const;

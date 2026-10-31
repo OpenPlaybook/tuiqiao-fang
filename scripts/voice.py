@@ -4,6 +4,8 @@ import edge_tts
 
 lines = json.load(open(sys.argv[1], encoding='utf-8'))
 out = sys.argv[2]
+MARKS = os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), 'voice-marks')
+os.makedirs(MARKS, exist_ok=True)
 poly = {}
 if len(sys.argv) > 3 and os.path.exists(sys.argv[3]):  # 多音字表：左边的词换成右边的同音写法（只影响配音）
     for a, b in re.findall(r"'([^']+)':\s*'([^']*)'", open(sys.argv[3], encoding='utf-8').read()):
@@ -16,12 +18,21 @@ def fix(t):
 
 async def one(sem, x):
     path = os.path.join(out, x['file'])
-    if os.path.exists(path) and os.path.getsize(path) > 1000:
+    marks_path = os.path.join(MARKS, x['file'].replace('.mp3', '.json'))
+    if os.path.exists(path) and os.path.getsize(path) > 1000 and os.path.exists(marks_path):
         return
+    text = fix(x['text'])
     async with sem:
         for k in range(4):
             try:
-                await edge_tts.Communicate(fix(x['text']), x['voice'], rate=x['rate']).save(path)
+                comm = edge_tts.Communicate(text, x['voice'], rate=x['rate'], boundary='WordBoundary')
+                audio, marks = bytearray(), []
+                async for c in comm.stream():
+                    if c['type'] == 'audio': audio += c['data']
+                    elif c['type'] == 'WordBoundary': marks.append(dict(o=c['offset'] / 1e7, d=c['duration'] / 1e7, t=c.get('text', '')))
+                open(path, 'wb').write(audio)
+                # 逐词时间点（检查停顿、读音用）：放在 build/voice-marks/，不随网站发布
+                json.dump(dict(text=text, voice=x['voice'], rate=x['rate'], marks=marks), open(marks_path, 'w', encoding='utf-8'), ensure_ascii=False)
                 return
             except Exception as e:
                 print('重试', x['file'], e)
