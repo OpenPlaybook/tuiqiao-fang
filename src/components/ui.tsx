@@ -11,22 +11,25 @@ import { DEMO } from '../game/demo';
 // ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置 ----------------
 import { createContext, useContext } from 'react';
 import type { Gloss } from '../shared/types';
-export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement) => void; marker?: (n: string, text?: string) => ReactNode }
+import type { GlossAt } from '../shared/gloss';
+/** onGloss 的 at：被点的那一处在哪段文字里、是第几个——句中解释按它找（不同句子里的同一个字，解释不一样） */
+export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => void; marker?: (n: string, text?: string) => ReactNode }
 export const GlossContext = createContext<GlossCtx>({ gloss: {} });
 const TOK = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_{3,}|⟦[^⟧]+⟧|⟪[^⟫]+⟫|⟨[^⟩]+⟩)/;
 export const Rich = ({ text, className = '', fill, fills }: { text: string; className?: string; fill?: string; fills?: string[] }) => {
   const ctx = useContext(GlossContext);
   const lines = text.split('\n');
   let b = 0;
+  const seen: Record<string, number> = {}; // 每个 ⟦词⟧ 是这段文字里的第几个（按出现的先后）
   const piece = (part: string, j: number): ReactNode => {
     if (/^\*\*/.test(part)) return <b key={j}>{part.slice(2, -2).split(TOK).map(piece)}</b>;
     if (/^\*[^*]/.test(part) && part.endsWith('*')) return <em key={j}>{part.slice(1, -1)}</em>;
     if (/^_{3,}$/.test(part)) return <span key={j} className="blank">{fills?.[b++] ?? fill ?? '\u00a0'}</span>;
     if (part.startsWith('⟦')) {
-      const w = part.slice(1, -1), g = ctx.gloss[w];
+      const w = part.slice(1, -1), g = ctx.gloss[w], n = (seen[w] = (seen[w] ?? -1) + 1);
       if (!g) return <span key={j}>{w}</span>;
       // 鼠标放上去才看得出能点；点了才出释义
-      return <span key={j} className="gloss" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); ctx.onGloss?.(w, g, e.currentTarget); }}>{w}</span>;
+      return <span key={j} className="gloss" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); ctx.onGloss?.(w, g, e.currentTarget, { text, n }); }}>{w}</span>;
     }
     if (part.startsWith('⟪')) { const w = part.slice(1, -1), py = ctx.gloss[w]?.py; return py ? <ruby key={j}>{w}<rt>{py}</rt></ruby> : <span key={j}>{w}</span>; }
     if (part.startsWith('⟨')) { const [n, ...t] = part.slice(1, -1).split('|'); return <span key={j}>{ctx.marker ? ctx.marker(n, t.length ? t.join('|') : undefined) : t.length ? <Rich text={t.join('|')} /> : null}</span>; }

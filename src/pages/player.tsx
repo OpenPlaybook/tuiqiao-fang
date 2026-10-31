@@ -3,6 +3,7 @@
 // 做过的题点进度条上的标记、或者台本里的题，就能回来看自己的答案；拓展在居中弹窗里，按“讲—例—练”往下走。
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type React from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { CornerUpLeft, Glasses, Loader2, Pause, Play as PlayIcon, RotateCcw, Send, Volume2, VolumeX, X } from 'lucide-react';
@@ -10,11 +11,12 @@ import type { Back, Ext, Gloss, Item, Line, MisSub, Play } from '../shared/types
 import { PLAY_BY_ID, voiceFile, voiceLine, type Mode } from '../shared/play';
 import { resultOf, scoredSteps, taskItem } from '../shared/adapt';
 import { Art, Btn, GlossContext, Rich, Stars, centerOf } from '../components/ui';
+import { type GlossAt, sentOf } from '../shared/gloss';
 import { finishItem, fly, getState as useGameState, logPlay, markUnsure, setData, setExtDone, startItem, toast, useGame } from '../game/store';
 import type { AskOut } from '../shared/ai';
 import { api } from '../game/api';
 import { sfx } from '../game/sound';
-import { Bubble, ChoiceChat, PlayStep, SaveCtx, TeachView, ansOf, layoutOf } from '../items/steps2';
+import { Bubble, ChoiceChat, ChoiceQ, PlayStep, SaveCtx, TeachBody, ansOf, layoutOf } from '../items/steps2';
 import { DEMO } from '../game/demo';
 import { Film } from '../film/Film';
 
@@ -71,7 +73,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const [muted, setMuted] = useState(() => { try { return localStorage.getItem('tq-mute') === '1'; } catch { return false; } });
   const [elapsed, setElapsed] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
-  const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean } | null>(null);
+  const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; sent: [string, string] | null; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean } | null>(null);
   const [extOpen, setExtOpen] = useState<{ it: Item; ext: Ext } | null>(null);
   // 点字的小窗：点外面任何地方就关上
   const glossRef = useRef<HTMLDivElement>(null);
@@ -140,7 +142,8 @@ export default function PlayerPage({ id }: { id: string }) {
   };
   const cont = () => { if (idx >= n - 1) { setPhase('end'); return; } setIdx((k) => k + 1); setPhase('play'); };
   const jump = (b: Back) => { stop(); go(`/c/${b.ch}?at=${b.line}&ret=${id}:${idx}`); };
-  const onGloss = (w: string, g: Gloss, el: HTMLElement) => { const r = el.getBoundingClientRect(); sfx('hint'); setGlossPop({ w, g, x: r.left + r.width / 2, y: r.bottom, lv: 1 }); logPlay(id, 'gloss', w); };
+  // 句中解释按被点的那一处找：同一个字在别的句子里，不拿这句的解释
+  const onGloss = (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => { const r = el.getBoundingClientRect(); sfx('hint'); setGlossPop({ w, g, sent: sentOf(g, w, at), x: r.left + r.width / 2, y: r.bottom, lv: 1 }); logPlay(id, 'gloss', w); };
   const barClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect(), t = ((e.clientX - r.left) / r.width) * starts[n];
     let k = 0; while (k + 1 < n && starts[k + 1] <= t) k++;
@@ -255,9 +258,9 @@ export default function PlayerPage({ id }: { id: string }) {
           <div ref={glossRef} className="fixed z-[100] w-max max-w-[min(340px,92vw)] rounded-2xl bg-white px-4 py-2.5 shadow-2xl ring-2 ring-sky-200" style={{ left: Math.min(window.innerWidth - 178, Math.max(178, glossPop.x)), top: above ? glossPop.y - 30 : glossPop.y + 8, transform: `translate(-50%, ${above ? '-100%' : '0'})` }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-baseline gap-2"><Glasses size={16} className="shrink-0 self-center text-sky-600" /><b className="kai text-2xl">{glossPop.w}</b>{glossPop.g.py && <span className="text-[15px] text-ink2">{glossPop.g.py}</span>}</div>
             <div className="mt-0.5 text-[15px] leading-relaxed">{glossPop.g.d}</div>
-            {glossPop.g.s && (glossPop.lv === 1
+            {glossPop.sent && (glossPop.lv === 1
               ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, lv: 2 }); logPlay(id, 'gloss2', glossPop.w); }} className="mt-1.5 text-[14px] font-black text-sky-700 underline">放在这句话里怎么理解？</button>
-              : <div className="mt-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[15px] leading-relaxed"><div className="text-[12px] font-black text-sky-700">在这句话里</div>{glossPop.g.s}</div>)}
+              : <div className="mt-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[15px] leading-relaxed"><div className="text-[12px] font-black text-sky-700">在这句话里</div><span className="kai text-[1.05em]">“{glossPop.sent[0]}”</span>：{glossPop.sent[1]}</div>)}
             {glossPop.g.more && (!glossPop.more
               ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, more: true, wrong: [] }); }} className="mt-1.5 block text-[14px] font-black text-[#9A5B2E] underline">🧭 这个字还能怎么用？</button>
               : <div className="mt-1.5 max-w-[320px] rounded-lg bg-amber-50 px-2.5 py-1.5 text-[15px] leading-relaxed">
@@ -275,7 +278,7 @@ export default function PlayerPage({ id }: { id: string }) {
           </div>
         );
       })()}
-      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={(w, g, el) => onGloss(w, g, el)} />}</AnimatePresence>
+      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={onGloss} />}</AnimatePresence>
     </GlossContext.Provider>
   );
 }
@@ -370,6 +373,8 @@ const ExtChip = ({ e, done, onClick }: { e: Ext; done: boolean; onClick: () => v
 const stateOf = (it: Item | null, r: { status?: string; data?: Record<string, unknown> } | undefined) => !it ? 'all' : r?.status !== 'done' ? 'todo' : (it.ext ?? []).every((e) => extsOf(r)[e.id] !== undefined) ? 'all' : 'part';
 
 /** 一句话按讲解模式显示：白话；文言（出自《史记》的用原文，旁边可以点开白话）；对照（原文，下面是白话） */
+/** 给 AI 看的这一句：有原文就一起带上（学生看的是白话还是原文都能答） */
+const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.t);
 function LineText({ l, mode }: { l: Line; mode: Mode }) {
   const [show, setShow] = useState(false);
   if (mode === 'bh' || !l.wy) return <Rich text={l.t} />;
@@ -422,7 +427,7 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
           );
         })}
       </div>
-      <Ask play={play} item={item} line={line} before={play.lines.slice(Math.max(0, idx - 2), idx).map((l) => l.t)} hint={askHint} />
+      <Ask play={play} item={item} line={line} before={play.lines.slice(Math.max(0, idx - 2), idx).map(aiText)} hint={askHint} />
     </aside>
   );
 }
@@ -444,7 +449,7 @@ function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null
     try {
       const r: AskOut = DEMO
         ? (await new Promise((res) => setTimeout(res, 500)), { a1: '（演示版没有连接 AI。课堂版里，我会先讲一半，再问你一个小问题，让你自己想出后一半。）', q: '', opts: [], a2: '' })
-        : await api.ask({ pid: p.pid, token: p.token, play: play.id, item: item?.id ?? '', line: line.t, before, q: t });
+        : await api.ask({ pid: p.pid, token: p.token, play: play.id, item: item?.id ?? '', line: aiText(line), before, q: t });
       setA({ ...r, ask: t, open: true }); setWrong([]); setGot(null); setQ('');
     } catch (e) { setErr(String((e as Error).message || e)); } finally { setBusy(false); }
   };
@@ -485,7 +490,7 @@ function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null
 }
 
 // ---------------- 拓展（居中弹窗）：像老师上课一样一步一问——讲一小段，紧跟着问一句；答对了才往下讲。做过的直接显示答案 ----------------
-function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: Ext; color: string; onClose: () => void; gloss: Record<string, Gloss>; onGloss: (w: string, g: Gloss, el: HTMLElement) => void }) {
+function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: Ext; color: string; onClose: () => void; gloss: Record<string, Gloss>; onGloss: (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => void }) {
   const rec = useGame((s) => s.player?.recs[it.id]);
   const required = requiredExts(it, rec).some((e) => e.id === ext.id);
   const already = extsOf(rec)[ext.id] !== undefined;
@@ -502,7 +507,33 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
   const firstShown = useRef(cur);
-  useEffect(() => { if (cur > firstShown.current) { const k = qs[cur] ?? ext.steps.length - 1; let j = k; while (j > 0 && ext.steps[j - 1].kind === 'teach') j--; scrollInto(boxRef.current, refs.current[j]); setTimeout(() => scrollInto(boxRef.current, refs.current[k]), 350); } }, [cur]);
+  const endRef = useRef<HTMLDivElement>(null);
+  // 眼镜连着说的话并成一个气泡：讲解并到后面那一问的前面；答对以后，下一段讲解和下一问接在那条回话后面
+  // （分类、连线这类要动手的，也接在那条回话后面，同一个气泡放宽）
+  type Piece = { i: number; lead: ReactNode[]; tail: ReactNode[]; hideQ: boolean; wide?: boolean };
+  const pieces: Piece[] = [];
+  let carry: ReactNode[] = [], lastChoice: Piece | null = null;
+  for (let i = 0; i <= upto; i++) {
+    const s = ext.steps[i];
+    if (s.kind === 'teach') { carry.push(<TeachBody key={s.key} s={s} />); continue; }
+    if (lastChoice && s.kind !== 'choice') {
+      lastChoice.tail.push(...carry, <div key={'p' + s.key} ref={(el) => { refs.current[i] = el; }} className="pt-1"><PlayStep it={it} s={s} color={color} onDone={(x) => answered(i, x)} /></div>);
+      lastChoice.wide = true; carry = []; lastChoice = null; continue;
+    }
+    if (lastChoice && s.kind === 'choice') { lastChoice.tail.push(...carry, <ChoiceQ key={'q' + s.key} s={s} />); carry = []; }
+    const pc: Piece = { i, lead: carry, tail: [], hideQ: !!lastChoice };
+    carry = []; pieces.push(pc); lastChoice = s.kind === 'choice' ? pc : null;
+  }
+  const endMsg = ext.reveal ? '这一段讲完了。刚才那道题每个选项为什么对、为什么不对，现在都能看了。' : '这一段讲完了。';
+  let trailing: ReactNode[] | null = null;
+  if (finished) { const rest = [...carry, <div key="end">{endMsg}</div>]; if (lastChoice) lastChoice.tail.push(...rest); else trailing = rest; }
+  // 新的话接在上一个气泡后面：先让上一个气泡的底露出来，再滚到新的一问
+  useEffect(() => {
+    if (cur <= firstShown.current) return;
+    const k = qs[cur], prev = [...pieces].reverse().find((pc) => k === undefined || pc.i < k);
+    scrollInto(boxRef.current, prev && refs.current[prev.i]);
+    setTimeout(() => scrollInto(boxRef.current, k !== undefined ? refs.current[k] : endRef.current), 350);
+  }, [cur]);
   const answered = (i: number, x: number) => {
     if (i !== qs[cur]) return;
     scores[i] = x;
@@ -515,25 +546,26 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
   const canClose = !required || finished;
   return (
     <motion.div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#2B2722]/55 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => canClose && onClose()}>
-      <motion.div ref={boxRef} initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} className="card relative max-h-[90vh] w-full max-w-[860px] overflow-auto px-5 py-4" onClick={(e) => e.stopPropagation()}>
+      <motion.div initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} className="card relative flex max-h-[90vh] w-full max-w-[860px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <GlossContext.Provider value={{ gloss, onGloss }}>
           <SaveCtx.Provider value={pre}>
-            <div className="mb-3 flex items-center gap-2 border-b border-[#EFE6D2] pb-2"><Glasses size={20} className="text-sky-600" /><span className="text-lg font-black">{ext.title}</span>
+            {/* 标题栏不跟着滚：一直看得到在做哪一段、第几问 */}
+            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2"><Glasses size={20} className="text-sky-600" /><span className="text-lg font-black">{ext.title}</span>
               {qs.length > 1 && <span className="flex gap-1">{qs.map((_, k) => <span key={k} className={`h-1.5 w-4 rounded-full ${k < cur ? 'bg-emerald-500' : k === cur ? '' : 'bg-[#E6DCC6]'}`} style={k === cur && !finished ? { background: color } : {}} />)}</span>}
               {canClose && <button onClick={onClose} className="ml-auto rounded-full p-1.5 text-ink2 hover:bg-black/5" aria-label="关闭"><X size={20} /></button>}</div>
             {/* 和读书眼镜的对话：它在左边讲、问，我的回答在右边 */}
-            <div className="space-y-2.5">
-              {ext.steps.map((s, i) => i <= upto && (
+            <div ref={boxRef} className="min-h-0 flex-1 overflow-auto px-5 pb-4 pt-3"><div className="space-y-2.5">
+              {pieces.map(({ i, lead, tail, hideQ, wide }) => { const s = ext.steps[i]; return (
                 <motion.div key={s.key} ref={(el) => { refs.current[i] = el; }} initial={i > (qs[firstShown.current] ?? -1) ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
-                  {s.kind === 'teach' ? <TeachView s={s} />
-                    : s.kind === 'choice' ? <ChoiceChat it={it} s={s} color={color} onDone={(x) => answered(i, x)} />
-                    : <Bubble who="ai" wide><PlayStep it={it} s={s} color={color} onDone={(x) => answered(i, x)} /></Bubble>}
+                  {s.kind === 'choice' ? <ChoiceChat it={it} s={s} color={color} onDone={(x) => answered(i, x)} lead={lead.length ? lead : undefined} tail={tail.length ? tail : undefined} hideQ={hideQ} wideTail={wide} />
+                    : <Bubble who="ai" wide>{lead.length > 0 && <div className="mb-2 space-y-1">{lead}</div>}<PlayStep it={it} s={s} color={color} onDone={(x) => answered(i, x)} /></Bubble>}
                 </motion.div>
-              ))}
-              {finished && <Bubble who="ai" tone="ok">{ext.reveal ? '这一段讲完了。刚才那道题每个选项为什么对、为什么不对，现在都能看了。' : '这一段讲完了。'}</Bubble>}
+              ); })}
+              {trailing && <Bubble who="ai" tone="ok"><div className="space-y-1">{trailing}</div></Bubble>}
+              <div ref={endRef} />
             </div>
-            {finished && <div className="mt-3 text-right"><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
-            {!finished && !required && <div className="mt-2 text-right"><button onClick={onClose} className="text-sm font-bold text-ink2 underline">先不做了，回到故事</button></div>}
+            {!finished && !required && <div className="mt-2 text-right"><button onClick={onClose} className="text-sm font-bold text-ink2 underline">先不做了，回到故事</button></div>}</div>
+            {finished && <div className="shrink-0 border-t border-[#EFE6D2] px-5 py-2.5 text-right"><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
           </SaveCtx.Provider>
         </GlossContext.Provider>
       </motion.div>

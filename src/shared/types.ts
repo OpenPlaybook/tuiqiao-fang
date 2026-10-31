@@ -100,9 +100,12 @@ export interface KNode {
 }
 // ---------------- 播放式故事（画面 + 配音 + 字幕，播到题就停） ----------------
 /** 可点的字（AI 眼镜释义）：文本里写 ⟦词⟧；拼音直接注在字上写 ⟪字⟫。释义在一回的 gloss 表里 */
-/** 可点的字：d 是这个字词本身的意思（点一下就看到）；s 是放在这句话里怎么理解（再点“在这句话里”才展开）——两层都记下来，老师能看出卡在字词还是卡在整句 */
-/** more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分） */
-export interface Gloss { d: string; s?: string; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
+/** 可点的字。两层都记下来，老师能看出卡在字词还是卡在整句：
+ *  d：这个字词本身的意思（点一下就看到，哪一句里点都一样）；py：读音。
+ *  s：放在句子里怎么理解（再点“放在这句话里怎么理解”才展开）。按出处分条——键是这个字所在那句话里的一小段原文（原样照抄、把这个字包在里面），
+ *     值是这一句里的理解；显示成“那段原文”：解释。点哪一处就找包住那一处的那一条，找不到就不显示第二层。见 src/shared/gloss.ts。
+ *  more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分）；back：回扣到别的回的某一句 */
+export interface Gloss { d: string; s?: Record<string, string>; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
 export interface Line {
   id?: string; // 回扣用的句号
   who?: string; // 说话人（旁白不写）

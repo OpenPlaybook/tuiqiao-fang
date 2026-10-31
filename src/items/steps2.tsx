@@ -467,15 +467,18 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
   );
 };
 
-// ---------------- 讲：老师讲一小段，和后面那一问一起出现 ----------------
-export const TeachView = ({ s }: { s: TeachSub; color?: string }) => (
-  <Bubble who="ai">
+// ---------------- 讲：老师讲一小段，和后面那一问并在同一个气泡里说 ----------------
+export const TeachBody = ({ s }: { s: TeachSub }) => (
+  <div>
     {s.q && <div className="font-black">{s.q}</div>}
     <Rich text={s.t} />
     {s.art && <div className="mt-1.5 max-w-[520px]">{isViz(s.art) ? <Viz spec={s.art} /> : <Art spec={s.art} className="aspect-[56/22] rounded-lg" />}</div>}
     {s.ex && <div className="mt-1 space-y-0.5">{s.ex.map((e, i) => <div key={i} className="kai text-[17px]"><Rich text={e} /></div>)}</div>}
-  </Bubble>
+  </div>
 );
+export const TeachView = ({ s }: { s: TeachSub; color?: string }) => <Bubble who="ai"><TeachBody s={s} /></Bubble>;
+/** 选择题的问句（并进上一个气泡时也用它） */
+export const ChoiceQ = ({ s }: { s: ChoiceSub }) => <div><span className="font-bold"><Rich text={s.q} /></span>{s.multi && <span className="ml-1 text-[14px] opacity-70">（可以选好几个）</span>}</div>;
 
 // ---------------- 对话：眼镜在左边讲、问；我的回答在右边 ----------------
 /** 一个对话气泡。who='ai' 在左边（读书眼镜），'me' 在右边（学生自己）；tone 是眼镜回话的颜色（对 / 错） */
@@ -487,8 +490,10 @@ export const Bubble = ({ who, tone, wide, children }: { who: 'ai' | 'me'; tone?:
       </div>
     : <div className="flex justify-end"><div className="max-w-[80%] rounded-2xl rounded-tr-md bg-[#F6E3BF] px-3.5 py-2 text-[16px] font-bold leading-[1.7] text-[#4A3A20]">{children}</div></div>
 );
-/** 选择题做成对话：眼镜问 → 我点一个回答（出现在右边）→ 眼镜接着说为什么；错了接着选 */
-export const ChoiceChat = ({ it, s, onDone, color }: StepProps<ChoiceSub>) => {
+/** 选择题做成对话：眼镜问 → 我点一个回答（出现在右边）→ 眼镜接着说为什么；错了接着选。
+ *  眼镜连着说的话并成一个气泡：lead 是问之前要讲的（并在问句前面）；答对以后，tail（下一段讲解、下一问）接在这条回话后面，
+ *  中间一道虚线隔开——上面是说刚才那个回答，下面是接着往下讲。hideQ：问句已经在上一个气泡里说过了。 */
+export const ChoiceChat = ({ it, s, onDone, color, lead, tail, hideQ, wideTail }: StepProps<ChoiceSub> & { lead?: React.ReactNode; tail?: React.ReactNode; hideQ?: boolean; wideTail?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const [sv, save] = useSaved<ChoiceSaved>(it, s.key);
   const order = useMemo(() => (s.keep ? s.opts.map((_, i) => i) : shuffleIdx(s.opts.length, pid + it.id + s.key)), [pid, it.id, s.key]);
@@ -511,23 +516,27 @@ export const ChoiceChat = ({ it, s, onDone, color }: StepProps<ChoiceSub>) => {
     sfx('no');
     if (t >= 3) { setSolved(true); setGave(true); save({ sc: 0.34, wrong: w, pick: s.ok }); onDone(0.34); }
   };
+  // 最后一条回话：后面有话接着说，就并进同一个气泡
+  const last = (body: React.ReactNode) => (tail
+    ? <Bubble who="ai" wide={wideTail}><div className="text-emerald-800">{body}</div><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-1.5 space-y-1 border-t border-dashed border-[#CFD9E0] pt-1.5">{tail}</motion.div></Bubble>
+    : <Bubble who="ai" tone="ok">{body}</Bubble>);
   const reply = (p: number[], k: number) => {
     const right = multi ? p.length === s.ok.length && p.every((i) => s.ok.includes(i)) : s.ok.includes(p[0]);
-    if (right) return <Bubble who="ai" tone="ok">{multi ? (s.ok.length > 1 ? '都对了。' : '对。') : <Rich text={s.opts[p[0]].why} />}{multi && p.map((i) => <div key={i} className="text-[15px]">· {plain(s.opts[i].t)}：<Rich text={s.opts[i].why} /></div>)}</Bubble>;
+    if (right) return last(<>{multi ? (s.ok.length > 1 ? '都对了。' : '对。') : <Rich text={s.opts[p[0]].why} />}{multi && p.map((i) => <div key={i} className="text-[15px]">· {plain(s.opts[i].t)}：<Rich text={s.opts[i].why} /></div>)}</>);
     const bad = p.filter((i) => !s.ok.includes(i)), miss = s.ok.filter((i) => !p.includes(i)).length;
     return <Bubble who="ai" tone="no">{bad.map((i) => <div key={i}>{bad.length > 1 && <b>{plain(s.opts[i].t)}：</b>}<Rich text={s.opts[i].why} /></div>)}{!bad.length && multi && <div>还少了 {miss} 个。</div>}{k === hist.length - 1 && !solved && <div className="mt-0.5 text-[14px] opacity-75">再想想，换一个。</div>}</Bubble>;
   };
   const left = order.filter((i) => !wrong.includes(i));
   return (
     <div className="space-y-2">
-      <Bubble who="ai"><span className="font-bold"><Rich text={s.q} /></span>{multi && <span className="ml-1 text-[14px] opacity-70">（可以选好几个）</span>}</Bubble>
+      {!hideQ && <Bubble who="ai">{lead && <div className="mb-1 space-y-1">{lead}</div>}<ChoiceQ s={s} /></Bubble>}
       {hist.map((p, k) => (
         <div key={k} className="space-y-2">
           <Bubble who="me">{p.map((i) => plain(s.opts[i].t)).join('、')}</Bubble>
           {reply(p, k)}
         </div>
       ))}
-      {gave && <Bubble who="ai" tone="ok">答案是：<b>{s.ok.map((i) => plain(s.opts[i].t)).join('、')}</b>。{s.ok.length === 1 && <Rich text={s.opts[s.ok[0]].why} />}</Bubble>}
+      {gave && last(<>答案是：<b>{s.ok.map((i) => plain(s.opts[i].t)).join('、')}</b>。{s.ok.length === 1 && <Rich text={s.opts[s.ok[0]].why} />}</>)}
       {!solved && (
         <div className="flex flex-wrap items-center justify-end gap-1.5 pl-10">
           {left.map((i) => (

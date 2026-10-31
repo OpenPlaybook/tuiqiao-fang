@@ -8,7 +8,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit -p .",
     "build:server": "node scripts/build-server.mjs",
-    "build": "npm run typecheck && vite build && npm run build:server",
+    "check:gloss": "node scripts/check-gloss.mjs",
+    "build": "npm run check:gloss && npm run typecheck && vite build && npm run build:server",
     "start": "node dist-server/server.js",
     "answers": "node dist-server/answers.js"
   },
