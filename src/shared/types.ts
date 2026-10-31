@@ -85,7 +85,8 @@ export interface Back { ch: string; line: string; label: string }
  *  s：放在句子里怎么理解（再点“放在这句话里怎么理解”才展开）。按出处分条——键是这个字所在那句话里的一小段原文（原样照抄、把这个字包在里面），
  *     值是这一句里的理解；显示成“那段原文”：解释。点哪一处就找包住那一处的那一条，找不到就不显示第二层。见 src/shared/gloss.ts。
  *  more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分）；back：回扣到别的回的某一句 */
-export interface Gloss { d: string; s?: Record<string, string>; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
+/** spoil：这个词组正是这句题要想的——题还没做完时，点开先不给释义 */
+export interface Gloss { d: string; s?: Record<string, string>; spoil?: boolean; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
 export interface Line {
   id?: string; // 回扣用的句号
   who?: string; // 说话人（旁白不写）
@@ -93,7 +94,8 @@ export interface Line {
   read?: string; // 配音念的文字（默认是去掉标记的字幕；文言里的多音字在这里换成同音字）
   wy?: string; // 这句在《史记》里的原文：选“文言”“对照”时显示、配音念它（旁白、引导、题目不写，始终是白话）
   wyRead?: string; // 原文的配音文字（多音字换成同音字）
-  tr?: string; // 英文故事：这句的中文意思（“中英对照”时显示在下面，“English”时可以点开看）
+  tr?: string; // 英文故事：这句的中文意思。{……} 标出关键词（剩下的是句式），右边一块一块点开
+  trHard?: 'words' | 'frame'; // 这句难在词还是难在句式：部分翻译先给难的那部分（words 先给关键词，frame 先给句式）
   voice?: VoiceId; // 配音的声音，见 play/index.ts 的 VOICES
   shots?: [string, number?][]; // 分镜动画：这一句的几个镜头（镜头名，时长权重），见 src/film/shots*.ts 和 第六堂课/分镜/
   scene?: Art; // 换画面（旧的静态画，没有 shots 时才用）
@@ -106,7 +108,8 @@ export interface Line {
 }
 /** lang：zh 楚汉（讲解方式：白话 / 文言 / 对照）；en 英文故事（English / 中英对照，故事用英文配音，AI 眼镜的话用中文） */
 /** endAsk：看完这一回，结束页上可以直接问 AI 眼镜的几个问题（看完了也能接着探索） */
-export interface Play { id: string; lang?: 'zh' | 'en'; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string; endAsk?: string[] }
+/** words：英文故事里普通词的基本意思（每个词都能点） */
+export interface Play { id: string; lang?: 'zh' | 'en'; words?: Record<string, string>; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string; endAsk?: string[] }
 /** 中文：旁白（女）、男声、AI 眼镜；英文：旁白、Ben、Green 老师、刘师傅 */
 export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu';
 

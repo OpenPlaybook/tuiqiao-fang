@@ -29,3 +29,27 @@ export const sentOf = (g: Gloss, w: string, at?: GlossAt): [string, string] | nu
   }
   return null;
 };
+
+// ---------------- 英文：每个词都能点 ----------------
+// 英文句子不靠 ⟦⟧ 标出可点的词：释义表里的词、词组（has been in Beijing for two weeks、look at……）在句子里一出现就能点，
+// 点哪个词，就给它所在的那个词组（长的优先，不重叠）。⟦⟧ 只用来给生词画虚线。
+const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** 句子（去掉标记的文字）里，释义表的词组都在哪儿：[开始, 结束, 词条] */
+export const enSpans = (plain: string, gloss: Record<string, Gloss>) => {
+  const hits: [number, number, string][] = [];
+  for (const k of Object.keys(gloss)) {
+    const re = new RegExp(`(?<![A-Za-z’'])${esc(k)}(?![A-Za-z’'])`, 'gi');
+    for (const m of plain.matchAll(re)) hits.push([m.index!, m.index! + m[0].length, k]);
+  }
+  hits.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]) || a[0] - b[0]);
+  const out: [number, number, string][] = [];
+  for (const h of hits) if (!out.some((o) => h[0] < o[1] && o[0] < h[1])) out.push(h);
+  return out.sort((a, b) => a[0] - b[0]);
+};
+/** 句中解释：哪一条的那段原文把 [s, e) 包住（大小写不论） */
+export const sentAtPos = (g: Gloss, plain: string, s: number, e: number): [string, string] | null => {
+  if (!g.s) return null;
+  const low = plain.toLowerCase();
+  for (const [frag, x] of Object.entries(g.s)) for (let i = low.indexOf(frag.toLowerCase()); i >= 0; i = low.indexOf(frag.toLowerCase(), i + 1)) if (i <= s && e <= i + frag.length) return [frag, x];
+  return null;
+};

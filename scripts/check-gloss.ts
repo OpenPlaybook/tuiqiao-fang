@@ -4,7 +4,7 @@
 //   3. 故事里（字幕、原文、画面卡片）每一处有句中解释的字，都要找得到自己那一条——找不到，点开就只有第一层。
 // 和网页用同一套查法（src/shared/gloss.ts），网页上看到什么，这里就查什么。
 import { PLAYS, PLAY_ITEMS } from '../src/shared/play';
-import { sentOf } from '../src/shared/gloss';
+import { enSpans, sentAtPos, sentOf } from '../src/shared/gloss';
 
 let bad = 0;
 const err = (m: string) => { bad++; console.log('✗ ' + m); };
@@ -31,6 +31,17 @@ for (const play of PLAYS) {
     else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (k !== 'gloss' && k !== 'read' && k !== 'wyRead' && k !== 'shots') walk(x, `${where}.${k}`, story);
   };
   play.lines.forEach((l, i) => walk({ t: l.t, wy: l.wy, card: l.card?.t, who: l.who }, `第 ${i + 1} 句`, true));
+  // 英文：释义表里的词、词组在句子里一出现就能点（不靠 ⟦⟧），每一处也要找得到自己的句中解释
+  if (play.lang === 'en') play.lines.forEach((l, i) => {
+    if (l.tr === undefined) return;
+    const plain = l.t.replace(/[⟦⟧]|\*\*/g, '');
+    for (const [a, b, k] of enSpans(plain, play.gloss)) {
+      const g = play.gloss[k]; if (!g.s) continue;
+      const hit = sentAtPos(g, plain, a, b);
+      if (hit) used.add(`${k}|${hit[0]}`); else err(`${play.id} 第 ${i + 1} 句：“${k}”在这句里没有句中解释（${plain.slice(0, 40)}）`);
+    }
+    if (/\{/.test(l.tr) && !l.trHard) warn(`${play.id} 第 ${i + 1} 句：中文分了关键词，却没写 trHard`);
+  });
   for (const it of PLAY_ITEMS) if (items.has(it.id)) walk(it, it.id, false);
   for (const [w, g] of Object.entries(play.gloss)) for (const frag of Object.keys(g.s ?? {})) {
     if (!frag.includes(w)) err(`${play.id} “${w}”的句中解释“${frag}”里没有这个字`);
