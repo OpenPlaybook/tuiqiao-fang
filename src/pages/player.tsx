@@ -124,7 +124,7 @@ export default function PlayerPage({ id }: { id: string }) {
 
   const stop = () => { audio.current?.pause(); if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
   /** 学生点了播放（手势里）：顺手把声音解锁（iPhone、iPad 要这样，后面几句才放得出声） */
-  const unlock = () => unlockAudio((audio.current ??= new Audio()));
+  const unlock = (force = false) => unlockAudio((audio.current ??= new Audio()), force);
   // 等配音：wait = 'load' 加载中（画面停在这一句开头），'fail' 取不到（让学生选重试或先看字幕）
   const [wait, setWait] = useState<null | 'load' | 'fail'>(null);
   const waiting = useRef(false);
@@ -157,8 +157,11 @@ export default function PlayerPage({ id }: { id: string }) {
         const a = (audio.current ??= new Audio());
         if (a.src !== new URL(src, location.href).href) a.src = src;
         a.currentTime = off;
-        a.onended = () => { voiceEnded.current = true; timer.current = window.setTimeout(endLine, (l.pause ?? 0.35) * 1000); };
-        a.play().catch(() => { timer.current = window.setTimeout(endLine, (d - off) * 1000); });
+        a.onended = () => { if (!alive) return; voiceEnded.current = true; timer.current = window.setTimeout(endLine, (l.pause ?? 0.35) * 1000); };
+        // 放不出声（Safari 没解锁、文件坏了）：停下来让学生点“重试”（点击时能解锁），不要没声音地往下走
+        const failed = () => { if (!alive) return; waiting.current = true; clearInterval(iv); setElapsed(off); setWait('fail'); };
+        a.onerror = failed;
+        void a.play().catch(failed);
       } else timer.current = window.setTimeout(endLine, (d - off) * 1000);
       iv = window.setInterval(() => setElapsed((performance.now() - t0.current) / 1000), 200); // 进度条 5 次 / 秒就够了
     };
@@ -177,7 +180,7 @@ export default function PlayerPage({ id }: { id: string }) {
   }, [idx, mode, durMap, muted, noVoice]);
   const wordAudio = useRef<HTMLAudioElement | null>(null);
   const sayWord = (w: string) => { const file = voiceFile(wordVoice(w)); loadVoice(file, 0).then((u) => { const a = (wordAudio.current ??= new Audio()); a.src = u; a.play().catch(() => {}); }, () => {}); };
-  const retryVoice = () => { sfx('click'); setIdxFail(false); setWait('load'); setRetry((r) => r + 1); };
+  const retryVoice = async () => { await unlock(true); sfx('click'); setIdxFail(false); setWait('load'); setRetry((r) => r + 1); };
   const skipVoice = () => { sfx('click'); subsOnly.current = true; if (!durMap) setNoVoice(true); else setSkipAt(idx); };
   useEffect(() => { setHint(null); }, [idx, phase]);
   // 必做的拓展：题做完以后自动弹出
@@ -187,23 +190,23 @@ export default function PlayerPage({ id }: { id: string }) {
     if (need) { const tm = setTimeout(() => setExtOpen({ it: item, ext: need }), 1200); return () => clearTimeout(tm); }
   }, [phase, idx, p, extOpen]);
 
-  const seek = (k0: number) => { let k = k0; while (k < n - 1 && promptDone(k)) k++; if (k > maxIdx && k > far) return; stop(); unlock(); sfx('click'); resumeAt.current = null; setIdx(k); setPhase('play'); setAgain((x) => x + 1); };
+  const seek = async (k0: number) => { let k = k0; while (k < n - 1 && promptDone(k)) k++; if (k > maxIdx && k > far) return; stop(); await unlock(); sfx('click'); resumeAt.current = null; setIdx(k); setPhase('play'); setAgain((x) => x + 1); };
   useEffect(() => { resumeAt.current = null; }, [mode, muted]); // 换了讲解方式（配音换了）：从句首放
   /** 重听这一句：从句首再放一遍（英文没听清时最有用） */
-  const replay = () => { stop(); unlock(); sfx('click'); resumeAt.current = null; setPhase('play'); setAgain((x) => x + 1); };
+  const replay = async () => { stop(); await unlock(); sfx('click'); resumeAt.current = null; setPhase('play'); setAgain((x) => x + 1); };
   const openTask = (k: number) => { if (k > maxIdx || !items[k]) return; stop(); sfx('click'); setIdx(k); setPhase('task'); };
-  const playPause = () => {
+  const playPause = async () => {
     if (phase === 'play') {
       const t = waiting.current ? 0 : (performance.now() - t0.current) / 1000;
       if (!waiting.current) resumeAt.current = { k: idx, t, ended: voiceEnded.current };
       stop(); setElapsed(t); setPhase('pause'); return;
     }
-    unlock();
+    await unlock();
     if (phase === 'end') { setIdx(0); setPhase('play'); return; }
     if (phase === 'task') { if (done(idx) && extOk(idx)) cont(); return; }
     setPhase('play');
   };
-  const cont = () => { unlock(); if (idx >= n - 1) { setPhase('end'); return; } setIdx((k) => k + 1); setPhase('play'); };
+  const cont = async () => { await unlock(); if (idx >= n - 1) { setPhase('end'); return; } setIdx((k) => k + 1); setPhase('play'); };
   // 点画面中间：播放 / 暂停（像看视频一样）。做题、封面、看完的时候不管；点字的小窗开着时，这一下只是关小窗
   const [flash, setFlash] = useState<{ play: boolean; n: number } | null>(null);
   const popAtDown = useRef(false);
@@ -244,7 +247,7 @@ export default function PlayerPage({ id }: { id: string }) {
             {/* 点了一下：中间闪一下播放 / 暂停的图标 */}
             <AnimatePresence>{flash && <motion.div key={flash.n} initial={{ opacity: 0.9, scale: 0.8 }} animate={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.6 }} className="pointer-events-none absolute left-1/2 top-1/2 z-30 -ml-9 -mt-9 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-black/45 text-white">{flash.play ? <PlayIcon size={34} /> : <Pause size={34} />}</motion.div>}</AnimatePresence>
             {line.shots
-              ? <Film shots={line.shots} lid={`${id}-${idx}`} running={phase !== 'pause'} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
+              ? <Film shots={line.shots} lid={`${id}-${idx}`} running={phase !== 'pause'} fps={phase === 'play' ? 30 : 12} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
               : <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>}
             <AnimatePresence>
               {showCard && (
@@ -274,8 +277,8 @@ export default function PlayerPage({ id }: { id: string }) {
                 {wait === 'load'
                   ? <div className="tq-appear flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-[15px] font-bold text-white"><Loader2 size={18} className="animate-spin" />配音加载中…</div>
                   : <div className="rounded-2xl bg-white/95 px-5 py-3 text-center shadow-xl">
-                      <div className="text-[17px] font-black">配音没加载出来</div>
-                      <div className="text-[14px] text-ink2">网络可能不太好，可以再试一次，也可以先看字幕。</div>
+                      <div className="text-[17px] font-black">配音暂时无法播放</div>
+                      <div className="text-[14px] text-ink2">点“重试”再放一次，也可以先看字幕。</div>
                       <div className="mt-2 flex items-center justify-center gap-3"><Btn size="sm" color={play.color} onClick={retryVoice}>重试</Btn><button onClick={skipVoice} className="text-[14px] font-bold text-ink2 underline">先看字幕，接着往下</button></div>
                     </div>}
               </div>
@@ -284,7 +287,7 @@ export default function PlayerPage({ id }: { id: string }) {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white">
                 <div className={en ? 'font-serif text-5xl font-black' : 'kai text-5xl'}>{play.title}</div>
                 <div className="mt-2 text-lg opacity-85">{play.sub}</div>
-                <button onClick={() => { sfx('click'); unlock(); setPhase('play'); }} className="mt-6 flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-lg font-black text-[#2B2722]"><PlayIcon size={22} />{lastDone >= 0 ? '接着看' : '开始'}</button>
+                <button onClick={async () => { sfx('click'); await unlock(); setPhase('play'); }} className="mt-6 flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-lg font-black text-[#2B2722]"><PlayIcon size={22} />{lastDone >= 0 ? '接着看' : '开始'}</button>
               </div>
             )}
             {phase === 'end' && (

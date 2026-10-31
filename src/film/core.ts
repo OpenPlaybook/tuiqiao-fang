@@ -26,8 +26,18 @@ export const defs = (id: string) => `<defs>
 </defs>`;
 /** 天：上下两色的渐变 */
 export const sky = (id: string, top: string, bottom: string, k = 'sky') => `<defs><linearGradient id="${id}${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs><rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="url(#${id}${k})"/>`;
-/** 纸纹 + 四角压暗：盖在最上面 */
-export const finish = (id: string) => `<rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="#000" filter="url(#${id}p)" pointer-events="none"/><rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="url(#${id}v)" pointer-events="none"/>`;
+/** 纸纹 + 四角压暗：盖在最上面。paper = false 时不画纸纹（播放时纸纹不放在 SVG 里，见 paperTile） */
+export const finish = (id: string, paper = true) => (paper ? `<rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="#000" filter="url(#${id}p)" pointer-events="none"/>` : '') + `<rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="url(#${id}v)" pointer-events="none"/>`;
+/** 播放用的纸纹：同一个噪声滤镜先画成一块 256 像素、能无缝拼接的小图，盖在画面上面。
+ *  纸纹要是画在会动的 SVG 里，Safari 每一帧都要把整个画面的噪声重新算一遍（实测只有 6—9 帧/秒）；画成图片只算一次。 */
+let tileP: Promise<string> | null = null;
+export const paperTile = () => (tileP ??= new Promise<string>((ok) => {
+  const N = 256, url = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}"><filter id="p" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="7" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.17  0 0 0 0 0.15  0 0 0 0 0.13  0 0 0 .07 0"/></filter><rect width="100%" height="100%" fill="#000" filter="url(#p)"/></svg>`);
+  const im = new Image();
+  im.onload = () => { try { const c = document.createElement('canvas'); c.width = c.height = N; c.getContext('2d')!.drawImage(im, 0, 0); ok(c.toDataURL('image/png')); } catch { ok(url); } };
+  im.onerror = () => ok(url);
+  im.src = url;
+}));
 
 // ---------------- 山、地、水 ----------------
 export const ridge = (o: { y: number; amp: number; seed: number; color?: string; a?: number; peaks?: number; x0?: number; x1?: number; id?: string; soft?: boolean }) => {

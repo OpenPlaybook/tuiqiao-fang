@@ -85,13 +85,18 @@ export const planVoices = (files: string[]) => {
   files.forEach((f, k) => { if (!voiceReady(f)) loadVoice(f, k < NEAR ? k : NEAR + k); });
 };
 
-// ---------------- iPhone / iPad：声音要在“点一下”的时候先解锁 ----------------
-// Safari 只允许在用户点击时开始放声音；后面几句是在 await 之后才 play()，所以第一次点击时先用同一个 audio 放一段无声的，把它解锁。
-const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-let unlocked = false;
-export const unlockAudio = (a: HTMLAudioElement) => {
-  if (unlocked) return;
-  unlocked = true;
-  a.src = SILENT;
-  a.play().then(() => { if (a.src === SILENT) a.pause(); }).catch(() => { unlocked = false; }); // 这时可能已经换成真的配音在放了，别把它停掉
+// ---------------- iPhone / iPad / Mac 上的 Safari：声音要在“点一下”的时候先解锁 ----------------
+// Safari 只允许在用户点击时开始放声音；后面几句是在 await 之后才 play()，所以点击时先用同一个 audio 放一段无声的，把它解锁。
+// 无声的这一段必须真有内容（20 毫秒的静音）：空的 WAV 解不了锁。解锁成功才记下来（每个 audio 各记各的），失败了下次点击再试。
+const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+const unlocked = new WeakSet<HTMLAudioElement>();
+const unlocking = new WeakMap<HTMLAudioElement, Promise<boolean>>();
+/** force：点“重试”时再解锁一次（已经载入了配音就直接在点击里放它，不换成无声的） */
+export const unlockAudio = (a: HTMLAudioElement, force = false): Promise<boolean> => {
+  if (!force && unlocked.has(a)) return Promise.resolve(true);
+  const pending = unlocking.get(a); if (pending) return pending;
+  if (!a.getAttribute('src')) a.src = SILENT;
+  const r = a.play().then(() => { unlocked.add(a); if (a.src === SILENT) a.pause(); return true; }, () => false).finally(() => unlocking.delete(a)); // 这时可能已经换成真的配音在放了，别把它停掉
+  unlocking.set(a, r);
+  return r;
 };
