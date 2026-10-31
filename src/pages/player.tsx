@@ -82,14 +82,13 @@ export default function PlayerPage({ id }: { id: string }) {
   const [muted, setMuted] = useState(() => { try { return localStorage.getItem('tq-mute') === '1'; } catch { return false; } });
   const [elapsed, setElapsed] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
-  const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; sent: [string, string] | null; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean; basic?: boolean; locked?: boolean; sentence?: string } | null>(null);
+  const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; sent: [string, string] | null; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean; locked?: boolean; sentence?: string } | null>(null);
   const [extOpen, setExtOpen] = useState<{ it: Item; ext: Ext } | null>(null);
   const [askPreset, setAskPreset] = useState<{ q: string; n: number } | null>(null); // 结束页上点的问题，交给右边的“问 AI”
   // 英文：每一句点开到哪儿（字幕和右边共用）；换字幕档位就从新的那一档重新开始
   const [enS, setEnS] = useState<Record<number, EnSt>>({});
   const enApi: EnApi = {
     base: 0, get: (k) => enS[k] ?? {}, set: (k, f) => setEnS((o) => ({ ...o, [k]: f(o[k] ?? {}) })),
-    word: (w, el, sentence) => { const r = el.getBoundingClientRect(); sfx('hint'); setGlossPop({ w, g: { d: play.words?.[w.toLowerCase()] ?? '（这个词还没收进来——问问 AI 眼镜吧）' }, sent: null, x: r.left + r.width / 2, y: r.bottom, lv: 1, basic: true, sentence }); logPlay(id, 'gloss', w); },
     phrase: (key, el, sent, sentence) => { const r = el.getBoundingClientRect(); sfx('hint'); setGlossPop({ w: key, g: play.gloss[key], sent, x: r.left + r.width / 2, y: r.bottom, lv: 1, locked: lockedW.has(key), sentence }); logPlay(id, 'gloss', key); },
   };
   const aiOn = useGame((s) => s.config.ai);
@@ -347,7 +346,7 @@ export default function PlayerPage({ id }: { id: string }) {
                     }} className={`rounded-lg border-2 px-2 py-0.5 text-left font-bold ${good ? 'border-emerald-400 bg-emerald-50' : bad ? 'border-rose-200 bg-rose-50 text-ink2 line-through' : 'border-[#E6DCC6] bg-white hover:border-amber-300'}`}>{t}</button>;
                   })}</div>
                 </div>)}
-            {en && glossPop.sentence && !glossPop.locked && aiOn && <button onClick={() => { sfx('click'); setAskPreset((x) => ({ q: `“${glossPop.w}”在“${glossPop.sentence}”这句话里是什么意思、怎么用？`, n: (x?.n ?? 0) + 1 })); setGlossPop(null); }} className="mt-1.5 flex items-center gap-1 text-[14px] font-black text-sky-700 underline"><Glasses size={14} />{glossPop.basic ? '这个词在这句话里怎么用？问 AI 眼镜' : '还不明白？问 AI 眼镜'}</button>}
+            {en && glossPop.sentence && !glossPop.locked && aiOn && <button onClick={() => { sfx('click'); setAskPreset((x) => ({ q: `“${glossPop.w}”在“${glossPop.sentence}”这句话里是什么意思、怎么用？`, n: (x?.n ?? 0) + 1 })); setGlossPop(null); }} className="mt-1.5 flex items-center gap-1 text-[14px] font-black text-sky-700 underline"><Glasses size={14} />还不明白？问 AI 眼镜</button>}
             {glossPop.g.back && <button onClick={() => jump(glossPop.g.back!)} className="mt-2 flex items-center gap-1 text-sm font-black text-sky-700 underline"><CornerUpLeft size={14} />{glossPop.g.back.label}</button>}
           </div>
         );
@@ -448,7 +447,7 @@ const stateOf = (it: Item | null, r: { status?: string; data?: Record<string, un
 
 /** 一句话按讲解模式显示：白话；文言（出自《史记》的用原文，旁边可以点开白话）；对照（原文，下面是白话） */
 /** 给 AI 看的这一句：有原文就一起带上（学生看的是白话还是原文都能答） */
-const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.tr ? `${l.t}（中文意思：${l.tr.replace(/[{}]/g, '')}）` : l.t);
+const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.tr ? `${l.t}（中文意思：${l.tr.replace(/\{!?|\}/g, '')}）` : l.t);
 /** lock：这句有题、还没做完——中文先不给（不然一看中文就知道答案了）。k：这是第几句（英文句子的点开状态按句记） */
 function LineText({ l, mode, lock, min = 0, max = 2, k }: { l: Line; mode: Mode; lock?: boolean; min?: number; max?: number; k?: number }) {
   const [show, setShow] = useState(false);
@@ -463,17 +462,17 @@ function LineText({ l, mode, lock, min = 0, max = 2, k }: { l: Line; mode: Mode;
   );
 }
 
-// ---------------- 英文的一句：每个词都能点 ----------------
-// 英文分三级：0 只听；1 部分字幕（长一点的词、生词只露首字母，点哪个露哪个）；2 整句。播放器的字幕和右边那一栏共用一份“点开了哪些”（EnCtx），点词不会跳到那一句。
-// 中文只在右边：先给“部分翻译”（这句难在词，就先给关键词；难在句式，就先给句式），没给的每一块都能单独点开，再往下是全部翻译。
-// 点露出来的词：释义表里有的词组（has been in Beijing…、look at…）给词组的意思和在这句里的用法；没有的给基本意思，还能接着问 AI 眼镜。
+// ---------------- 英文的一句 ----------------
+// 英文分三级：0 只听；1 部分字幕（长一点的词、生词只露首字母，点哪个露哪个）；2 整句。播放器的字幕和右边那一栏共用一份“点开了哪些”（EnCtx）。
+// 能点开看意思的（释义表里的词、词组、语法点）都画虚线，和文言文点字一样；太简单的词不能点——在右边点它，就是点这一句（回到这一句）。
+// 中文只在右边：先给“部分翻译”（这句难在词，就先给关键词；难在句式，就先给句式），没给的每一块都能单独点开；题要考的那块（{!……}）题做完才给。
 type EnSt = { lv?: number; w?: number[]; zh?: number; c?: number[] };
-interface EnApi { base: number; get: (k: number) => EnSt; set: (k: number, f: (x: EnSt) => EnSt) => void; word: (w: string, el: HTMLElement, sentence: string) => void; phrase: (key: string, el: HTMLElement, sent: [string, string] | null, sentence: string) => void }
+interface EnApi { base: number; get: (k: number) => EnSt; set: (k: number, f: (x: EnSt) => EnSt) => void; phrase: (key: string, el: HTMLElement, sent: [string, string] | null, sentence: string) => void }
 const EnCtx = createContext<EnApi | null>(null);
 const EASY = new Set('from with will have been that this they them what when were your into very just some then than there their about after back does here also only over well much many more most each other could would should shall must'.split(' '));
 /** 部分字幕里，这个词要不要先遮住：生词（⟦⟧）遮；长一点的小写词遮（常用的小词除外）；人名、短词照常露出来 */
 const hideWord = (w: string, key: boolean) => key || (w.length >= 4 && /^[a-z]/.test(w) && !EASY.has(w.toLowerCase()));
-function EnText({ l, k, min = 0, max = 2, lock }: { l: Line; k: number; min?: number; max?: number; lock?: boolean }) {
+function EnText({ l, k, min = 0, max = 2 }: { l: Line; k: number; min?: number; max?: number; lock?: boolean }) {
   const en = useContext(EnCtx)!;
   const { gloss } = useContext(GlossContext);
   const st = en.get(k);
@@ -490,45 +489,49 @@ function EnText({ l, k, min = 0, max = 2, lock }: { l: Line; k: number; min?: nu
   const spans = useMemo(() => enSpans(plain, gloss), [plain, gloss]);
   if (lv === 0) return <span className="opacity-70">🎧 …</span>;
   const inR = (rs: [number, number][], a: number) => rs.some(([x, y]) => a >= x && a < y);
-  const out: React.ReactNode[] = [];
+  // 一个个词：部分字幕里该遮的遮住（点一下露出来），其余照原样
   let wi = 0;
-  for (const m of plain.matchAll(/[A-Za-z’']+|[^A-Za-z’']+/g)) {
-    const t = m[0], a = m.index!;
-    if (!/[A-Za-z]/.test(t)) { out.push(<span key={a}>{t}</span>); continue; }
-    const n = wi++, key = inR(keyR, a), bold = inR(boldR, a), sp = spans.find(([x, y]) => a >= x && a < y);
-    if (lv === 1 && hideWord(t, key) && !(st.w ?? []).includes(n)) {
-      out.push(<button key={a} onClick={(e) => { e.stopPropagation(); sfx('click'); en.set(k, (x) => ({ ...x, w: [...(x.w ?? []), n] })); }} className="enmask tracking-wide" title="点一下，看这个词">{t[0]}{'·'.repeat(t.length - 1)}</button>);
-      continue;
-    }
-    const click = (e: React.MouseEvent<HTMLElement>) => {
-      e.stopPropagation();
-      if (sp) en.phrase(sp[2], e.currentTarget, sentAtPos(gloss[sp[2]], plain, sp[0], sp[1]), plain);
-      else en.word(t, e.currentTarget, plain);
-    };
-    out.push(<span key={a} role="button" onClick={click} className={`enw ${key ? 'gloss' : ''} ${bold ? 'kw' : ''}`}>{t}</span>);
+  const toks = [...plain.matchAll(/[A-Za-z’']+|[^A-Za-z’']+/g)].map((m) => {
+    const t = m[0], a = m.index!, isW = /[A-Za-z]/.test(t), n = isW ? wi++ : -1;
+    const masked = isW && lv === 1 && hideWord(t, inR(keyR, a)) && !(st.w ?? []).includes(n);
+    const node = masked
+      ? <button key={a} onClick={(e) => { e.stopPropagation(); sfx('click'); en.set(k, (x) => ({ ...x, w: [...(x.w ?? []), n] })); }} className="enmask tracking-wide" title="点一下，看这个词">{t[0]}{'·'.repeat(t.length - 1)}</button>
+      : <span key={a} className={inR(boldR, a) ? 'kw' : ''}>{t}</span>;
+    return { a, e: a + t.length, node };
+  });
+  // 能点开看意思的词组：整段画虚线，点哪儿都给这个词组的意思
+  const out: React.ReactNode[] = [];
+  for (let i = 0; i < toks.length; i++) {
+    const sp = spans.find(([x]) => x === toks[i].a);
+    if (!sp) { out.push(toks[i].node); continue; }
+    const inner: React.ReactNode[] = [];
+    while (i < toks.length && toks[i].a < sp[1]) inner.push(toks[i++].node);
+    i--;
+    out.push(<span key={`g${sp[0]}`} role="button" className="gloss" onClick={(e) => { e.stopPropagation(); en.phrase(sp[2], e.currentTarget, sentAtPos(gloss[sp[2]], plain, sp[0], sp[1]), plain); }}>{inner}</span>);
   }
   return <>{out}</>;
 }
-/** 中文（只在右边）：0 没开；1 部分翻译（先给难的那部分，没给的一块块点开）；2 全部翻译 */
+/** 中文（只在右边）：0 没开；1 部分翻译（先给难的那部分，没给的一块块点开）；2 全部翻译。lock：这句的题还没做完——{!……} 那几块先空着、点不开 */
 function ZhText({ l, k, lock }: { l: Line; k: number; lock?: boolean }) {
   const en = useContext(EnCtx)!;
   const st = en.get(k);
   if (!st.zh) return null;
-  if (lock) return <span className="mt-0.5 block text-[13px] font-normal opacity-70">做完题再看中文</span>;
-  const parts = l.tr!.split(/(\{[^}]*\})/).filter(Boolean).map((x) => (x.startsWith('{') ? { t: x.slice(1, -1), key: true } : { t: x, key: false }));
-  const showFirst = l.trHard === 'frame' ? false : true; // words：先给关键词；frame：先给句式
+  const parts = l.tr!.split(/(\{[^}]*\})/).filter(Boolean).map((x) => (x.startsWith('{') ? { t: x.slice(1, -1).replace(/^!/, ''), key: true, spoil: x[1] === '!' } : { t: x, key: false, spoil: false }));
+  const showFirst = l.trHard !== 'frame'; // words：先给关键词；frame：先给句式
   return (
     <span className="mt-0.5 block text-[0.88em] font-normal leading-relaxed text-[#5B544B]">
       {parts.map((p, j) => {
-        const shown = st.zh! >= 2 || (st.c ?? []).includes(j) || (p.key === showFirst) || !/[\u4e00-\u9fa5A-Za-z0-9]/.test(p.t);
+        if (p.spoil && lock) return <span key={j} className="mx-px rounded bg-[#EFE6D2] px-1 text-[0.85em] text-[#B8AE9C]" title="这块是题要你想的，做完题再看">＿＿</span>;
+        const shown = st.zh! >= 2 || (st.c ?? []).includes(j) || p.key === showFirst || !/[\u4e00-\u9fa5A-Za-z0-9]/.test(p.t);
         return shown ? <span key={j} className={p.key ? 'font-bold text-[#2B2722]' : ''}>{p.t}</span>
           : <button key={j} onClick={(e) => { e.stopPropagation(); sfx('click'); en.set(k, (x) => ({ ...x, c: [...(x.c ?? []), j] })); }} className="zhchunk mx-px rounded bg-[#EFE6D2] px-1 text-[0.85em] text-[#9A8F80]" title="点一下，看这一块">{p.key ? '＿＿' : '···'}</button>;
       })}
+      {lock && /\{!/.test(l.tr!) && <span className="ml-1 text-[12px] font-normal text-[#9A8F80]">（空着的那块，做完题再看）</span>}
     </span>
   );
 }
-/** 右边每一句英文后面的小按钮：英文再露一点、中文开一级 */
-function EnMore({ l, k, lock }: { l: Line; k: number; lock?: boolean }) {
+/** 右边每一句英文后面的小按钮：英文再露一点、中文开一级（有题的句子也能看中文，只是题要考的那块先空着） */
+function EnMore({ l, k }: { l: Line; k: number; lock?: boolean }) {
   const en = useContext(EnCtx)!;
   const st = en.get(k), lv = st.lv ?? en.base, zh = st.zh ?? 0;
   const hasChunks = /\{/.test(l.tr ?? '');
@@ -536,7 +539,7 @@ function EnMore({ l, k, lock }: { l: Line; k: number; lock?: boolean }) {
   return (
     <>
       {lv < 2 && btn(lv === 0 ? '英文' : '整句', (x) => ({ ...x, lv: lv + 1 }))}
-      {!lock && zh < 2 && btn(zh === 0 ? '中文' : '全中文', (x) => ({ ...x, zh: zh === 0 && !hasChunks ? 2 : zh + 1 }))}
+      {zh < 2 && btn(zh === 0 ? '中文' : '全中文', (x) => ({ ...x, zh: zh === 0 && !hasChunks ? 2 : zh + 1 }))}
     </>
   );
 }
