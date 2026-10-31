@@ -12,7 +12,7 @@ const type = (key: string, q: string, accept: string[], why: string, near: Recor
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_ZH1: Play = {
-  id: 'zh1', no: 1, title: '第一回　淮阴少年', sub: '漂母分饭，胯下之辱', color: '#9A3B2E', next: 'zh6', nextNote: '第二回到第五回还在写，先翻到第六回',
+  id: 'zh1', no: 1, title: '第一回　淮阴少年', sub: '漂母分饭，胯下之辱', color: '#9A3B2E', next: 'zh6', nextNote: '第二回到第五回还在写，先翻到第六回', endAsk: ['陈胜、吴广为什么要起兵？', '韩信离开淮阴，去投奔了谁？', '“胯下之辱”后来怎么用？'],
   gloss: {
     诸母: { d: '几位老妇人。“诸”：众、各位。' },
     漂: { d: '在水里漂洗（丝絮）。读 piǎo。', py: 'piǎo' },
@@ -79,7 +79,7 @@ export const PLAY_ZH1: Play = {
     { shots: [['a.standoff']], who: 'AI 眼镜', t: '如果你虽然长得高大，喜欢带着刀剑，中间的感情却是胆怯罢了。', voice: 'ai', hide: true, task: ['p1-ruo'] },
     { shots: [['a.dare'], ['a.crowd']], who: '屠户少年', t: '你要是不怕死，就拿剑刺我；怕死，就从我⟦胯下⟧钻过去！', voice: 'm', wy: '信⟦能死⟧，刺我；不能死，出我⟦袴下⟧。', wyRead: '信能死，刺我；不能死，出我胯下。' },
     { shots: [['a.hush', 0.8], ['a.eyes'], ['a.grip', 0.8]], t: '满街的人都安静下来。韩信⟦孰视⟧之——', wy: '于是信⟦孰视⟧之，', cam: [50, 45, 1.5, 50, 45, 1.7], ask: '韩信为什么不拔剑？' },
-    { shots: [['a.eyes']], t: '你给这一幕写旁白：“韩信___着那个人，看了很久很久。”', read: '你给这一幕写一句旁白：韩信怎样看着那个人，看了很久很久。', task: ['p1-kan'] },
+    { shots: [['a.eyes']], id: 'kan', t: '你给这一幕写旁白：“韩信___着那个人，看了很久很久。”', read: '你给这一幕写一句旁白：韩信怎样看着那个人，看了很久很久。', task: ['p1-kan'] },
     { shots: [['a.crawl', 1.2], ['a.laugh']], t: '韩信低下头，从那人胯下爬了过去。满街的人都笑了起来。', wy: '⟦俛⟧出袴下，⟦蒲伏⟧。一市人皆笑信，以为怯。', wyRead: '俯出胯下，匍匐。一市人皆笑信，以为怯。', cam: [50, 60, 1.2, 50, 60, 1.05] },
     { shots: [['a.split']], t: '同一件事：当时的人笑他___；后来的人夸他___。', read: '同一件事：当时的人笑他什么？后来的人又夸他什么？', task: ['p1-bb'] },
     { shots: [['a.desk']], t: '晚上，AI 眼镜自动给这一回写了一句小结——', scene: ink('changan'), cam: [50, 50, 1.1, 50, 50, 1] },

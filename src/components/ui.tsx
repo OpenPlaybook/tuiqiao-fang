@@ -22,7 +22,8 @@ export const Rich = ({ text, className = '', fill, fills }: { text: string; clas
   let b = 0;
   const seen: Record<string, number> = {}; // 每个 ⟦词⟧ 是这段文字里的第几个（按出现的先后）
   const piece = (part: string, j: number): ReactNode => {
-    if (/^\*\*/.test(part)) return <b key={j}>{part.slice(2, -2).split(TOK).map(piece)}</b>;
+    // **字**：标出来的字（红色 + 底色），放在本来就是粗体的地方（选项、卡片）也看得出来
+    if (/^\*\*/.test(part)) return <b key={j} className="kw">{part.slice(2, -2).split(TOK).map(piece)}</b>;
     if (/^\*[^*]/.test(part) && part.endsWith('*')) return <em key={j}>{part.slice(1, -1)}</em>;
     if (/^_{3,}$/.test(part)) return <span key={j} className="blank">{fills?.[b++] ?? fill ?? '\u00a0'}</span>;
     if (part.startsWith('⟦')) {

@@ -1,7 +1,7 @@
 // 播放式故事用的题：都在画面里做，所以要紧凑。
 // 选项下面直接出反馈的选择题、选词填句、打字短答、碎片拼接；长文本、点出毛病、改错直接在画面里的卡片上做（点那个词，弹出贴着它的小窗）。
 // 每一步做完把“最后的样子”存进记录（data.ans），回来看到的就是自己做过的答案；拓展的步骤用 SaveCtx 加前缀，免得和正题撞名。
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type React from 'react';
 import { Reorder, motion } from 'motion/react';
@@ -36,6 +36,11 @@ export const Diff = ({ text }: { text: string }) => <>{text.split(/(~~[^~]+~~|\+
 
 // ---------------- 选择：反馈写在选项下面；单选点一下就算选了，多选才要“确定” ----------------
 type ChoiceSaved = { sc: number; wrong: number[]; pick: number[] };
+/** 选项的顺序：一律打乱（按学号 + 题号固定，刷新不变）；“都说得通”“以上都……”这种总括的放最后 */
+export const optOrder = (opts: { t: string }[], seed: string) => {
+  const o = shuffleIdx(opts.length, seed), last = (i: number) => /^(都|以上|两个都|三个都)/.test(plain(opts[i].t)) || /都说得通|都有可能/.test(opts[i].t);
+  return [...o.filter((i) => !last(i)), ...o.filter(last)];
+};
 export const ChoiceInline = ({ it, s, onDone, color, revealed, compact }: StepProps<ChoiceSub> & { revealed?: boolean; compact?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const [saved, save] = useSaved<ChoiceSaved>(it, s.key);
@@ -51,7 +56,7 @@ export const ChoiceInline = ({ it, s, onDone, color, revealed, compact }: StepPr
     const idx = (v: string) => v.split(' / ').map((t) => s.opts.findIndex((o) => o.t === t || plain(o.t) === t)).filter((i) => i >= 0);
     return { sc: 1, wrong: [...new Set(es.filter((e) => !e.ok).flatMap((e) => idx(e.v)).filter((i) => !s.ok.includes(i)))], pick: idx(okE.v) };
   }, []);
-  const order = useMemo(() => (s.keep ? s.opts.map((_, i) => i) : shuffleIdx(s.opts.length, pid + it.id + s.key)), [pid, it.id, s.key]);
+  const order = useMemo(() => optOrder(s.opts, pid + it.id + s.key), [pid, it.id, s.key]);
   const [pick, setPick] = useState<number[]>(sv?.pick ?? []);
   const [wrong, setWrong] = useState<number[]>(sv?.wrong ?? []);
   const [tries, setTries] = useState(0);
@@ -119,6 +124,8 @@ const OptArt = ({ a }: { a: NonNullable<ChoiceSub['opts'][number]['art']> }) => 
 type FillSaved = { sc: number; put: Record<number, string> };
 export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
   const [sv, save] = useSaved<FillSaved>(it, s.key);
+  const pid = useGame((g) => g.player?.pid ?? '');
+  const bank = useMemo(() => shuffleIdx(s.bank.length, pid + it.id + s.key + 'b').map((i) => s.bank[i]), [pid]); // 词的顺序打乱，不跟着句子的顺序
   const [sel, setSel] = useState<string | null>(null);
   const [put, setPut] = useState<Record<number, string>>(sv?.put ?? {});
   const [bad, setBad] = useState<number[]>([]);
@@ -140,7 +147,7 @@ export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
   return (
     <div>
       <Q text={s.q} />
-      {!solved && <div className="mb-2 flex flex-wrap items-center gap-1.5">{s.bank.map((w) => <button key={w} onClick={() => { sfx('click'); setSel(sel === w ? null : w); }} className={`rounded-full border-2 px-3 py-0.5 font-black ${sel === w ? 'text-white' : 'border-[#E6DCC6] bg-white'}`} style={sel === w ? { background: color, borderColor: color } : {}}>{w}</button>)}<span className="ml-1 text-sm text-ink2">{sel ? `放进哪一句？点那一句的空。` : '先点词，再点空。'}</span></div>}
+      {!solved && <div className="mb-2 flex flex-wrap items-center gap-1.5">{bank.map((w) => <button key={w} onClick={() => { sfx('click'); setSel(sel === w ? null : w); }} className={`rounded-full border-2 px-3 py-0.5 font-black ${sel === w ? 'text-white' : 'border-[#E6DCC6] bg-white'}`} style={sel === w ? { background: color, borderColor: color } : {}}>{w}</button>)}<span className="ml-1 text-sm text-ink2">{sel ? `放进哪一句？点那一句的空。` : '先点词，再点空。'}</span></div>}
       <div className="space-y-1.5">
         {s.sents.map((x, i) => {
           const parts = x.t.split(/_{3,}/);
@@ -159,7 +166,7 @@ export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
 };
 
 // ---------------- 打字短答 ----------------
-const norm = (t: string) => t.replace(/[\s，。、“”"'‘’！？!?.,；;：:（）()]/g, '');
+const norm = (t: string) => t.replace(/[\s，。、“”"'‘’！？!?.,；;：:（）()]/g, '').toLowerCase(); // 英文不分大小写
 type TypeSaved = { sc: number; v: string; ok: boolean };
 export const TypeView = ({ it, s, onDone, color }: StepProps<TypeSub>) => {
   const [sv, save] = useSaved<TypeSaved>(it, s.key);
@@ -176,7 +183,7 @@ export const TypeView = ({ it, s, onDone, color }: StepProps<TypeSub>) => {
     sfx('no');
     const near = Object.entries(s.near ?? {}).find(([k]) => norm(k) === x)?.[1];
     if (t >= 3) { setSolved(true); setMsg({ ok: null, t: `答案是“${s.accept[0]}”。${s.why}` }); save({ sc: 0.34, v, ok: false }); onDone(0.34); return; }
-    setMsg({ ok: false, t: near ?? (t === 1 ? '不太对，再想想。' : `提示：第一个字是“${s.accept[0][0]}”。`) });
+    setMsg({ ok: false, t: near ?? (t === 1 ? '不太对，再想想。' : `提示：第一个${/[a-z]/i.test(s.accept[0][0]) ? '字母' : '字'}是“${s.accept[0][0]}”。`) });
   };
   return (
     <div>
@@ -406,6 +413,7 @@ export const SpotCard = ({ it, s, onDone, color }: StepProps<SpotSub>) => {
 type MisSaved = { sc: number; fixed: string[]; gave?: boolean };
 export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
   const [sv, save] = useSaved<MisSaved>(it, s.key);
+  const pid = useGame((g) => g.player?.pid ?? '');
   const groups = useMemo(() => [...new Set(s.segs.filter((g) => g.bad).map((g) => g.bad!.word))], [s]);
   const [fixed, setFixed] = useState<string[]>(sv?.fixed ?? []);
   const [open, setOpen] = useState<string | null>(null);
@@ -457,7 +465,7 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
           ) : (
             <>
               <div className="mb-2 pr-5 font-black">{s.src ? <>“<span className="kai text-lg">{open}</span>”在这里是什么意思？</> : <>这里有毛病。怎么改？</>}</div>
-              <div className="flex flex-wrap gap-1.5">{ob.opts.map((o, k) => <button key={k} disabled={wrongOpt.includes(k)} onClick={() => choose(open, k)} className={`rounded-lg border-2 px-2.5 py-1 text-left font-bold ${wrongOpt.includes(k) ? 'border-rose-200 bg-rose-50 text-ink2 line-through' : 'border-[#E6DCC6] bg-white hover:border-amber-400'}`}>{o}</button>)}</div>
+              <div className="flex flex-wrap gap-1.5">{shuffleIdx(ob.opts.length, pid + it.id + s.key + open).map((k) => { const o = ob.opts[k]; return <button key={k} disabled={wrongOpt.includes(k)} onClick={() => choose(open, k)} className={`rounded-lg border-2 px-2.5 py-1 text-left font-bold ${wrongOpt.includes(k) ? 'border-rose-200 bg-rose-50 text-ink2 line-through' : 'border-[#E6DCC6] bg-white hover:border-amber-400'}`}>{o}</button>; })}</div>
               {wrongOpt.length > 0 && <div className="mt-1.5 text-sm text-rose-800">“{ob.opts[wrongOpt[wrongOpt.length - 1]]}”不对。{s.src ? `再想想“${open}”在这里是什么意思。` : '再想想。'}</div>}
             </>
           )}
@@ -496,7 +504,7 @@ export const Bubble = ({ who, tone, wide, children }: { who: 'ai' | 'me'; tone?:
 export const ChoiceChat = ({ it, s, onDone, color, lead, tail, hideQ, wideTail }: StepProps<ChoiceSub> & { lead?: React.ReactNode; tail?: React.ReactNode; hideQ?: boolean; wideTail?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const [sv, save] = useSaved<ChoiceSaved>(it, s.key);
-  const order = useMemo(() => (s.keep ? s.opts.map((_, i) => i) : shuffleIdx(s.opts.length, pid + it.id + s.key)), [pid, it.id, s.key]);
+  const order = useMemo(() => optOrder(s.opts, pid + it.id + s.key), [pid, it.id, s.key]);
   // 回答的记录：每次交的那几个选项（做过的从存档里排出来：先是答错的，最后是答对的）
   const [hist, setHist] = useState<number[][]>(() => (sv ? [...sv.wrong.map((i) => [i]), sv.pick] : []));
   const [tries, setTries] = useState(0);
@@ -613,6 +621,9 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
     </div>
   );
 };
+/** 连一连：左右两栏，中间画线。点左边一项、再点右边一项（先点右边也行，或者从一边拖到另一边）就连上；再连一次就换。
+ *  右边的顺序打乱；一项右边可以连好几项左边（比如“这几句各是哪个意思”）。检查以后，连对的绿线，连错的红色虚线。 */
+const LINE_C = ['#2F5DA8', '#C2552E', '#7A4FA0', '#2F8A57', '#B8862A', '#B8352A', '#3A8A9A', '#8A5A3A'];
 export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & { init?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const rorder = useMemo(() => shuffleIdx(s.right.length, pid + it.id + s.key + 'r'), [pid]);
@@ -620,6 +631,38 @@ export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & 
   const [bad, setBad] = useState<number[]>([]);
   const [tries, setTries] = useState(0);
   const [solved, setSolved] = useState(!!init);
+  const [pickL, setPickL] = useState<number | null>(null);
+  const [pickR, setPickR] = useState<number | null>(null);
+  const [drag, setDrag] = useState<{ side: 'l' | 'r'; i: number; x: number; y: number } | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const lRef = useRef<(HTMLDivElement | null)[]>([]), rRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [geo, setGeo] = useState<{ w: number; h: number; l: { x: number; y: number }[]; r: { x: number; y: number }[] }>({ w: 0, h: 0, l: [], r: [] });
+  // 量每一项的位置（线从左边一项的右边缘，连到右边一项的左边缘）
+  useLayoutEffect(() => {
+    const el = box.current; if (!el) return;
+    const measure = () => {
+      const b = el.getBoundingClientRect();
+      const at = (e: HTMLDivElement | null, side: 'l' | 'r') => { if (!e) return { x: 0, y: 0 }; const r = e.getBoundingClientRect(); return { x: (side === 'l' ? r.right : r.left) - b.left, y: r.top + r.height / 2 - b.top }; };
+      setGeo({ w: b.width, h: b.height, l: s.left.map((_, i) => at(lRef.current[i], 'l')), r: s.right.map((_, j) => at(rRef.current[j], 'r')) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(el); return () => ro.disconnect();
+  }, [s]);
+  const link = (i: number, j: number) => { if (solved) return; sfx('click'); setSel((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); setPickL(null); setPickR(null); };
+  const tapL = (i: number) => { if (solved) return; if (pickR !== null) return link(i, pickR); sfx('click'); setPickL(pickL === i ? null : i); };
+  const tapR = (j: number) => { if (solved) return; if (pickL !== null) return link(pickL, j); sfx('click'); setPickR(pickR === j ? null : j); };
+  // 拖：从一边按下，拖到另一边松开
+  const local = (e: React.PointerEvent) => { const b = box.current!.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  const down = (side: 'l' | 'r', i: number) => (e: React.PointerEvent) => { if (solved) return; setDrag({ side, i, ...local(e) }); };
+  const move = (e: React.PointerEvent) => { if (drag) setDrag({ ...drag, ...local(e) }); };
+  const up = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const t = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest('[data-m]') as HTMLElement | null;
+    const [side, k] = (t?.dataset.m ?? '').split(':');
+    if (side && side !== drag.side) link(drag.side === 'l' ? drag.i : Number(k), drag.side === 'l' ? Number(k) : drag.i);
+    else if (side === drag.side && Number(k) === drag.i) (drag.side === 'l' ? tapL : tapR)(drag.i);
+    setDrag(null);
+  };
   const all = Object.keys(sel).length === s.left.length;
   const check = () => {
     const t = tries + 1; setTries(t);
@@ -628,25 +671,38 @@ export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & 
     if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setSel(Object.fromEntries(s.pairs.map((p, i) => [i, p]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
     sfx('no'); setBad(wrong);
   };
+  const item = (side: 'l' | 'r', k: number, text: string, on: boolean, linked: boolean, tone: string) => (
+    <div key={k} ref={(e) => { (side === 'l' ? lRef : rRef).current[k] = e; }} data-m={`${side}:${k}`} onPointerDown={down(side, k)}
+      className={`relative cursor-pointer select-none rounded-lg border-2 px-2.5 py-1.5 text-[15px] font-bold leading-snug transition ${on ? 'bg-[#FFF3D6]' : linked ? 'bg-white' : 'bg-[#FBF7EE] hover:border-amber-300'} ${side === 'l' ? 'pr-4' : 'pl-4'}`}
+      style={{ borderColor: on ? color : linked ? tone : '#E6DCC6', touchAction: 'none' }}>
+      <Rich text={text} />
+      <span className={`absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 bg-white ${side === 'l' ? '-right-[7px]' : '-left-[7px]'}`} style={{ borderColor: on || linked ? tone : '#CFC4AE', background: linked ? tone : '#fff' }} />
+    </div>
+  );
+  const toneL = (i: number) => (solved ? '#059669' : bad.includes(i) ? '#E11D48' : LINE_C[i % LINE_C.length]);
   return (
     <div>
       <Q text={s.q} />
-      <div className="divide-y divide-[#EFE6D2] overflow-hidden rounded-lg border-2 border-[#E6DCC6] bg-white">
-        {s.left.map((l, i) => (
-          <div key={i} className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-1.5 ${bad.includes(i) ? 'bg-rose-50' : ''}`}>
-            <div className="min-w-[200px] flex-1 text-[15px] font-bold leading-snug"><Rich text={l} /></div>
-            <div className="flex flex-wrap gap-1">
-              {rorder.map((j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setSel((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-lg border-2 px-2 py-0.5 text-left text-[13px] font-bold ${sel[i] === j ? 'text-white' : solved ? 'hidden' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink'}`} style={sel[i] === j ? { background: solved ? '#059669' : color, borderColor: solved ? '#059669' : color } : {}}>{s.right[j]}</button>)}
-            </div>
-          </div>
+      <div ref={box} className="relative grid grid-cols-[1fr_minmax(56px,12%)_1fr] items-center gap-y-1.5" onPointerMove={move} onPointerUp={up} onPointerLeave={() => setDrag(null)}>
+        {(s.lh || s.rh) && <><div className="text-[12px] font-black text-ink2">{s.lh}</div><div /><div className="text-[12px] font-black text-ink2">{s.rh}</div></>}
+        {Array.from({ length: Math.max(s.left.length, s.right.length) }, (_, row) => (
+          <Fragment key={row}>
+            <div>{row < s.left.length && item('l', row, s.left[row], pickL === row || drag?.side === 'l' && drag.i === row, sel[row] !== undefined, toneL(row))}</div>
+            <div />
+            <div>{row < rorder.length && (() => { const j = rorder[row], li = Object.keys(sel).map(Number).filter((i) => sel[i] === j); return item('r', j, s.right[j], pickR === j || drag?.side === 'r' && drag.i === j, li.length > 0, li.length ? toneL(li[0]) : '#CFC4AE'); })()}</div>
+          </Fragment>
         ))}
+        <svg className="pointer-events-none absolute inset-0" width={geo.w} height={geo.h}>
+          {Object.entries(sel).map(([i0, j]) => { const i = Number(i0), a = geo.l[i], b = geo.r[j]; if (!a || !b) return null; const c = toneL(i), mx = (a.x + b.x) / 2;
+            return <path key={i} d={`M${a.x + 6},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x - 6},${b.y}`} stroke={c} strokeWidth="3" fill="none" strokeDasharray={bad.includes(i) ? '6 5' : undefined} />; })}
+          {drag && (() => { const a = drag.side === 'l' ? geo.l[drag.i] : geo.r[drag.i]; return a ? <path d={`M${a.x},${a.y} L${drag.x},${drag.y}`} stroke={color} strokeWidth="3" strokeDasharray="4 4" fill="none" /> : null; })()}
+        </svg>
       </div>
-      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">有 {bad.length} 行不对，再改改。</span>}</div>}
+      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 ? <span className="text-sm font-bold text-rose-700">有 {bad.length} 条线连错了（红色虚线），改一改。</span> : <span className="text-sm text-ink2">点左边一项，再点右边一项，就连上了；也可以直接拖过去。</span>}</div>}
       {solved && <div className="mt-1.5"><Why tone="ok"><Rich text={s.why} /></Why></div>}
     </div>
   );
 };
-
 export interface StepProps<S> { it: Item; s: S; onDone: (score: number) => void; color: string }
 /** 播放式故事里一道题的一步（连线、分类、排序：做完只存分数，回来直接显示正确答案） */
 export const PlayStep = ({ it, s, color, onDone, revealed }: { it: Item; s: Sub; color: string; onDone: (x: number) => void; revealed?: boolean }) => {

@@ -49,13 +49,16 @@ button:disabled { cursor: not-allowed; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* 可点的字：平时看不出来，鼠标放上去才显示能点 */
-.gloss { cursor: pointer; border-radius: 4px; transition: background .12s, box-shadow .12s; }
+/* 可点的字：蓝色虚线（到处都看得见）；放在答题点里，再加一层浅蓝底，和答题点的粗下划线分得开 */
+.gloss { cursor: pointer; border-radius: 3px; border-bottom: 1.5px dotted rgba(37, 99, 235, .6); transition: background .12s, box-shadow .12s; }
+.subline .gloss { border-bottom-color: rgba(255, 255, 255, .6); }
+.mark .gloss { background: rgba(37, 99, 235, .1); border-bottom: 2px dotted #2563EB; }
 .gloss:hover { background: rgba(37, 99, 235, .12); box-shadow: 0 2px 0 rgba(37, 99, 235, .6); }
 ruby rt { font-size: .62em; color: #5B544B; font-weight: 600; }
 .kai b { color: var(--color-zhu); }
 
 /* 长文本里题针对的字词句：画线 + 编号，点它做题 */
-.mark { cursor: pointer; border-radius: 4px; text-decoration: underline; text-decoration-color: var(--c); text-decoration-thickness: 3px; text-underline-offset: 7px; transition: background .12s; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.mark { cursor: pointer; border-radius: 4px; text-decoration: underline; text-decoration-color: var(--c); text-decoration-thickness: 3px; text-underline-offset: 11px; transition: background .12s; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .mark:hover { background: rgba(217, 164, 65, .22); }
 .mark-on { background: rgba(217, 164, 65, .38); }
 .mark-done { text-decoration-color: #059669; }
@@ -68,3 +71,8 @@ ruby rt { font-size: .62em; color: #5B544B; font-weight: 600; }
 /* 等一会儿才显示（“配音加载中”：很快就好的时候不一闪而过） */
 @keyframes tq-appear { to { opacity: 1; } }
 .tq-appear { opacity: 0; animation: tq-appear .2s ease .35s forwards; }
+
+/* **标出来的字**：不只加粗——红色、下面一道黄底，在粗体的卡片、选项里也一眼看得出 */
+.kw { color: #B8352A; font-weight: 900; background: linear-gradient(transparent 58%, #FBE3A0 58%); padding: 0 1px; }
+/* 画面里的字幕是深底白字：标出来的字用亮黄 */
+.subline .kw { color: #FFD866; background: none; }

@@ -1,6 +1,6 @@
 // 各种小步骤的界面：选择、点出毛病、分类、连线、排序、AI 误译、自己写。
 // 每一步做完调用 onDone(得分 0—1)。
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowDown, ArrowUp, Check, Loader2, Sparkles, X } from 'lucide-react';
 import type { ChoiceSub, Item, MatchSub, MisSub, OrderSub, SortSub, SpotSub, WriteSub } from '../shared/types';
@@ -10,6 +10,7 @@ import { Art, Btn, LETTERS, Rich, isEnter, shuffleIdx } from '../components/ui';
 import { addBonus, getState, logAnswer, setAiLeft, toast, useGame } from '../game/store';
 import { api } from '../game/api';
 import { sfx } from '../game/sound';
+import { SaveCtx, useSaved } from './steps2';
 import { DEMO } from '../game/demo';
 
 export interface StepProps<S> { it: Item; s: S; onDone: (score: number) => void; color: string }
@@ -301,6 +302,8 @@ export const MisView = ({ it, s, onDone, color }: StepProps<MisSub>) => {
 const tokens = (t: string) => t.split(/(\s+)/);
 export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
   const p = useGame((g) => g.player);
+  const pre = useContext(SaveCtx); // 拓展里：步骤号前面带拓展号（服务器按它找题）
+  const [sv, save] = useSaved<{ sc: number; t: string }>(it, s.key);
   const aiOn = useGame((g) => g.config.ai);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -314,7 +317,7 @@ export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
   const [foundAll, setFoundAll] = useState(false);
   const [done, setDone] = useState(false);
   const isEn = s.lang === 'en';
-  const finish = (score: number) => { if (done) return; setDone(true); onDone(score); };
+  const finish = (score: number) => { if (done) return; setDone(true); save({ sc: score, t: text.trim() }); onDone(score); };
   const [demoShown, setDemoShown] = useState(false);
   const submit = async () => {
     const t = text.trim();
@@ -322,7 +325,7 @@ export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
     if (DEMO) { logAnswer(it, { q: s.key, v: t, ok: null }); setDemoShown(true); sfx('hint'); if (!s.bonus) finish(1); return; } // 演示版不评分：算完成，不要求变式练习
     setBusy(true); setErr('');
     try {
-      const r = await api.judge({ pid: p.pid, token: p.token, item: it.id, step: s.key, text: t });
+      const r = await api.judge({ pid: p.pid, token: p.token, item: it.id, step: pre + s.key, text: t });
       setAiLeft(r.left);
       const k = n + 1; setN(k);
       logAnswer(it, { q: s.key, v: t, ok: null });
@@ -359,6 +362,8 @@ export const WriteView = ({ it, s, onDone, color }: StepProps<WriteSub>) => {
   };
   const toks = hunt ? tokens(hunt.text) : [];
   const left = useGame((g) => g.config.aiLeft);
+  // 做过的：显示当时写的，不再重写
+  if (sv && !done) return <div><Q text={s.q} /><div className="rounded-2xl bg-white px-4 py-2 text-lg font-bold chunky">{sv.t || '（没有写）'}</div><div className="mt-2 flex items-center gap-1.5 font-bold" style={{ color }}><Check size={18} />这一步完成了</div></div>;
   if (!aiOn) return <Msg ok={null}>老师暂时关闭了 AI 评分。{s.bonus ? '这道加分题可以先跳过。' : ''}{!s.bonus && !done && <button className="ml-2 underline" onClick={() => finish(0.67)}>先跳过</button>}</Msg>;
   return (
     <div>

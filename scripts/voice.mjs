@@ -4,16 +4,17 @@ import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
-const r = await build({ stdin: { contents: "export { PLAYS, readText, voiceFile, VOICES } from './src/shared/play';", resolveDir: '.', loader: 'ts' }, bundle: true, format: 'cjs', platform: 'node', write: false, logLevel: 'warning' });
+const r = await build({ stdin: { contents: "export { PLAYS, readText, voiceFile, wordVoice, VOICES, VOICE_RATE } from './src/shared/play';", resolveDir: '.', loader: 'ts' }, bundle: true, format: 'cjs', platform: 'node', write: false, logLevel: 'warning' });
 const mod = { exports: {} }; new Function('module', 'exports', r.outputFiles[0].text)(mod, mod.exports);
-const { PLAYS, readText, voiceFile, VOICES } = mod.exports;
-const RATE = { n: '+14%', ai: '+14%', m: '+6%' };
+const { PLAYS, readText, voiceFile, wordVoice, VOICES, VOICE_RATE: RATE } = mod.exports;
 const list = [];
 for (const p of PLAYS) for (const l of p.lines) {
   const v = l.voice ?? 'n';
   list.push({ file: voiceFile(l), text: readText(l), voice: VOICES[v], rate: RATE[v] });
   if (l.wy) { const w = { t: l.wy, read: l.wyRead, voice: l.voice }; list.push({ file: voiceFile(w), text: readText(w), voice: VOICES[v], rate: RATE[v] }); } // 文言 / 对照模式念原文
 }
+// 英文故事：点开的单词能听一遍发音
+for (const p of PLAYS) if (p.lang === 'en') for (const w of Object.keys(p.gloss)) { const x = wordVoice(w); list.push({ file: voiceFile(x), text: readText(x), voice: VOICES[x.voice], rate: '-10%' }); }
 fs.mkdirSync('build', { recursive: true });
 fs.writeFileSync('build/voice-lines.json', JSON.stringify(list, null, 1));
 const PY = `${os.homedir()}/Desktop/高中物化/.venv/bin/python`;

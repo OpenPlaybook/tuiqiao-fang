@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Player, WriteSub } from '../src/shared/types';
 import { ITEM_BY_ID } from '../src/shared/bank';
-import { AI_QUOTA, ASK_SYSTEM, askUser, cleanAsk, type AskOut, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
+import { AI_QUOTA, askSystem, askUser, cleanAsk, type AskOut, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
 import { NODE_BY_ID } from '../src/shared/story';
 import { PLAY_BY_ID, plainText } from '../src/shared/play';
 
@@ -77,7 +77,10 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
     const p = b.pid ? players.get(b.pid) : undefined;
     if (!p || p.token !== b.token) return send(403, '身份不对，请重新登录');
     const it = ITEM_BY_ID[String(b.item)];
-    const w = it?.steps.find((s) => s.key === b.step && s.kind === 'write') as WriteSub | undefined;
+    // 题里的写作，或者拓展里的写作（拓展的步骤号是“拓展号:步骤号”）
+    const [xid, xkey] = String(b.step).includes(':') ? String(b.step).split(':') : ['', String(b.step)];
+    const steps = xid ? it?.ext?.find((e) => e.id === xid)?.steps : it?.steps;
+    const w = steps?.find((s) => s.key === xkey && s.kind === 'write') as WriteSub | undefined;
     if (!it || !w) return send(400, '找不到这道题');
     const text = String(b.text ?? '').trim().slice(0, 400);
     if (!text) return send(400, '先写一句话');
@@ -161,7 +164,7 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
       const before = (Array.isArray(b.before) ? (b.before as unknown[]) : []).map((x) => plainText(String(x)).slice(0, 120)).slice(-2);
       let out: AskOut = MOCK
         ? { a1: `（模拟）你问的是“${q}”。我先讲一半：这件事和你正在看的这一句有关。`, q: '你觉得后一半会是什么？', opts: [{ t: '和这一句里的人有关', ok: true, why: '对。' }, { t: '和这一句没关系', ok: false, why: '再读读这一句。' }], a2: '（模拟）后一半：所以故事接着往下走。' }
-        : cleanAsk(await complete([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) }]));
+        : cleanAsk(await complete([{ role: 'system', content: askSystem(play.lang) }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) }]));
       // 题还没做完，回答里却带出了答案：换成只给方向
       const nz = (t: string) => t.replace(/[\s，。、“”‘’！？…（）()：:；;——-]/g, '');
       // 字面没说出来，也可能换了个说法：题还没做完时，再让模型判断一次“这段回答是不是把答案告诉学生了”；漏了就重答一次，还漏就只给方向
@@ -177,7 +180,7 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
       };
       let leak = await leaks(out);
       if (leak && !MOCK) {
-        out = cleanAsk(await complete([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) + `\n注意：上一次的回答把题的答案说出来了。这次不要说出、也不要暗示“${answer}”。学生问的如果和这道题无关，就只回答他问的事。` }]));
+        out = cleanAsk(await complete([{ role: 'system', content: askSystem(play.lang) }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) + `\n注意：上一次的回答把题的答案说出来了。这次不要说出、也不要暗示“${answer}”。学生问的如果和这道题无关，就只回答他问的事。` }]));
         leak = await leaks(out);
       }
       if (leak) out = { a1: `这道题还在做，我先不说答案。给你一个方向：${it.hints[0] ?? '回到原文，一个字一个字地看。'}`, q: '', opts: [], a2: '' };

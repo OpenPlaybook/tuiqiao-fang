@@ -113,7 +113,8 @@ export interface Line {
   read?: string; // 配音念的文字（默认是去掉标记的字幕；文言里的多音字在这里换成同音字）
   wy?: string; // 这句在《史记》里的原文：选“文言”“对照”时显示、配音念它（旁白、引导、题目不写，始终是白话）
   wyRead?: string; // 原文的配音文字（多音字换成同音字）
-  voice?: 'n' | 'm' | 'ai'; // 旁白（女）、男声、AI 眼镜
+  tr?: string; // 英文故事：这句的中文意思（“中英对照”时显示在下面，“English”时可以点开看）
+  voice?: VoiceId; // 配音的声音，见 play/index.ts 的 VOICES
   shots?: [string, number?][]; // 分镜动画：这一句的几个镜头（镜头名，时长权重），见 src/film/shots*.ts 和 第六堂课/分镜/
   scene?: Art; // 换画面（旧的静态画，没有 shots 时才用）
   cam?: [number, number, number, number, number, number]; // 镜头推拉：起点 x%、y%、放大 → 终点 x%、y%、放大
@@ -123,7 +124,11 @@ export interface Line {
   pause?: number;
   ask?: string; // 播到这里以后，“问我”框里的示例问题（一直用到下一句有 ask 为止）
 }
-export interface Play { id: string; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string }
+/** lang：zh 楚汉（讲解方式：白话 / 文言 / 对照）；en 英文故事（English / 中英对照，故事用英文配音，AI 眼镜的话用中文） */
+/** endAsk：看完这一回，结束页上可以直接问 AI 眼镜的几个问题（看完了也能接着探索） */
+export interface Play { id: string; lang?: 'zh' | 'en'; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string; endAsk?: string[] }
+/** 中文：旁白（女）、男声、AI 眼镜；英文：旁白、Ben、Green 老师、刘师傅 */
+export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu';
 
 // ---------------- 故事 ----------------
 export interface Beat { who?: string; t: string; art?: Art }

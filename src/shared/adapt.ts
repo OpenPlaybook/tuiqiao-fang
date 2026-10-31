@@ -7,10 +7,9 @@ import { PLAYS, PLAY_BY_ID } from './play';
 export interface StationMeta { id: StationId; name: string; sub: string; n: number; track: Track; emoji: string; color: string; part: string }
 /** 一章里的题（每道题是几个难度版本）：中文用播放式（PLAYS），英文还是第二版的故事页（CHAPTERS） */
 export const slotsOf = (st: StationId): string[][] => PLAY_BY_ID[st] ? PLAY_BY_ID[st].lines.filter((l) => l.task).map((l) => l.task!) : CHAPTER_BY_ID[st] ? chapterSlots(CHAPTER_BY_ID[st]).map((x) => x.task) : [];
-export const STATIONS: StationMeta[] = [
-  ...PLAYS.map((c) => ({ id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 楚汉' })),
-  ...CHAPTERS.filter((c) => c.line === 'en').map((c) => ({ id: c.id, name: c.title, sub: c.sub, n: chapterSlots(c).length, track: c.line, emoji: '🔎', color: c.color, part: 'English · The Golden Panda' })),
-];
+export const STATIONS: StationMeta[] = PLAYS.map((c) => c.lang === 'en'
+  ? { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'en' as Track, emoji: '🔎', color: c.color, part: 'English · The Golden Panda' }
+  : { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 楚汉' });
 export const ST: Record<StationId, StationMeta> = Object.fromEntries(STATIONS.map((s) => [s.id, s]));
 export const TRACKS: { id: Track; name: string }[] = [{ id: 'zh', name: '中文' }, { id: 'en', name: '英语' }];
 export const trackOf = (st: StationId): Track => ST[st]?.track ?? (/^e/.test(st) ? 'en' : 'zh');

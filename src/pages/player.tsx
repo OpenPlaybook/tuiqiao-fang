@@ -8,9 +8,9 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { CornerUpLeft, Glasses, Loader2, Pause, Play as PlayIcon, RotateCcw, Send, Volume2, VolumeX, X } from 'lucide-react';
 import type { Back, Ext, Gloss, Item, Line, MisSub, Play } from '../shared/types';
-import { PLAY_BY_ID, voiceFile, voiceLine, type Mode } from '../shared/play';
+import { MODES, MODE_TIP, PLAY_BY_ID, modeKey, voiceFile, voiceLine, wordVoice, type Mode } from '../shared/play';
 import { resultOf, scoredSteps, taskItem } from '../shared/adapt';
-import { Art, Btn, GlossContext, Rich, Stars, centerOf } from '../components/ui';
+import { Art, Btn, GlossContext, Rich, Stars, centerOf, shuffleIdx } from '../components/ui';
 import { type GlossAt, sentOf } from '../shared/gloss';
 import { finishItem, fly, getState as useGameState, logPlay, markUnsure, setData, setExtDone, startItem, toast, useGame } from '../game/store';
 import type { AskOut } from '../shared/ai';
@@ -45,7 +45,8 @@ export default function PlayerPage({ id }: { id: string }) {
   const lines = play.lines;
   const n = lines.length;
   // 每一句挑出这道题的难度版本（做过的就是做过的那个）
-  const items = lines.map((l) => (l.task ? taskItem(p, l.task, 'zh') : null));
+  const lang = play.lang ?? 'zh', en = lang === 'en';
+  const items = lines.map((l) => (l.task ? taskItem(p, l.task, lang) : null));
   const done = (k: number) => !items[k] || p.recs[items[k]!.id]?.status === 'done';
   const extOk = (k: number) => { const it = items[k]; if (!it) return true; const r = p.recs[it.id]; return requiredExts(it, r).every((e) => extsOf(r)[e.id] !== undefined); };
   const firstOpen = lines.findIndex((_, k) => !done(k) || !extOk(k));
@@ -57,7 +58,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const [retry, setRetry] = useState(0); // 点“重试”：时长表、这一句的配音重新取
   const [idxFail, setIdxFail] = useState(false);
   useEffect(() => { if (durMap) return; let alive = true; voiceIndex().then((d) => alive && setDur(d)).catch(() => alive && setIdxFail(true)); return () => { alive = false; }; }, [retry]);
-  const [mode, setMode] = useState<Mode>(() => { try { const m = localStorage.getItem('tq-mode'); return m === 'wy' || m === 'dz' ? m : 'bh'; } catch { return 'bh'; } });
+  const [mode, setMode] = useState<Mode>(() => { const ms = MODES[lang].map((x) => x.m); try { const m = localStorage.getItem(modeKey(lang)) as Mode; return ms.includes(m) ? m : ms[0]; } catch { return ms[0]; } });
   const lineDur = (l: Line) => { const v = voiceLine(l, mode); return (dur[voiceFile(v)] ?? EST(v.read ?? v.t)) + (l.pause ?? 0.35); };
   const starts: number[] = []; { let t = 0; for (const l of lines) { starts.push(t); t += lineDur(l); } starts.push(t); }
 
@@ -75,6 +76,8 @@ export default function PlayerPage({ id }: { id: string }) {
   const [hint, setHint] = useState<string | null>(null);
   const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; sent: [string, string] | null; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean } | null>(null);
   const [extOpen, setExtOpen] = useState<{ it: Item; ext: Ext } | null>(null);
+  const [askPreset, setAskPreset] = useState<{ q: string; n: number } | null>(null); // 结束页上点的问题，交给右边的“问 AI”
+  const aiOn = useGame((s) => s.config.ai);
   // 点字的小窗：点外面任何地方就关上
   const glossRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -149,6 +152,8 @@ export default function PlayerPage({ id }: { id: string }) {
     if (!durMap || muted || noVoice) return;
     planVoices(lines.slice(idx).map((l) => voiceFile(voiceLine(l, mode))).filter((f) => durMap[f]));
   }, [idx, mode, durMap, muted, noVoice]);
+  const wordAudio = useRef<HTMLAudioElement | null>(null);
+  const sayWord = (w: string) => { const file = voiceFile(wordVoice(w)); loadVoice(file, 0).then((u) => { const a = (wordAudio.current ??= new Audio()); a.src = u; a.play().catch(() => {}); }, () => {}); };
   const retryVoice = () => { sfx('click'); setIdxFail(false); setWait('load'); setRetry((r) => r + 1); };
   const skipVoice = () => { sfx('click'); subsOnly.current = true; if (!durMap) setNoVoice(true); else setSkipAt(idx); };
   useEffect(() => { setHint(null); }, [idx, phase]);
@@ -210,7 +215,7 @@ export default function PlayerPage({ id }: { id: string }) {
                 </motion.div>
               )}
             </AnimatePresence>
-            {atTask && <TaskView key={item!.id} it={item!} line={line} prev={lines[idx - 1]} stem={stem} mode={mode} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
+            {atTask && <TaskView key={item!.id} en={en} it={item!} line={line} prev={lines[idx - 1]} stem={stem} mode={mode} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
             {hint && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="absolute right-3 top-3 z-20 flex max-w-[44%] gap-2 rounded-2xl bg-white/95 px-3.5 py-2.5 shadow-xl">
                 <Glasses size={20} className="mt-0.5 shrink-0 text-sky-600" /><div className="text-[15px] font-bold leading-relaxed"><Rich text={hint} /></div>
@@ -219,9 +224,9 @@ export default function PlayerPage({ id }: { id: string }) {
             )}
             {/* 字幕：在画面里，躲开下面的控制条 */}
             {showSub && !stem && (
-              <div className="absolute inset-x-0 bg-gradient-to-t from-black/70 to-black/0 px-6 pb-1.5 pt-6 text-center font-bold leading-relaxed text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]" style={{ fontSize: subSize, bottom: Math.max(0, CTRL - vy) }}>
+              <div className="subline absolute inset-x-0 bg-gradient-to-t from-black/70 to-black/0 px-6 pb-1.5 pt-6 text-center font-bold leading-relaxed text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]" style={{ fontSize: subSize, bottom: Math.max(0, CTRL - vy) }}>
                 {line.who && <span className={`mr-2 rounded-md px-2 py-0.5 align-middle text-[0.62em] ${line.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{line.voice === 'ai' ? <Glasses size={16} className="inline" /> : <Rich text={line.who} />}</span>}
-                <LineText key={idx} l={line} mode={mode} />
+                <LineText key={idx} l={line} mode={mode} lock={!!item && !done(idx)} />
               </div>
             )}
             {/* 等配音：加载中（过 0.35 秒还没好才显示，免得一闪）；取不到就让学生选 */}
@@ -238,24 +243,34 @@ export default function PlayerPage({ id }: { id: string }) {
             )}
             {phase === 'cover' && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white">
-                <div className="kai text-5xl">{play.title}</div>
+                <div className={en ? 'font-serif text-5xl font-black' : 'kai text-5xl'}>{play.title}</div>
                 <div className="mt-2 text-lg opacity-85">{play.sub}</div>
                 <button onClick={() => { sfx('click'); unlock(); setPhase('play'); }} className="mt-6 flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-lg font-black text-[#2B2722]"><PlayIcon size={22} />{lastDone >= 0 ? '接着看' : '开始'}</button>
               </div>
             )}
             {phase === 'end' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 text-white">
-                <div className="kai text-4xl">这一回看完了</div>
-                {play.next && PLAY_BY_ID[play.next] ? <Btn size="lg" color={play.color} onClick={() => go(`/c/${play.next}`)}>翻到下一回 ›</Btn> : <Btn size="lg" color={play.color} onClick={() => go('/')}>合上书</Btn>}
-                {play.nextNote && <div className="text-sm opacity-85">{play.nextNote}</div>}
-                <button onClick={() => { setIdx(0); setPhase('play'); }} className="flex items-center gap-1 text-sm font-bold underline opacity-85"><RotateCcw size={14} />从头再看</button>
+              // 看完了也能接着探索：最后那句话（字可以点），几个可以直接问 AI 眼镜的问题
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-auto bg-black/60 px-6 py-4 text-white">
+                <div className={en ? 'font-serif text-3xl font-black' : 'kai text-4xl'}>这一回看完了</div>
+                <div className={`max-w-[80%] rounded-xl bg-white/95 px-5 py-2.5 text-center leading-relaxed text-[#2B2722] ${en ? 'font-serif text-[19px]' : 'kai text-[21px]'}`}><LineText l={lines[n - 1]} mode={mode} /></div>
+                {(play.endAsk?.length ?? 0) > 0 && aiOn && (
+                  <div className="max-w-[86%] text-center">
+                    <div className="text-[14px] opacity-90">点一点画虚线的字，看看意思；还想知道更多，问问 AI 眼镜：</div>
+                    <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">{play.endAsk!.map((q) => <button key={q} onClick={() => { sfx('click'); setAskPreset((x) => ({ q, n: (x?.n ?? 0) + 1 })); }} className="rounded-full bg-sky-50 px-3 py-1 text-[14px] font-bold text-sky-900 hover:bg-white">🔎 {q}</button>)}</div>
+                  </div>
+                )}
+                <div className="mt-1 flex items-center gap-3">
+                  {play.next && PLAY_BY_ID[play.next] ? <Btn color={play.color} onClick={() => go(`/c/${play.next}`)}>翻到下一回 ›</Btn> : <Btn color={play.color} onClick={() => go('/')}>合上书</Btn>}
+                  <button onClick={() => { setIdx(0); setPhase('play'); }} className="flex items-center gap-1 text-sm font-bold underline opacity-85"><RotateCcw size={14} />从头再看</button>
+                </div>
+                {play.nextNote && <div className="text-sm opacity-80">{play.nextNote}</div>}
               </div>
             )}
           </div>
           {/* 左上角：目录、回目（有黑边就在黑边里） */}
           <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-white backdrop-blur-sm">
             <button onClick={() => go('/')} className="text-[13px] font-bold underline opacity-90">目录</button>
-            <span className="kai text-[17px]">{play.title}</span>
+            <span className={en ? 'font-serif text-[16px] font-bold' : 'kai text-[17px]'}>{play.title}</span>
           </div>
           {retTo && PLAY_BY_ID[retTo[0]] && <button onClick={() => go(`/c/${retTo[0]}?at=${retTo[1]}`)} className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-black text-[#2B2722] shadow"><CornerUpLeft size={15} />回到{PLAY_BY_ID[retTo[0]].title.split('　')[0]}</button>}
           {/* 最下面一摞：答题区（从字幕的位置展开，有黑边就往黑边里长）→ 控制条（播放区最下面） */}
@@ -279,8 +294,8 @@ export default function PlayerPage({ id }: { id: string }) {
                 })}
               </div>
               <span className="w-[86px] text-right text-xs tabular-nums opacity-85">{fmt(nowT)} / {fmt(total)}</span>
-              <div className="flex overflow-hidden rounded-full bg-white/15 text-[12px] font-bold" title="白话：现代汉语讲；文言：出自《史记》的句子用原文讲、配音念原文；对照：原文下面附白话">
-                {([['bh', '白话'], ['wy', '文言'], ['dz', '对照']] as const).map(([m, t]) => <button key={m} onClick={() => { setMode(m); try { localStorage.setItem('tq-mode', m); } catch { /* */ } }} className={`px-2 py-0.5 ${mode === m ? 'bg-white text-[#2B2722]' : 'hover:bg-white/10'}`}>{t}</button>)}
+              <div className="flex overflow-hidden rounded-full bg-white/15 text-[12px] font-bold" title={MODE_TIP[lang]}>
+                {MODES[lang].map(({ m, t }) => <button key={m} onClick={() => { setMode(m); try { localStorage.setItem(modeKey(lang), m); } catch { /* */ } }} className={`px-2 py-0.5 ${mode === m ? 'bg-white text-[#2B2722]' : 'hover:bg-white/10'}`}>{t}</button>)}
               </div>
               <button onClick={() => { const m = !muted; setMuted(m); try { localStorage.setItem('tq-mute', m ? '1' : '0'); } catch { /* */ } }} className="rounded-full p-1 hover:bg-white/15" title={muted ? '打开配音' : '关掉配音（只看字幕）'}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}</button>
             </div>
@@ -288,7 +303,7 @@ export default function PlayerPage({ id }: { id: string }) {
         </div>
 
         {/* ---------- 台本（AI 眼镜） ---------- */}
-        <Script play={play} mode={mode} items={items} far={Math.min(far, n - 1)} idx={idx} phase={phase} maxIdx={maxIdx} onSeek={seek} onTask={openTask} onExt={(it, ext) => setExtOpen({ it, ext })} onBack={jump} askHint={askHint} line={line} item={atTask ? item : null} />
+        <Script play={play} mode={mode} items={items} far={Math.min(far, n - 1)} idx={idx} phase={phase} maxIdx={maxIdx} onSeek={seek} onTask={openTask} onExt={(it, ext) => setExtOpen({ it, ext })} onBack={jump} askHint={askHint} line={line} item={atTask ? item : null} askPreset={askPreset} />
       </div>
 
       {glossPop && (() => {
@@ -296,17 +311,17 @@ export default function PlayerPage({ id }: { id: string }) {
         const above = glossPop.y > window.innerHeight * 0.62;
         return (
           <div ref={glossRef} className="fixed z-[100] w-max max-w-[min(340px,92vw)] rounded-2xl bg-white px-4 py-2.5 shadow-2xl ring-2 ring-sky-200" style={{ left: Math.min(window.innerWidth - 178, Math.max(178, glossPop.x)), top: above ? glossPop.y - 30 : glossPop.y + 8, transform: `translate(-50%, ${above ? '-100%' : '0'})` }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-baseline gap-2"><Glasses size={16} className="shrink-0 self-center text-sky-600" /><b className="kai text-2xl">{glossPop.w}</b>{glossPop.g.py && <span className="text-[15px] text-ink2">{glossPop.g.py}</span>}</div>
+            <div className="flex items-baseline gap-2"><Glasses size={16} className="shrink-0 self-center text-sky-600" /><b className={en ? 'font-serif text-[22px]' : 'kai text-2xl'}>{glossPop.w}</b>{glossPop.g.py && <span className="text-[15px] text-ink2">{glossPop.g.py}</span>}{en && <button onClick={() => sayWord(glossPop.w)} className="self-center rounded-full p-1 text-sky-700 hover:bg-sky-50" title="听一听"><Volume2 size={17} /></button>}</div>
             <div className="mt-0.5 text-[15px] leading-relaxed">{glossPop.g.d}</div>
             {glossPop.sent && (glossPop.lv === 1
               ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, lv: 2 }); logPlay(id, 'gloss2', glossPop.w); }} className="mt-1.5 text-[14px] font-black text-sky-700 underline">放在这句话里怎么理解？</button>
               : <div className="mt-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[15px] leading-relaxed"><div className="text-[12px] font-black text-sky-700">在这句话里</div><span className="kai text-[1.05em]">“{glossPop.sent[0]}”</span>：{glossPop.sent[1]}</div>)}
             {glossPop.g.more && (!glossPop.more
-              ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, more: true, wrong: [] }); }} className="mt-1.5 block text-[14px] font-black text-[#9A5B2E] underline">🧭 这个字还能怎么用？</button>
+              ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, more: true, wrong: [] }); }} className="mt-1.5 block text-[14px] font-black text-[#9A5B2E] underline">🧭 这个{en ? '词' : '字'}还能怎么用？</button>
               : <div className="mt-1.5 max-w-[320px] rounded-lg bg-amber-50 px-2.5 py-1.5 text-[15px] leading-relaxed">
                   <div>{glossPop.g.more.t}</div>
                   <div className="mt-1 font-black">{glossPop.g.more.q}</div>
-                  <div className="mt-1 flex flex-wrap gap-1">{glossPop.g.more.opts.map(([t, ok], i) => {
+                  <div className="mt-1 flex flex-wrap gap-1">{shuffleIdx(glossPop.g.more.opts.length, p.pid + glossPop.w).map((i) => { const [t, ok] = glossPop.g.more!.opts[i];
                     const bad = glossPop.wrong?.includes(i), good = glossPop.got && ok;
                     return <button key={i} disabled={glossPop.got || bad} onClick={() => {
                       if (ok) { sfx('ok'); const first = !(useGameState().player?.recs[`${id}-log`]?.log ?? []).some((e) => e.q === 'more' && e.v === glossPop.w); logPlay(id, 'more', glossPop.w); if (first) toast({ emoji: '🧭', title: '探索分 +1', text: `“${glossPop.w}”的别的用法` }); setGlossPop({ ...glossPop, got: true }); }
@@ -340,7 +355,7 @@ export const requiredExts = (it: Item, r: { perf?: number; unsure?: number; stat
 
 // ---------------- 画面里的题 ----------------
 // 卡片上做的（长文本、点毛病、改错）：卡片在画面上方；其余在画面下方的小弹层 / 大弹层里。做完了，下面出讲解、拓展、继续。
-function TaskView({ it, line, prev, stem, mode, color, bh, bottomEl, onCont, onExt, onBack, onHint }: { it: Item; line: Line; prev?: Line; stem: Line | null; mode: Mode; color: string; bh: number; bottomEl: HTMLDivElement | null; onCont: () => void; onExt: (e: Ext) => void; onBack: (b: Back) => void; onHint: (h: string) => void }) {
+function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont, onExt, onBack, onHint }: { en: boolean; it: Item; line: Line; prev?: Line; stem: Line | null; mode: Mode; color: string; bh: number; bottomEl: HTMLDivElement | null; onCont: () => void; onExt: (e: Ext) => void; onBack: (b: Back) => void; onHint: (h: string) => void }) {
   const rec = useGame((s) => s.player?.recs[it.id]);
   const finished = rec?.status === 'done';
   const steps = scoredSteps(it);
@@ -382,7 +397,7 @@ function TaskView({ it, line, prev, stem, mode, color, bh, bottomEl, onCont, onE
     <>
       {lay === 'card' && (
         <motion.div ref={ref} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute left-1/2 top-[4%] z-10 max-h-[64%] w-[90%] -translate-x-1/2 overflow-visible">
-          {mis?.src && <div className="mb-1.5 rounded-xl bg-[#F7EFD9]/95 px-5 py-2 shadow-xl"><div className="text-xs font-black text-[#8A6A2F]">{prev?.card?.by ?? '原文'}</div><div className="kai text-[22px] leading-relaxed"><Rich text={prev?.card?.t ?? mis.src} /></div></div>}
+          {mis?.src && <div className="mb-1.5 rounded-xl bg-[#F7EFD9]/95 px-5 py-2 shadow-xl"><div className="text-xs font-black text-[#8A6A2F]">{prev?.card?.by ?? '原文'}</div><div className={en ? 'font-serif text-[20px] leading-relaxed' : 'kai text-[22px] leading-relaxed'}><Rich text={prev?.card?.t ?? mis.src} /></div></div>}
           <div className={`rounded-xl px-5 py-3 shadow-2xl ${cardKind === 'yuan' && !mis ? 'bg-[#F7EFD9]/96' : 'bg-sky-50/96'}`}>
             <div className="mb-0.5 flex items-center gap-2">
               {cardKind === 'ai' || mis ? <span className="flex items-center gap-1 text-xs font-black text-sky-700"><Glasses size={15} />{mis?.title ?? (mis?.src ? '译文' : line.who === 'AI 眼镜' ? '小结' : '')}</span> : null}
@@ -396,7 +411,7 @@ function TaskView({ it, line, prev, stem, mode, color, bh, bottomEl, onCont, onE
         lay === 'card' ? (foot ? <div className="mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-3 shadow-xl [&>div]:mt-0 [&>div]:border-0 [&>div]:pt-0" style={{ maxHeight: bh * 0.4 }}>{foot}</div> : null) : (
           <motion.div ref={ref} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} onClick={(e) => e.stopPropagation()} className="relative mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-2.5 shadow-xl backdrop-blur" style={{ maxHeight: bh * (lay === 'big' ? 0.86 : 0.62) }}>
             {hintBtn && <div className="float-right ml-2">{hintBtn}</div>}
-            {stem && <div className="mb-1.5 text-[17px] font-bold leading-relaxed">{stem.who && <span className={`mr-1.5 rounded-md px-1.5 py-0.5 align-middle text-[12px] text-white ${stem.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{stem.voice === 'ai' ? <Glasses size={14} className="inline" /> : <Rich text={stem.who} />}</span>}<LineText l={stem} mode={mode} /></div>}
+            {stem && <div className="mb-1.5 text-[17px] font-bold leading-relaxed">{stem.who && <span className={`mr-1.5 rounded-md px-1.5 py-0.5 align-middle text-[12px] text-white ${stem.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{stem.voice === 'ai' ? <Glasses size={14} className="inline" /> : <Rich text={stem.who} />}</span>}<LineText l={stem} mode={mode} lock={!finished} /></div>}
             {body}
             {foot}
           </motion.div>
@@ -414,10 +429,19 @@ const stateOf = (it: Item | null, r: { status?: string; data?: Record<string, un
 
 /** 一句话按讲解模式显示：白话；文言（出自《史记》的用原文，旁边可以点开白话）；对照（原文，下面是白话） */
 /** 给 AI 看的这一句：有原文就一起带上（学生看的是白话还是原文都能答） */
-const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.t);
-function LineText({ l, mode }: { l: Line; mode: Mode }) {
+const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.tr ? `${l.t}（中文意思：${l.tr}）` : l.t);
+/** lock：这句有题、还没做完——中文先不给（不然一看中文就知道答案了） */
+function LineText({ l, mode, lock }: { l: Line; mode: Mode; lock?: boolean }) {
   const [show, setShow] = useState(false);
-  if (mode === 'bh' || !l.wy) return <Rich text={l.t} />;
+  // 英文故事：英文，下面附中文（对照），或者点“中文”看这一句的意思
+  if (l.tr !== undefined) return (
+    <>
+      <Rich text={l.t} />
+      {mode === 'en' && !lock && <button onClick={(e) => { e.stopPropagation(); setShow(!show); }} className="ml-1.5 rounded-md border border-current px-1 align-middle text-[0.6em] font-bold opacity-75 hover:opacity-100">{show ? '收起' : '中文'}</button>}
+      {(mode === 'dz' || show) && (lock ? mode === 'dz' && <span className="mt-0.5 block text-[0.75em] font-normal opacity-70">（做完这道题，再看中文）</span> : <span className="mt-0.5 block text-[0.86em] font-normal opacity-90"><Rich text={l.tr} /></span>)}
+    </>
+  );
+  if (mode === 'bh' || mode === 'en' || !l.wy) return <Rich text={l.t} />;
   return (
     <>
       <span className="kai text-[1.08em]"><Rich text={l.wy} /></span>
@@ -428,7 +452,7 @@ function LineText({ l, mode }: { l: Line; mode: Mode }) {
 }
 
 // ---------------- 右边：看过的内容（可点的字带虚线，随时能点；谁说的一眼看得出；不套框，省地方）----------------
-function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, onExt, onBack, askHint, line, item }: { play: Play; mode: Mode; items: (Item | null)[]; far: number; idx: number; phase: string; maxIdx: number; onSeek: (k: number) => void; onTask: (k: number) => void; onExt: (it: Item, e: Ext) => void; onBack: (b: Back) => void; askHint: string; line: Line; item: Item | null }) {
+function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, onExt, onBack, askHint, line, item, askPreset }: { play: Play; mode: Mode; items: (Item | null)[]; far: number; idx: number; phase: string; maxIdx: number; onSeek: (k: number) => void; onTask: (k: number) => void; onExt: (it: Item, e: Ext) => void; onBack: (b: Back) => void; askHint: string; line: Line; item: Item | null; askPreset: { q: string; n: number } | null }) {
   const p = useGame((s) => s.player)!;
   const cur = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -451,7 +475,7 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
                 {l.voice === 'ai' && <Glasses size={15} className="mr-1 inline align-[-2px] text-sky-600" />}
                 {l.who && l.voice !== 'ai' && <span className="mr-1 font-sans text-[13px] font-black text-[#9A5B2E]"><Rich text={l.who} />：</span>}
                 {!l.who && yuan && l.card?.by && <span className="mr-1 font-sans text-[12px] font-black text-[#8A6A2F]">{l.card.by}</span>}
-                <LineText l={l} mode={mode} />
+                <LineText l={l} mode={mode} lock={!!it && !isDone} />
               </div>
               {showTask && (
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 pb-1 pl-6 text-[13px]">
@@ -467,13 +491,13 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
           );
         })}
       </div>
-      <Ask play={play} item={item} line={line} before={play.lines.slice(Math.max(0, idx - 2), idx).map(aiText)} hint={askHint} />
+      <Ask play={play} item={item} line={line} before={play.lines.slice(Math.max(0, idx - 2), idx).map(aiText)} hint={askHint} preset={askPreset} />
     </aside>
   );
 }
 
 // ---------------- 问 AI：不直接给全部答案——先讲一半，问你一个小问题，你想对了再讲后一半（想对了得 1 个探索分） ----------------
-function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null; line: Line; before: string[]; hint: string }) {
+function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Item | null; line: Line; before: string[]; hint: string; preset: { q: string; n: number } | null }) {
   const p = useGame((s) => s.player)!;
   const aiOn = useGame((s) => s.config.ai);
   const [q, setQ] = useState('');
@@ -482,6 +506,8 @@ function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null
   const [wrong, setWrong] = useState<number[]>([]);
   const [got, setGot] = useState<number | null>(null);
   const [err, setErr] = useState('');
+  const askRef = useRef<(t?: string) => void>(() => {});
+  useEffect(() => { if (preset) askRef.current(preset.q); }, [preset?.n]); // 结束页上点了一个问题：直接问
   if (!aiOn) return null;
   const ask = async (text?: string) => {
     const t = (text ?? q).trim(); if (!t || busy) return;
@@ -493,6 +519,7 @@ function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null
       setA({ ...r, ask: t, open: true }); setWrong([]); setGot(null); setQ('');
     } catch (e) { setErr(String((e as Error).message || e)); } finally { setBusy(false); }
   };
+  askRef.current = ask;
   const pick = (i: number) => {
     if (!a || got !== null || wrong.includes(i)) return;
     if (a.opts[i].ok) { sfx('ok'); setGot(i); if (!wrong.length) logPlay(play.id, 'askok', a.ask); toast({ emoji: '🧭', title: wrong.length ? '想通了' : '探索分 +1', text: wrong.length ? '' : '你自己想出了后一半' }); }
@@ -509,12 +536,12 @@ function Ask({ play, item, line, before, hint }: { play: Play; item: Item | null
           {a.q && (
             <div className="mt-2">
               <div className="font-black text-sky-800">{a.q}</div>
-              <div className="mt-1 flex flex-wrap gap-1.5">{a.opts.map((o, i) => (
+              <div className="mt-1 flex flex-wrap gap-1.5">{shuffleIdx(a.opts.length, a.ask + a.q).map((i) => { const o = a.opts[i]; return (
                 <div key={i} className="max-w-full" style={{ minWidth: wrong.includes(i) || got === i ? 'min(100%, 260px)' : undefined }}>
                   <button onClick={() => pick(i)} disabled={got !== null || wrong.includes(i)} className={`w-full rounded-lg border-2 px-2.5 py-1 text-left font-bold ${got === i ? 'border-emerald-400 bg-emerald-50' : wrong.includes(i) ? 'border-rose-200 bg-rose-50 text-ink2 line-through' : 'border-[#E6DCC6] bg-white hover:border-sky-300'}`}>{o.t}</button>
                   {(wrong.includes(i) || got === i) && <div className={`rounded-b-lg px-2.5 py-1 text-[14px] ${got === i ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900'}`}>{o.why}</div>}
                 </div>
-              ))}</div>
+              ); })}</div>
             </div>
           )}
           {showRest && a.a2 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">{a.a2}</motion.div>}

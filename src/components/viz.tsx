@@ -10,6 +10,7 @@ const loop = { duration: 2.6, repeat: Infinity, repeatDelay: 0.8, ease: 'easeInO
 
 // ---------------- 时间线：现在完成时 / 一般过去时 ----------------
 const Timeline = ({ p }: { p: P }) => {
+  if (p.mode === 'cont') return <TimelineCont />;
   const perfect = p.mode !== 'past';
   return (
     <svg viewBox="0 0 640 230" className="w-full">
@@ -42,6 +43,24 @@ const Timeline = ({ p }: { p: P }) => {
     </svg>
   );
 };
+
+// ---------------- 过去进行时：一段“正在做”，那一刻落在中间 ----------------
+const TimelineCont = () => (
+  <svg viewBox="0 0 640 230" className="w-full">
+    <line x1="30" y1="140" x2="610" y2="140" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+    <path d="M610,140 l-14,-9 v18 z" fill={INK} />
+    <text x="40" y="180" fontSize="20" fill={GRAY} fontWeight="700">过去 past</text>
+    <line x1="540" y1="120" x2="540" y2="160" stroke={GRAY} strokeWidth="3" />
+    <text x="540" y="185" fontSize="20" fill={GRAY} fontWeight="800" textAnchor="middle">现在 now</text>
+    <motion.rect x="110" y="128" height="24" rx="12" fill={GOLD} opacity=".8" initial={{ width: 0 }} animate={{ width: [0, 300, 300] }} transition={loop} />
+    <text x="260" y="112" fontSize="22" fill="#8A5A10" fontWeight="900" textAnchor="middle">was eating（一直在吃）</text>
+    <motion.g initial={{ opacity: 0 }} animate={{ opacity: [0, 0, 1, 1] }} transition={{ ...loop, times: [0, 0.45, 0.55, 1] }}>
+      <line x1="260" y1="60" x2="260" y2="160" stroke={ZHU} strokeWidth="4" strokeDasharray="6 5" />
+      <text x="260" y="48" fontSize="22" fill={ZHU} fontWeight="900" textAnchor="middle">💡→⚫ 2:15 灯灭了</text>
+      <text x="260" y="208" fontSize="19" fill={INK} fontWeight="800" textAnchor="middle">灯灭的那一刻，正在吃——已经吃了一会儿</text>
+    </motion.g>
+  </svg>
+);
 
 // ---------------- borrow / lend：同一个动作，主语不同 ----------------
 const Give = () => (
