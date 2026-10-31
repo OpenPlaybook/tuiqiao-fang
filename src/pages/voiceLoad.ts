@@ -1,0 +1,97 @@
+// 配音按需加载。画面、字幕、题目都在网页代码里（一次载入，压缩后约 300KB）；真正要“等”的只有配音。
+// 每句配音是一个几十 KB 的 mp3，文件名是“音色 + 文字”的哈希（内容不变，名字就不变，可以长期缓存）。
+//   · 播到哪一句，先把这一句和后面几句取下来（fetch 成 Blob 放在内存里）；取到了才开始播，播的时候不会卡在半句。
+//   · 这一句还没取到：画面停在这一句开头，显示“配音加载中”，取到了接着播。
+//   · 一回里剩下的句子，空闲时一句一句在后台取（同一时间只取一个，不和眼前要用的抢网速）。
+//   · 取不到（断网、服务器出错）：自动重试两次；还不行就让学生选“重试”或“先看字幕”。
+// 演示版（单个 HTML）把配音内嵌成 window.__VOICE__（文件名 → data URL），直接就是“已取到”。
+// 配音放在别的地方（CDN、对象存储）：打包时设 VITE_MEDIA_BASE=https://…/（以 / 结尾），见 src/media.ts。
+import { MEDIA } from '../media';
+
+const W = window as unknown as { __VOICE__?: Record<string, string>; __VOICE_IDX__?: Record<string, number> };
+const NEAR = 4; // 眼前要用的：当前这句 + 后面几句
+const MAX = 2; // 同时取几个（后台慢慢取的只占一个）
+
+const sleep = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
+/** fetch 带超时，失败重试（0.6 秒、2 秒后各再试一次） */
+const fetchRetry = async (url: string, timeout = 15000): Promise<Response> => {
+  let err: unknown;
+  for (const wait of [0, 600, 2000]) {
+    if (wait) await sleep(wait);
+    const ac = new AbortController(), tm = setTimeout(() => ac.abort(), timeout);
+    try {
+      const r = await fetch(url, { signal: ac.signal });
+      if (r.ok) return r;
+      err = new Error(`HTTP ${r.status}`);
+      if (r.status === 404) break; // 文件不存在，重试也没用
+    } catch (e) { err = e; } finally { clearTimeout(tm); }
+  }
+  throw err;
+};
+
+// ---------------- 时长表：voice/index.json（文件名 → 秒） ----------------
+let idxP: Promise<Record<string, number>> | null = null;
+/** 时长表取不到时 reject（下次再调用会重新取） */
+export const voiceIndex = () => (idxP ??= W.__VOICE_IDX__
+  ? Promise.resolve(W.__VOICE_IDX__)
+  : fetchRetry(`${MEDIA}voice/index.json`).then((r) => r.json() as Promise<Record<string, number>>).catch((e) => { idxP = null; throw e; }));
+
+// ---------------- 配音文件 ----------------
+type Job = { file: string; prio: number; ok: (u: string) => void; bad: (e: unknown) => void };
+const ready = new Map<string, string>(); // 取到的：文件名 → 播放地址（Blob URL）
+const wanted = new Map<string, { p: Promise<string>; job: Job | null }>(); // 正在排队或正在取的
+const queue: Job[] = [];
+let active = 0, activeBg = 0;
+
+const pump = () => {
+  queue.sort((a, b) => a.prio - b.prio);
+  while (queue.length && active < MAX) {
+    const bg = queue[0].prio >= NEAR;
+    if (bg && activeBg >= 1) break; // 后台的同时只取一个
+    const job = queue.shift()!;
+    active++; if (bg) activeBg++;
+    const w = wanted.get(job.file); if (w) w.job = null;
+    fetchRetry(`${MEDIA}voice/${job.file}`)
+      .then((r) => r.blob())
+      .then((b) => { const u = URL.createObjectURL(b); ready.set(job.file, u); wanted.delete(job.file); job.ok(u); })
+      .catch((e) => { wanted.delete(job.file); job.bad(e); })
+      .finally(() => { active--; if (bg) activeBg--; pump(); });
+  }
+};
+
+/** 已经取到了吗（取到了就能马上播） */
+export const voiceReady = (file: string) => !!W.__VOICE__?.[file] || ready.has(file);
+/** 播放地址：取到了才有 */
+export const voiceSrc = (file: string) => W.__VOICE__?.[file] ?? ready.get(file);
+
+/** 要这个文件：prio 越小越急（0 = 正要播）。已经在排队的会按新的急迫程度往前挪 */
+export const loadVoice = (file: string, prio = 0): Promise<string> => {
+  const have = voiceSrc(file);
+  if (have) return Promise.resolve(have);
+  const w = wanted.get(file);
+  if (w) { if (w.job && prio < w.job.prio) { w.job.prio = prio; pump(); } return w.p; }
+  let job!: Job;
+  const p = new Promise<string>((ok, bad) => { job = { file, prio, ok, bad }; });
+  p.catch(() => {}); // 没人等的后台任务失败了也不报错
+  wanted.set(file, { p, job });
+  queue.push(job); pump();
+  return p;
+};
+
+/** 播放计划：files 是从当前这句往后的配音（按顺序）。前 NEAR 个马上取，其余后台慢慢取；不在计划里的排队任务往后放 */
+export const planVoices = (files: string[]) => {
+  const plan = new Set(files);
+  for (const j of queue) if (!plan.has(j.file)) j.prio = 1000 + j.prio;
+  files.forEach((f, k) => { if (!voiceReady(f)) loadVoice(f, k < NEAR ? k : NEAR + k); });
+};
+
+// ---------------- iPhone / iPad：声音要在“点一下”的时候先解锁 ----------------
+// Safari 只允许在用户点击时开始放声音；后面几句是在 await 之后才 play()，所以第一次点击时先用同一个 audio 放一段无声的，把它解锁。
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+let unlocked = false;
+export const unlockAudio = (a: HTMLAudioElement) => {
+  if (unlocked) return;
+  unlocked = true;
+  a.src = SILENT;
+  a.play().then(() => { if (a.src === SILENT) a.pause(); }).catch(() => { unlocked = false; }); // 这时可能已经换成真的配音在放了，别把它停掉
+};

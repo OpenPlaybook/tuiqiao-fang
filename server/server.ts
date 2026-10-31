@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { STATION_IDS, type GameConfig, type Player, type Rec, type StationId } from '../src/shared/types';
 import { ITEMS, ITEM_BY_ID } from '../src/shared/bank';
@@ -168,7 +169,13 @@ const readBody = (req: http.IncomingMessage) => new Promise<unknown>((ok, bad) =
   req.on('end', () => { try { ok(chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}); } catch (e) { bad(e); } });
   req.on('error', bad);
 });
-/** 静态文件；视频支持 Range（拖动进度条） */
+/** 静态文件。
+ *  缓存：assets/ 里的文件名带内容哈希、voice/*.mp3 的文件名是“音色 + 文字”的哈希——内容变了名字就变，浏览器存一年不用再问；
+ *        index.html、voice/index.json、shorts/ 每次都问一下服务器有没有变（ETag，没变就回 304，不重传）。
+ *  压缩：网页代码、样式、JSON 用 gzip 发（JS 约 920KB → 300KB），压好的放在内存里，文件改了自动重压。
+ *  视频支持 Range（拖动进度条、边下边放）。 */
+const gzCache = new Map<string, { m: number; buf: Buffer }>();
+const ZIP = new Set(['.js', '.css', '.html', '.json', '.svg']);
 const serveStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: string) => {
   let rel = decodeURIComponent(url.split('?')[0]);
   const sub = ['/assets/', '/shorts/', '/voice/'].map((d) => rel.lastIndexOf(d)).find((k) => k >= 0);
@@ -176,16 +183,28 @@ const serveStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: s
   if (rel === '/' || !path.extname(rel)) rel = '/index.html';
   const f = path.join(DIST, path.normalize(rel));
   if (!f.startsWith(DIST) || !fs.existsSync(f)) return send(res, 404, 'not found', 'text/plain');
-  const type = MIME[path.extname(f)] ?? 'application/octet-stream';
-  const size = fs.statSync(f).size;
+  const ext = path.extname(f), type = MIME[ext] ?? 'application/octet-stream';
+  const st = fs.statSync(f), size = st.size;
+  const etag = `"${size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+  const immutable = rel.startsWith('/assets/') || (rel.startsWith('/voice/') && ext === '.mp3');
+  const cache = immutable ? 'public, max-age=31536000, immutable' : 'no-cache';
+  const head: Record<string, string> = { 'Content-Type': type, 'Cache-Control': cache, ETag: etag, 'Accept-Ranges': 'bytes', ...(ZIP.has(ext) ? { Vary: 'Accept-Encoding' } : {}) };
+  if (req.headers['if-none-match'] === etag) { res.writeHead(304, head); return res.end(); }
   const range = req.headers.range?.match(/bytes=(\d*)-(\d*)/);
-  if (range && type === 'video/mp4') {
+  if (range && (type === 'video/mp4' || type === 'audio/mpeg')) {
     const a = range[1] ? Number(range[1]) : 0, b = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
-    res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': b - a + 1, 'Cache-Control': 'public, max-age=86400' });
+    if (a > b || a >= size) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); return res.end(); }
+    res.writeHead(206, { ...head, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Content-Length': b - a + 1 });
     return fs.createReadStream(f, { start: a, end: b }).pipe(res);
   }
-  const immutable = rel.startsWith('/assets/');
-  res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Accept-Ranges': 'bytes', 'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : type === 'video/mp4' || type === 'audio/mpeg' ? 'public, max-age=86400' : 'no-cache' });
+  if (ZIP.has(ext) && size > 1024 && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))) {
+    let z = gzCache.get(f);
+    if (!z || z.m !== st.mtimeMs) { z = { m: st.mtimeMs, buf: zlib.gzipSync(fs.readFileSync(f), { level: 9 }) }; gzCache.set(f, z); }
+    res.writeHead(200, { ...head, 'Content-Encoding': 'gzip', 'Content-Length': z.buf.length });
+    return res.end(req.method === 'HEAD' ? undefined : z.buf);
+  }
+  res.writeHead(200, { ...head, 'Content-Length': size });
+  if (req.method === 'HEAD') return res.end();
   fs.createReadStream(f).pipe(res);
 };
 

@@ -64,3 +64,7 @@ ruby rt { font-size: .62em; color: #5B544B; font-weight: 600; }
 
 /* 右边记录里，可点的字带虚线（画面里不带，免得乱） */
 .glosslog .gloss { border-bottom: 1.5px dotted rgba(37, 99, 235, .55); border-radius: 0; }
+
+/* 等一会儿才显示（“配音加载中”：很快就好的时候不一闪而过） */
+@keyframes tq-appear { to { opacity: 1; } }
+.tq-appear { opacity: 0; animation: tq-appear .2s ease .35s forwards; }

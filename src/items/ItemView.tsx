@@ -1,5 +1,6 @@
 // 一道题：情境 → 一步一步作答 →（不确定：看图和提示，不扣星）→ 讲解、来历、加分题、竖屏讲解视频。
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { MEDIA } from '../media';
 import { motion } from 'motion/react';
 import { HelpCircle, Lock, PlayCircle } from 'lucide-react';
 import type { Item, Sub } from '../shared/types';
@@ -25,7 +26,7 @@ export const StepView = ({ it, s, color, onDone }: { it: Item; s: Sub; color: st
 
 // ---------------- 竖屏讲解视频 ----------------
 let manifest: Promise<string[]> | null = null;
-const getManifest = () => (manifest ??= fetch('shorts/index.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).catch(() => []));
+const getManifest = () => (manifest ??= fetch(`${MEDIA}shorts/index.json`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : [])).catch(() => []));
 export const VideoPanel = ({ topic, unlocked, color }: { topic: string; unlocked: boolean; color: string }) => {
   const [has, setHas] = useState<boolean | null>(null);
   const [play, setPlay] = useState(false);
@@ -33,7 +34,7 @@ export const VideoPanel = ({ topic, unlocked, color }: { topic: string; unlocked
   return (
     <div className="mx-auto w-full max-w-[300px]">
       <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] border-[6px] border-[#2B2722] bg-[#2B2722] shadow-xl">
-        {has && unlocked && play ? <video className="h-full w-full object-cover" src={`shorts/${encodeURIComponent(topic)}.mp4`} controls autoPlay playsInline />
+        {has && unlocked && play ? <video className="h-full w-full object-cover" src={`${MEDIA}shorts/${encodeURIComponent(topic)}.mp4`} controls autoPlay playsInline />
           : (
             <button disabled={!has || !unlocked} onClick={() => { sfx('click'); setPlay(true); }} className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-[#3A332B] to-[#1F1B17] px-5 text-center text-white">
               {has && unlocked ? <PlayCircle size={64} style={{ color }} /> : <Lock size={44} className="opacity-60" />}
