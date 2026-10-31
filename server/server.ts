@@ -9,7 +9,7 @@ import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { STATION_IDS, type GameConfig, type Player, type Rec, type StationId } from '../src/shared/types';
 import { ITEMS, ITEM_BY_ID } from '../src/shared/bank';
-import { sideOf, STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, pracOf, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
+import { sideOf, STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
 import { createAi } from './ai';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -81,14 +81,13 @@ const sanitize = (p: Player): Player => {
   return {
     pid: p.pid, token: p.token, name: String(p.name).slice(0, 20), sid: String(p.sid).slice(0, 20), avatar: Number(p.avatar) || 0,
     createdAt: Number(p.createdAt) || Date.now(), recs,
-    vocab: p.vocab && typeof p.vocab === 'object' ? { known: (p.vocab.known || []).map(String).slice(0, 20), fake: num(p.vocab.fake, 0, 5), score: num(p.vocab.score, 0, 20), t: Number(p.vocab.t) || Date.now() } : undefined,
     updatedAt: Date.now(),
   };
 };
 const merge = (old: Player, inc: Player): Player => {
   const recs = { ...old.recs };
   for (const [id, r] of Object.entries(inc.recs)) recs[id] = better(recs[id], r);
-  return { ...inc, token: old.token, pid: old.pid, createdAt: old.createdAt, recs, vocab: old.vocab ?? inc.vocab };
+  return { ...inc, token: old.token, pid: old.pid, createdAt: old.createdAt, recs };
 };
 
 // ---------------- 统计 ----------------
@@ -99,11 +98,11 @@ const currentOf = (p: Player) => {
 };
 const summary = (p: Player) => ({
   pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
-  done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p), prac: pracOf(p),
+  done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p),
   side: sideOf(p), gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
   stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
-  vocab: p.vocab?.score, lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
+  lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
 });
 /** 学生点开的字：每一回、每个字词，多少人点开看了意思、多少人又展开看了“在这句话里”（人数，不是次数） */
 const glossList = (ps: Player[]) => {
@@ -152,8 +151,8 @@ const teacherState = () => {
 };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 const exportCsv = () => {
-  const head = ['姓名', '学校', '星星', '加权分', '妙笔分', '完成题数', '平均难度', ...TRACKS.map((t) => `能力·${t.name}（1—4）`), '不确定次数', '词汇热身', ...STATIONS.map((s) => `${s.name} 星星`)];
-  const rows = [...players.values()].map(summary).sort((a, b) => b.weighted - a.weighted).map((s) => [s.name, s.sid, s.stars, s.weighted, s.bonus, s.done, s.avgLv.toFixed(2), ...TRACKS.map((t) => s.theta[t.id]), s.unsure, s.vocab ?? '', ...STATIONS.map((x) => s.stations[x.id].stars)]);
+  const head = ['姓名', '学校', '星星', '加权分', '妙笔分', '完成题数', '平均难度', ...TRACKS.map((t) => `能力·${t.name}（1—4）`), '不确定次数', ...STATIONS.map((s) => `${s.name} 星星`)];
+  const rows = [...players.values()].map(summary).sort((a, b) => b.weighted - a.weighted).map((s) => [s.name, s.sid, s.stars, s.weighted, s.bonus, s.done, s.avgLv.toFixed(2), ...TRACKS.map((t) => s.theta[t.id]), s.unsure, ...STATIONS.map((x) => s.stations[x.id].stars)]);
   return '﻿' + [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
 };
 
@@ -251,10 +250,6 @@ const server = http.createServer(async (req, res) => {
     if (route === 'ai/ask' && req.method === 'POST') {
       if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');
       return void (await ai.handleAsk((await readBody(req)) as Record<string, unknown>, (code, body) => send(res, code, body)));
-    }
-    if (route === 'ai/examples' && req.method === 'POST') {
-      if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');
-      return void (await ai.handleExamples((await readBody(req)) as Record<string, unknown>, (code, body) => send(res, code, body)));
     }
     if (route === 'ai/judge' && req.method === 'POST') {
       if (!config.ai) return send(res, 403, '老师暂时关闭了 AI 评分');

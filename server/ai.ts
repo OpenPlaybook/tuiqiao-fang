@@ -4,12 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Player, WriteSub } from '../src/shared/types';
 import { ITEM_BY_ID } from '../src/shared/bank';
-import { AI_QUOTA, askSystem, askUser, cleanAsk, type AskOut, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
-import { NODE_BY_ID } from '../src/shared/story';
+import { AI_QUOTA, askSystem, askUser, cleanAsk, type AskOut, EN_SYSTEM, ZH_SYSTEM, cleanEn, cleanZh, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
 import { PLAY_BY_ID, plainText } from '../src/shared/play';
 
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
-export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { examples: { s: string; note: string }[] } | { a: string } | null; ms: number; ok: boolean; err?: string }
+export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { a: string } | null; ms: number; ok: boolean; err?: string }
 
 const MODELS = ['deepseek-flash', 'deepseek-v4-pro'];
 const ENDPOINT = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions';
@@ -107,36 +106,6 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
     } finally { active--; }
   };
 
-  // AI 再举例：学生还不明白时，现场生成两个新例子
-  const handleExamples = async (b: Record<string, unknown>, send: (code: number, body: unknown) => void) => {
-    const p = b.pid ? players.get(String(b.pid)) : undefined;
-    if (!p || p.token !== b.token) return send(403, '身份不对，请重新登录');
-    const node = NODE_BY_ID[String(b.node)], it = ITEM_BY_ID[String(b.item)];
-    if (!node || !node.ai) return send(400, '这个知识点没有 AI 举例');
-    if (!ready()) return send(503, 'AI 还没有接好，请告诉老师');
-    if (left(p.pid) <= 0) return send(429, '这节课的 AI 次数用完了');
-    if (active >= 12) return send(429, '同时找 AI 的人太多了，等几秒再点');
-    const seen = (Array.isArray(b.seen) ? b.seen : []).map(String).slice(-8);
-    active++;
-    const t0 = Date.now();
-    try {
-      let ex: { s: string; note: string }[];
-      if (MOCK) { await new Promise((r) => setTimeout(r, 400)); ex = [{ s: `（模拟）${node.ai.words?.[0] ?? node.name}的第一个例子。`, note: '（模拟）说明为什么这样用。' }, { s: `（模拟）${node.ai.words?.[1] ?? node.name}的第二个例子。`, note: '（模拟）点出容易混的那个。' }]; }
-      else {
-        const msgs: Msg[] = [{ role: 'system', content: EX_SYSTEM }, { role: 'user', content: exUser(node, it?.intro ?? '', seen) }];
-        ex = cleanEx((await complete(msgs)) as { examples?: { s?: unknown; note?: unknown }[] }, node.ai.words);
-        if (!ex.length) ex = cleanEx((await complete(msgs)) as { examples?: { s?: unknown; note?: unknown }[] }, node.ai.words);
-      }
-      if (!ex.length) throw new Error('AI 这次没举好，再点一次');
-      used.set(p.pid, (used.get(p.pid) ?? 0) + 1);
-      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item), step: node.id, role: 'examples', text: '', out: { examples: ex }, ms: Date.now() - t0, ok: true });
-      return send(200, { examples: ex, left: left(p.pid) });
-    } catch (e) {
-      const msg = String((e as Error).message || e);
-      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item), step: node.id, role: 'examples', text: '', out: null, ms: Date.now() - t0, ok: false, err: msg });
-      return send(502, msg.includes('abort') ? 'AI 回复太慢了，再点一次' : msg);
-    } finally { active--; }
-  };
 
   // 学生自己提问：结合正在看的那一句回答
   /** 一道题的答案文字（给 AI 看“不能说”，也用来检查有没有说漏） */
@@ -222,5 +191,5 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
   /** 好句子：中文 3 分、英语 perfect 的，最新的在前 */
   const goodTexts = () => logs.filter((l) => l.ok && l.out && ('grade' in l.out ? l.out.grade >= 3 : 'verdict' in l.out && l.out.verdict === 'perfect')).slice(-300).reverse();
   const asks = () => logs.filter((l) => l.role === 'ask' && l.ok).slice(-300).reverse();
-  return { ready, left, handleJudge, handleExamples, handleAsk, asks, teacher, status, logs, resetUsage, goodTexts };
+  return { ready, left, handleJudge, handleAsk, asks, teacher, status, logs, resetUsage, goodTexts };
 };

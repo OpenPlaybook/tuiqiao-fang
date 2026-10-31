@@ -306,7 +306,8 @@ export const SHOTS_E1: Record<string, ShotDef> = {
   // ---------- 读书眼镜在翻译（AI 误译那道题） ----------
   'e.glasses': {
     bg: (id) => hallBg(id) + `<rect x="-200" y="-200" width="2000" height="1300" fill="#1C2440" opacity=".72"/>`,
-    fg: (u, g) => aiGlasses(800, 430, 1.5, g) + [['bursts open', 220], ['in charge', 360], ['has been', 500], ['face is white', 640]].map(([t, y], i) => `<g opacity="${f(seg(u, i * 0.12, i * 0.12 + 0.2))}"><rect x="60" y="${(y as number) - 40}" width="300" height="56" rx="12" fill="#FBF7EA" opacity=".92"/><text x="210" y="${(y as number) - 2}" font-size="30" font-weight="800" fill="#2B2722" text-anchor="middle" ${SANS}>${t}</text></g><g opacity="${f(seg(u, i * 0.12 + 0.15, i * 0.12 + 0.3))}"><rect x="1240" y="${(y as number) - 40}" width="300" height="56" rx="12" fill="#CFE6F2" opacity=".92"/><text x="1390" y="${(y as number) - 2}" font-size="30" font-weight="800" fill="#2B2722" text-anchor="middle">？？？</text></g>`).join(''),
+    // 只画眼镜在扫字（不把要找的那几处词摆出来）
+    fg: (u, g) => aiGlasses(800, 430, 1.5, g) + `<text x="800" y="760" font-size="44" font-weight="900" fill="#CFE6F2" text-anchor="middle" ${SANS} opacity="${f(0.6 + 0.3 * Math.sin(g * 2))}">EN → 中文</text>`,
     cam: [[800, 450, 1600], [800, 440, 1450]],
   },
   // ---------- 6 Green 老师：Someone has taken it! ----------

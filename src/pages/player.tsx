@@ -1,14 +1,14 @@
 // 播放式故事：画面（水墨 + 镜头推拉）+ 配音 + 字幕，一句一句往下播；播到题就停，题在画面里做。
 // 画面尽量大：字幕、进度条都在画面里；右边窄栏是“台本”（播过的每一句，可点的字随时能点；做过的题、拓展入口挂在题下面），最下面可以问 AI。
 // 做过的题点进度条上的标记、或者台本里的题，就能回来看自己的答案；拓展在居中弹窗里，按“讲—例—练”往下走。
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type React from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { CornerUpLeft, Glasses, Loader2, Pause, Play as PlayIcon, RotateCcw, Send, Volume2, VolumeX, X } from 'lucide-react';
 import type { Back, Ext, Gloss, Item, Line, MisSub, Play } from '../shared/types';
-import { MODES, MODE_TIP, PLAY_BY_ID, modeKey, voiceFile, voiceLine, wordVoice, type Mode } from '../shared/play';
+import { MODES, MODE_TIP, PLAY_BY_ID, enLevel, modeKey, plainText, voiceFile, voiceLine, wordVoice, type Mode } from '../shared/play';
 import { resultOf, scoredSteps, taskItem } from '../shared/adapt';
 import { Art, Btn, GlossContext, Rich, Stars, centerOf, shuffleIdx } from '../components/ui';
 import { type GlossAt, sentOf } from '../shared/gloss';
@@ -58,7 +58,8 @@ export default function PlayerPage({ id }: { id: string }) {
   const [retry, setRetry] = useState(0); // 点“重试”：时长表、这一句的配音重新取
   const [idxFail, setIdxFail] = useState(false);
   useEffect(() => { if (durMap) return; let alive = true; voiceIndex().then((d) => alive && setDur(d)).catch(() => alive && setIdxFail(true)); return () => { alive = false; }; }, [retry]);
-  const [mode, setMode] = useState<Mode>(() => { const ms = MODES[lang].map((x) => x.m); try { const m = localStorage.getItem(modeKey(lang)) as Mode; return ms.includes(m) ? m : ms[0]; } catch { return ms[0]; } });
+  // 讲解方式：中文默认“白话”，英文默认“英文字幕”（中间那一档）
+  const [mode, setMode] = useState<Mode>(() => { const ms = MODES[lang].map((x) => x.m), d: Mode = en ? 'en2' : 'bh'; try { const m = localStorage.getItem(modeKey(lang)) as Mode; return ms.includes(m) ? m : d; } catch { return d; } });
   const lineDur = (l: Line) => { const v = voiceLine(l, mode); return (dur[voiceFile(v)] ?? EST(v.read ?? v.t)) + (l.pause ?? 0.35); };
   const starts: number[] = []; { let t = 0; for (const l of lines) { starts.push(t); t += lineDur(l); } starts.push(t); }
 
@@ -191,7 +192,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const atTask = phase === 'task' && !!item;
   const taskLay = atTask ? layoutOf(scoredSteps(item!)[0]) : null;
   const showCard = line.card && phase !== 'cover' && !(atTask && (line.hide || taskLay === 'card'));
-  const showSub = !(atTask && line.hide) && !line.card && phase !== 'cover';
+  const showSub = !(atTask && line.hide) && !line.card && phase !== 'cover' && phase !== 'end'; // 看完了：最后那句放在结束页上，字幕不再重复
   const retTo = ret ? ret.split(':') : null;
   const subSize = Math.max(15, Math.min(24, vw / 48));
   const askHint = (atTask && item?.ask) || lines.slice(0, idx + 1).reverse().find((l) => l.ask)?.ask || '这一段有什么看不懂的？';
@@ -226,7 +227,7 @@ export default function PlayerPage({ id }: { id: string }) {
             {showSub && !stem && (
               <div className="subline absolute inset-x-0 bg-gradient-to-t from-black/70 to-black/0 px-6 pb-1.5 pt-6 text-center font-bold leading-relaxed text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]" style={{ fontSize: subSize, bottom: Math.max(0, CTRL - vy) }}>
                 {line.who && <span className={`mr-2 rounded-md px-2 py-0.5 align-middle text-[0.62em] ${line.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{line.voice === 'ai' ? <Glasses size={16} className="inline" /> : <Rich text={line.who} />}</span>}
-                <LineText key={idx} l={line} mode={mode} lock={!!item && !done(idx)} />
+                <LineText key={idx} l={line} mode={mode} lock={!!item && !done(idx)} max={2} />
               </div>
             )}
             {/* 等配音：加载中（过 0.35 秒还没好才显示，免得一闪）；取不到就让学生选 */}
@@ -252,7 +253,7 @@ export default function PlayerPage({ id }: { id: string }) {
               // 看完了也能接着探索：最后那句话（字可以点），几个可以直接问 AI 眼镜的问题
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-auto bg-black/60 px-6 py-4 text-white">
                 <div className={en ? 'font-serif text-3xl font-black' : 'kai text-4xl'}>这一回看完了</div>
-                <div className={`max-w-[80%] rounded-xl bg-white/95 px-5 py-2.5 text-center leading-relaxed text-[#2B2722] ${en ? 'font-serif text-[19px]' : 'kai text-[21px]'}`}><LineText l={lines[n - 1]} mode={mode} /></div>
+                <div className={`max-w-[80%] rounded-xl bg-white/95 px-5 py-2.5 text-center leading-relaxed text-[#2B2722] ${en ? 'font-serif text-[19px]' : 'kai text-[21px]'}`}><LineText l={lines[n - 1]} mode={mode} min={2} /></div>
                 {(play.endAsk?.length ?? 0) > 0 && aiOn && (
                   <div className="max-w-[86%] text-center">
                     <div className="text-[14px] opacity-90">点一点画虚线的字，看看意思；还想知道更多，问问 AI 眼镜：</div>
@@ -411,7 +412,7 @@ function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont,
         lay === 'card' ? (foot ? <div className="mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-3 shadow-xl [&>div]:mt-0 [&>div]:border-0 [&>div]:pt-0" style={{ maxHeight: bh * 0.4 }}>{foot}</div> : null) : (
           <motion.div ref={ref} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} onClick={(e) => e.stopPropagation()} className="relative mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-2.5 shadow-xl backdrop-blur" style={{ maxHeight: bh * (lay === 'big' ? 0.86 : 0.62) }}>
             {hintBtn && <div className="float-right ml-2">{hintBtn}</div>}
-            {stem && <div className="mb-1.5 text-[17px] font-bold leading-relaxed">{stem.who && <span className={`mr-1.5 rounded-md px-1.5 py-0.5 align-middle text-[12px] text-white ${stem.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{stem.voice === 'ai' ? <Glasses size={14} className="inline" /> : <Rich text={stem.who} />}</span>}<LineText l={stem} mode={mode} lock={!finished} /></div>}
+            {stem && <div className="mb-1.5 text-[17px] font-bold leading-relaxed">{stem.who && <span className={`mr-1.5 rounded-md px-1.5 py-0.5 align-middle text-[12px] text-white ${stem.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{stem.voice === 'ai' ? <Glasses size={14} className="inline" /> : <Rich text={stem.who} />}</span>}<LineText l={stem} mode={mode} lock={!finished} min={2} /></div>}
             {body}
             {foot}
           </motion.div>
@@ -431,17 +432,11 @@ const stateOf = (it: Item | null, r: { status?: string; data?: Record<string, un
 /** 给 AI 看的这一句：有原文就一起带上（学生看的是白话还是原文都能答） */
 const aiText = (l: Line) => (l.wy ? `${l.t}（原文：${l.wy}）` : l.tr ? `${l.t}（中文意思：${l.tr}）` : l.t);
 /** lock：这句有题、还没做完——中文先不给（不然一看中文就知道答案了） */
-function LineText({ l, mode, lock }: { l: Line; mode: Mode; lock?: boolean }) {
+function LineText({ l, mode, lock, min = 0, max = 4, more }: { l: Line; mode: Mode; lock?: boolean; min?: number; max?: number; more?: { at: number; set: (k: number) => void } }) {
   const [show, setShow] = useState(false);
-  // 英文故事：英文，下面附中文（对照），或者点“中文”看这一句的意思
-  if (l.tr !== undefined) return (
-    <>
-      <Rich text={l.t} />
-      {mode === 'en' && !lock && <button onClick={(e) => { e.stopPropagation(); setShow(!show); }} className="ml-1.5 rounded-md border border-current px-1 align-middle text-[0.6em] font-bold opacity-75 hover:opacity-100">{show ? '收起' : '中文'}</button>}
-      {(mode === 'dz' || show) && (lock ? mode === 'dz' && <span className="mt-0.5 block text-[0.75em] font-normal opacity-70">（做完这道题，再看中文）</span> : <span className="mt-0.5 block text-[0.86em] font-normal opacity-90"><Rich text={l.tr} /></span>)}
-    </>
-  );
-  if (mode === 'bh' || mode === 'en' || !l.wy) return <Rich text={l.t} />;
+  // 英文故事：按这一档（或者右边点开到的那一级）显示，见 EnLine
+  if (l.tr !== undefined) return <EnLine l={l} level={Math.min(max, Math.max(min, more?.at ?? enLevel(mode)))} lock={lock} onMore={more ? () => more.set(Math.max(min, more.at) + 1) : undefined} />;
+  if (mode === 'bh' || !l.wy) return <Rich text={l.t} />;
   return (
     <>
       <span className="kai text-[1.08em]"><Rich text={l.wy} /></span>
@@ -451,12 +446,41 @@ function LineText({ l, mode, lock }: { l: Line; mode: Mode; lock?: boolean }) {
   );
 }
 
+/** 英文的一句，分五级：0 只听；1 露一部分词（长一点的词、生词只露首字母）；2 整句英文；3 部分翻译（这句里生词、短语的意思；没有生词的句子，给半句中文）；4 全部翻译。
+ *  播放器的字幕最多到 2；3、4 只在右边那一栏点开（onMore：点一下往下开一级）。lock：这句有题、还没做完——最多看到整句英文。 */
+const MORE_LABEL = ['看一点英文', '看整句', '看部分翻译', '看全部翻译'];
+function EnLine({ l, level, lock, onMore }: { l: Line; level: number; lock?: boolean; onMore?: () => void }) {
+  const { gloss } = useContext(GlossContext);
+  const lv = lock ? Math.min(level, 2) : level;
+  const words = [...l.t.matchAll(/⟦([^⟧]+)⟧/g)].map((m) => m[1]).filter((w, i, a) => gloss[w] && a.indexOf(w) === i);
+  const next = lv < 4 && !(lock && lv >= 2) ? lv : -1;
+  return (
+    <>
+      {lv === 0 ? <span className="opacity-70">🎧 …</span> : lv === 1 ? <span className="tracking-wide">{maskEn(l.t)}</span> : <Rich text={l.t} />}
+      {lv === 3 && (words.length > 0
+        ? <span className="mt-0.5 block text-[0.8em] font-normal opacity-90">{words.map((w) => <span key={w} className="mr-2 whitespace-nowrap"><b>{w}</b> {gloss[w].d.split(/[。；]/)[0]}</span>)}</span>
+        : <span className="mt-0.5 block text-[0.86em] font-normal opacity-90">{halfZh(l.tr!)}</span>)}
+      {lv >= 4 && <span className="mt-0.5 block text-[0.86em] font-normal opacity-90"><Rich text={l.tr!} /></span>}
+      {lock && level > 2 && <span className="mt-0.5 block text-[0.75em] font-normal opacity-70">（做完这道题，再看中文）</span>}
+      {onMore && next >= 0 && <button onClick={(e) => { e.stopPropagation(); sfx('click'); onMore(); }} className="ml-1.5 rounded-md border border-current px-1 align-middle text-[0.62em] font-bold opacity-70 hover:opacity-100">▸ {MORE_LABEL[next]}</button>}
+    </>
+  );
+}
+/** 部分翻译（没有生词的句子）：中文按标点分成几小段，隔一段给一段，其余留成“……” */
+const halfZh = (t: string) => { const seg = plainText(t).match(/[^，。！？；：—…]+[，。！？；：—…]*/g) ?? [t]; return seg.length > 1 ? seg.map((x, i) => (i % 2 === 0 ? x : '……')).join('') : `${[...seg[0]].slice(0, Math.ceil(seg[0].length / 2)).join('')}……`; };
+/** 部分字幕：长一点的小写词、生词只露首字母（f········），短词、人名照常显示；标点留着，能帮着串起来 */
+const EASY = new Set('from with will have been that this they them what when were your into very just some then than there their about after back does were here also only over well much many more most each other could would should shall must'.split(' '));
+const maskEn = (t: string) => t.replace(/⟦([^⟧]+)⟧/g, (_, w: string) => w.replace(/[A-Za-z’']+/g, (x) => x[0] + '·'.repeat(x.length - 1)))
+  .replace(/\*\*/g, '').replace(/(^|[^A-Za-z·’'])([a-z][a-z’']{3,})/g, (m, a: string, x: string) => (EASY.has(x) ? m : a + x[0] + '·'.repeat(x.length - 1))); // 常用的小词照常露出来
+
 // ---------------- 右边：看过的内容（可点的字带虚线，随时能点；谁说的一眼看得出；不套框，省地方）----------------
 function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, onExt, onBack, askHint, line, item, askPreset }: { play: Play; mode: Mode; items: (Item | null)[]; far: number; idx: number; phase: string; maxIdx: number; onSeek: (k: number) => void; onTask: (k: number) => void; onExt: (it: Item, e: Ext) => void; onBack: (b: Back) => void; askHint: string; line: Line; item: Item | null; askPreset: { q: string; n: number } | null }) {
   const p = useGame((s) => s.player)!;
   const cur = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => { scrollInto(list.current, cur.current); }, [idx, far]);
+  const [open, setOpen] = useState<Record<number, number>>({}); // 英文：每一句点开到第几级
+  useEffect(() => setOpen({}), [mode]);
   return (
     <aside className="glosslog hidden w-[350px] shrink-0 flex-col overflow-hidden rounded-2xl bg-[#FFFDF8] shadow-sm lg:flex">
       <div className="border-b border-[#EFE6D2] px-3 py-1.5">
@@ -475,7 +499,7 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
                 {l.voice === 'ai' && <Glasses size={15} className="mr-1 inline align-[-2px] text-sky-600" />}
                 {l.who && l.voice !== 'ai' && <span className="mr-1 font-sans text-[13px] font-black text-[#9A5B2E]"><Rich text={l.who} />：</span>}
                 {!l.who && yuan && l.card?.by && <span className="mr-1 font-sans text-[12px] font-black text-[#8A6A2F]">{l.card.by}</span>}
-                <LineText l={l} mode={mode} lock={!!it && !isDone} />
+                <LineText l={l} mode={mode} lock={!!it && !isDone} more={{ at: open[k] ?? enLevel(mode), set: (v) => setOpen((o) => ({ ...o, [k]: v })) }} />
               </div>
               {showTask && (
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 pb-1 pl-6 text-[13px]">

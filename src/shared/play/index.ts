@@ -6,6 +6,17 @@ import { PLAY_EN1, PLAY_EN1_ITEMS } from './en1';
 
 export const PLAYS: Play[] = [PLAY_ZH1, PLAY_ZH6, PLAY_EN1];
 export const PLAY_BY_ID: Record<string, Play> = Object.fromEntries(PLAYS.map((p) => [p.id, p]));
+/** 还没写好的回：目录上显示“制作中” */
+export const PLANNED: { id: string; lang: 'zh' | 'en'; title: string; sub: string }[] = [
+  { id: 'zh2', lang: 'zh', title: '第二回　两次投奔', sub: '揭竿而起；萧何月下追韩信' },
+  { id: 'zh3', lang: 'zh', title: '第三回　鸿门宴', sub: '项庄舞剑，意在沛公' },
+  { id: 'zh4', lang: 'zh', title: '第四回　拜将', sub: '明修栈道，暗度陈仓' },
+  { id: 'zh5', lang: 'zh', title: '第五回　背水一战', sub: '置之死地而后生' },
+  { id: 'zh7', lang: 'zh', title: '尾声　鸟尽弓藏', sub: '狡兔死，良狗烹' },
+  { id: 'en2', lang: 'en', title: 'Chapter 2　Where were you?', sub: '好几个人都说自己不在场' },
+  { id: 'en3', lang: 'en', title: 'Chapter 3　The Note', sub: '一个用反了的词' },
+  { id: 'en4', lang: 'en', title: 'Chapter 4　Case Closed', sub: '真相与颁奖' },
+];
 // 每一回一个“记录”条目：学生点了哪些字、问了 AI 什么，都记在这里（不是题，不计分）
 const logItem = (id: string): Item => ({ id: `${id}-log`, st: 'log', lv: 1, type: 'log', topic: `${id}-log`, label: '（记录）', intro: '', steps: [], hints: [], explain: '' });
 export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAY_EN1_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
@@ -22,13 +33,17 @@ export const VOICES: Record<VoiceId, string> = {
 /** 语速：中文 1.14 倍；英文给初二学生听，比正常稍慢 */
 export const VOICE_RATE: Record<VoiceId, string> = { n: '+14%', ai: '+14%', m: '+6%', en: '-6%', ben: '-4%', green: '-6%', liu: '-8%' };
 export const voiceFile = (l: { t: string; read?: string; voice?: VoiceId }) => `${l.voice ?? 'n'}-${fnv(readText(l))}.mp3`;
-/** 讲解模式。楚汉：白话（现代汉语）、文言（有原文的句子用《史记》原文）、对照（原文，下面是白话）；英文故事：English、中英对照（dz） */
-export type Mode = 'bh' | 'wy' | 'dz' | 'en';
+/** 讲解模式。楚汉：白话（现代汉语）、文言（有原文的句子用《史记》原文）、对照（原文，下面是白话）。
+ *  英文故事按听力水平分三档（en0—en2）：无字幕（只听）→ 部分字幕（长一点的词只露首字母）→ 英文字幕。
+ *  中文只在右边“看过的内容”里：每一句从播放器的那一档开始，一级一级往下点开——整句英文 → 部分翻译 → 全部翻译，不会一下子全给。 */
+export type Mode = 'bh' | 'wy' | 'dz' | 'en0' | 'en1' | 'en2';
 export const MODES: Record<'zh' | 'en', { m: Mode; t: string }[]> = {
   zh: [{ m: 'bh', t: '白话' }, { m: 'wy', t: '文言' }, { m: 'dz', t: '对照' }],
-  en: [{ m: 'en', t: 'English' }, { m: 'dz', t: '中英对照' }],
+  en: [{ m: 'en0', t: '无字幕' }, { m: 'en1', t: '部分字幕' }, { m: 'en2', t: '英文字幕' }],
 };
-export const MODE_TIP = { zh: '白话：现代汉语讲；文言：出自《史记》的句子用原文讲、配音念原文；对照：原文下面附白话', en: 'English：只看英文，哪句看不懂可以点开中文；中英对照：英文下面附中文' };
+export const MODE_TIP = { zh: '白话：现代汉语讲；文言：出自《史记》的句子用原文讲、配音念原文；对照：原文下面附白话', en: '无字幕：只听；部分字幕：只露一部分词；英文字幕：整句英文。中文在右边：每一句都可以一级一级点开（先部分翻译，再全部翻译）。' };
+/** 英文的这一档是第几级（0 只听、1 部分字幕、2 英文字幕；右边还能点开到 3 部分翻译、4 全部翻译） */
+export const enLevel = (m: Mode) => (/^en\d$/.test(m) ? Number(m[2]) : 2);
 /** 这一回用哪个讲解模式（中文、英文各记各的） */
 export const modeKey = (lang: 'zh' | 'en') => (lang === 'en' ? 'tq-mode-en' : 'tq-mode');
 /** 点开的英文单词念一遍：用旁白的声音 */

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { STATION_IDS, type GameConfig, type Item, type LogEntry, type Player, type Rec, type StationId } from '../shared/types';
-import { newPlayer, vocabScore } from '../shared/adapt';
+import { newPlayer } from '../shared/adapt';
 import { api } from './api';
 import { DEMO } from './demo';
 
@@ -78,9 +78,8 @@ export const logout = () => { try { localStorage.removeItem(LS_KEY); } catch { /
 
 // ---------------- 题目进度 ----------------
 // 变式练习的记录 st 记成 'p'，不算进章节的题数
-const pracIds = new Set<string>();
-const ensure = (p: Player, it: Item): Rec => (p.recs[it.id] ??= { id: it.id, st: pracIds.has(it.id) ? 'p' : it.st, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now(), ...(pracIds.has(it.id) ? { prac: true } : {}) });
-export const startItem = (it: Item, prac = false) => { if (prac) pracIds.add(it.id); if (!state.player?.recs[it.id]) mutate((p) => { ensure(p, it); }); };
+const ensure = (p: Player, it: Item): Rec => (p.recs[it.id] ??= { id: it.id, st: it.st, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now() });
+export const startItem = (it: Item) => { if (!state.player?.recs[it.id]) mutate((p) => { ensure(p, it); }); };
 /** 记一笔“点开了什么”（哪里不明白、一家人、AI 举例）：老师在后台看全班卡在哪 */
 export const logOpen = (it: Item, what: string) => mutate((p) => { ensure(p, it).log.push({ q: 'open', v: what.slice(0, 80), ok: null, t: Date.now() }); });
 export const logAnswer = (it: Item, e: Omit<LogEntry, 't'>, tries?: [string, number]) => mutate((p) => {
@@ -92,7 +91,6 @@ export const markUnsure = (it: Item) => mutate((p) => { ensure(p, it).unsure++; 
 export const setData = (it: Item, data: Record<string, unknown>) => mutate((p) => { const r = ensure(p, it); r.data = { ...(r.data ?? {}), ...data }; });
 export const finishItem = (it: Item, stars: number, perf: number) => mutate((p) => { const r = ensure(p, it); if (r.status === 'done') return; r.status = 'done'; r.stars = stars; r.perf = perf; r.t1 = Date.now(); });
 export const addBonus = (it: Item, n: number) => mutate((p) => { const r = ensure(p, it); r.bonus = Math.max(r.bonus, n); });
-export const setVocab = (known: string[]) => mutate((p) => { const s = vocabScore(known); p.vocab = { known, fake: s.fake, score: s.score, t: Date.now() }; });
 /** 播放式故事里的记录（点字、提问）：记在这一回的“记录”条目上 */
 export const logPlay = (playId: string, q: 'gloss' | 'gloss2' | 'more' | 'ask' | 'askok' | 'askfb', v: string) => mutate((p) => {
   const r = (p.recs[`${playId}-log`] ??= { id: `${playId}-log`, st: 'p', prac: true, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now() });

@@ -559,7 +559,9 @@ export const ChoiceChat = ({ it, s, onDone, color, lead, tail, hideQ, wideTail }
   );
 };
 
-// ---------------- 分类、连线：一项一行，几列并排，省地方 ----------------
+// ---------------- 分类：把卡片拖进格子（褒贬色带也是同一个组件，格子排成一条从贬到褒的色带） ----------------
+/** 上面一排没放的卡片，下面几个格子。拖过去就放进去（也可以先点卡片、再点格子）；放进去的卡片还能再拖、再点，换个格子或者拖回上面。
+ *  检查以后，错了只说错了几张、不说是哪几张（让学生自己再想想怎么分）；做对了，每张卡片下面说为什么。scale：格子从左到右是“贬 → 中 → 褒”，上面画一条色带。 */
 export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { init?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const order = useMemo(() => shuffleIdx(s.cards.length, pid + it.id + s.key), [pid]);
@@ -567,57 +569,69 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
   const [bad, setBad] = useState<number[]>([]);
   const [tries, setTries] = useState(0);
   const [solved, setSolved] = useState(!!init);
+  const [sel, setSel] = useState<number | null>(null);
+  const [drag, setDrag] = useState<{ i: number; x: number; y: number; x0: number; y0: number; on: boolean } | null>(null);
+  const [hover, setHover] = useState<number | null>(null); // 拖到哪个格子上面了（-1 是上面那一排）
   const all = Object.keys(put).length === s.cards.length;
   const check = () => {
     const t = tries + 1; setTries(t);
     const wrong = s.cards.map((c, i) => (put[i] === c.bin ? -1 : i)).filter((i) => i >= 0);
     logAnswer(it, { q: s.key, v: s.cards.map((c, i) => `${plain(c.t)}→${s.bins[put[i]]}`).join('；'), ok: !wrong.length }, [s.key, t]);
-    if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setPut(Object.fromEntries(s.cards.map((c, i) => [i, c.bin]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
+    if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setSel(null); setPut(Object.fromEntries(s.cards.map((c, i) => [i, c.bin]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
     sfx('no'); setBad(wrong);
   };
-  const [sel, setSel] = useState<number | null>(null);
-  if (s.scale) {
-    // 色带：先点一个词，再点它该放的位置；放错的会标红，点它可以拿回来重放
-    const place = (j: number) => { if (solved || sel === null) return; sfx('click'); setPut((p) => ({ ...p, [sel]: j })); setBad((x) => x.filter((y) => y !== sel)); setSel(null); };
-    const grad = 'linear-gradient(90deg, #C0392B, #E9DFCB 50%, #2E8B57)';
+  const place = (i: number, j: number) => { if (solved) return; sfx('click'); setPut((p) => { const q = { ...p }; if (j < 0) delete q[i]; else q[i] = j; return q; }); setBad([]); setSel(null); };
+  const zoneAt = (x: number, y: number) => { const z = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest('[data-bin]') as HTMLElement | null; return z ? Number(z.dataset.bin) : null; };
+  // 拖：按下以后挪了一点才算拖（没挪就是“点”：选中它）
+  useEffect(() => {
+    if (!drag) return;
+    const mv = (e: PointerEvent) => { const on = drag.on || Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6; setDrag({ ...drag, x: e.clientX, y: e.clientY, on }); if (on) setHover(zoneAt(e.clientX, e.clientY)); };
+    const up = (e: PointerEvent) => {
+      if (drag.on) { const z = zoneAt(e.clientX, e.clientY); if (z !== null) place(drag.i, z); }
+      else { sfx('click'); setSel((x) => (x === drag.i ? null : drag.i)); }
+      setDrag(null); setHover(null);
+    };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up, { once: true });
+    return () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+  }, [drag]);
+  const card = (i: number) => {
+    const c = s.cards[i], on = sel === i, ghost = drag?.on && drag.i === i;
     return (
-      <div>
-        <Q text={s.q} />
-        <div className="h-2.5 rounded-full" style={{ background: grad }} />
-        <div className="mt-1 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${s.bins.length}, minmax(0, 1fr))` }}>
-          {s.bins.map((b, j) => (
-            <div key={j} onClick={() => place(j)} className={`min-h-[64px] rounded-lg border-2 border-dashed px-1.5 py-1 ${sel !== null && !solved ? 'cursor-pointer border-amber-300 bg-amber-50/60' : 'border-[#E6DCC6] bg-white/60'}`}>
-              <div className={`mb-1 text-center text-[13px] font-black ${j === 0 ? 'text-rose-700' : j === s.bins.length - 1 ? 'text-emerald-700' : 'text-ink2'}`}>{b}</div>
-              <div className="flex flex-wrap justify-center gap-1">{order.filter((i) => put[i] === j).map((i) => (
-                <button key={i} onClick={(e) => { e.stopPropagation(); if (!solved) { setSel(i); sfx('click'); } }} title={solved ? s.cards[i].why : '点它可以换个位置'} className={`rounded-full border-2 px-2 py-0.5 text-[14px] font-bold ${bad.includes(i) ? 'border-rose-300 bg-rose-50' : solved ? 'border-emerald-200 bg-white' : sel === i ? 'bg-amber-100' : 'border-[#E6DCC6] bg-white'}`} style={sel === i ? { borderColor: color } : {}}><Rich text={s.cards[i].t} /></button>
-              ))}</div>
-            </div>
-          ))}
-        </div>
-        {!solved && order.some((i) => put[i] === undefined) && <div className="mt-1.5 flex flex-wrap items-center gap-1"><span className="mr-1 text-[13px] text-ink2">{sel !== null ? '放到色带上哪个位置？' : '先点一个词：'}</span>{order.filter((i) => put[i] === undefined).map((i) => <button key={i} onClick={() => { sfx('click'); setSel(sel === i ? null : i); }} className={`rounded-full border-2 px-2.5 py-0.5 text-[14px] font-bold ${sel === i ? 'text-white' : 'border-[#E6DCC6] bg-white'}`} style={sel === i ? { background: color, borderColor: color } : {}}><Rich text={s.cards[i].t} /></button>)}</div>}
-        {solved && <div className="mt-1.5 grid gap-x-3 text-[13px] leading-snug text-emerald-900 sm:grid-cols-2">{s.cards.map((c, i) => <div key={i}>✓ <b><Rich text={c.t} /></b>：<Rich text={c.why} /></div>)}</div>}
-        {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">红框的 {bad.length} 个放错了，点它重新放。</span>}</div>}
+      <div key={i} onPointerDown={(e) => { if (solved) return; e.preventDefault(); setDrag({ i, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, on: false }); }}
+        className={`select-none rounded-lg border-2 px-2.5 py-1 text-[15px] font-bold leading-snug transition ${solved ? 'border-emerald-200 bg-white' : on ? 'cursor-grab bg-[#FFF3D6]' : 'cursor-grab border-[#E6DCC6] bg-white hover:border-amber-300'} ${ghost ? 'opacity-30' : ''}`}
+        style={{ ...(on ? { borderColor: color } : {}), touchAction: 'none' }}>
+        <Rich text={c.t} />
+        {solved && <div className="mt-0.5 text-[13px] font-normal leading-snug text-emerald-800">✓ <Rich text={c.why} /></div>}
       </div>
     );
-  }
+  };
+  const pool = order.filter((i) => put[i] === undefined);
+  const zone = (j: number) => ({ 'data-bin': j, onClick: () => { if (sel !== null) place(sel, j); } });
   return (
     <div>
       <Q text={s.q} />
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}>
-        {order.map((i) => {
-          const c = s.cards[i];
+      {/* 还没放的卡片 */}
+      {!solved && (
+        <div {...zone(-1)} className={`mb-1.5 flex min-h-[44px] flex-wrap gap-1.5 rounded-lg border-2 border-dashed p-1.5 ${hover === -1 ? 'border-amber-400 bg-amber-50' : 'border-transparent'}`}>
+          {pool.map(card)}
+          {!pool.length && <span className="self-center text-[13px] text-ink2">都放好了。想换，就把卡片拖到别的格子（或者拖回这里）。</span>}
+        </div>
+      )}
+      {s.scale && <div className="h-2.5 rounded-full" style={{ background: 'linear-gradient(90deg, #C0392B, #E9DFCB 50%, #2E8B57)' }} />}
+      <div className={`grid gap-1.5 ${s.scale ? 'mt-1' : ''}`} style={{ gridTemplateColumns: `repeat(${s.bins.length}, minmax(0, 1fr))` }}>
+        {s.bins.map((b, j) => {
+          const hot = hover === j || (sel !== null && !solved);
           return (
-            <div key={i} className={`rounded-lg border-2 bg-white px-2.5 py-1 ${bad.includes(i) ? 'border-rose-300' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
-              <div className="flex flex-wrap items-center gap-1">
-                <span className="mr-auto text-[15px] font-bold leading-snug"><Rich text={c.t} /></span>
-                {s.bins.map((b, j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setPut((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-full border-2 px-2 py-0 text-[13px] font-black ${put[i] === j ? 'text-white' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink2'}`} style={put[i] === j ? { background: color, borderColor: color } : {}}>{b}</button>)}
-              </div>
-              {(solved || bad.includes(i)) && <div className={`text-[13px] leading-snug ${bad.includes(i) ? 'text-rose-700' : 'text-emerald-800'}`}>{bad.includes(i) ? '✗ 放错了，再想想。' : <>✓ <Rich text={c.why} /></>}</div>}
+            <div key={j} {...zone(j)} className={`min-h-[90px] rounded-lg border-2 border-dashed px-1.5 pb-1.5 pt-1 transition ${hover === j ? 'border-amber-400 bg-amber-50' : hot ? 'cursor-pointer border-amber-300 bg-amber-50/40' : 'border-[#E6DCC6] bg-white/60'}`}>
+              <div className={`mb-1 text-center text-[13px] font-black ${s.scale ? (j === 0 ? 'text-rose-700' : j === s.bins.length - 1 ? 'text-emerald-700' : 'text-ink2') : 'text-ink2'}`}>{b}</div>
+              <div className="flex flex-col gap-1">{order.filter((i) => put[i] === j).map(card)}</div>
             </div>
           );
         })}
       </div>
-      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">有 {bad.length} 个放错了。</span>}</div>}
+      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 ? <span className="text-sm font-bold text-rose-700">有 {bad.length} 张放错了。再想想：每张卡片说的到底是哪一种？</span> : <span className="text-sm text-ink2">把卡片拖进格子；也可以先点卡片，再点格子。</span>}</div>}
+      {/* 拖着走的那张 */}
+      {drag?.on && createPortal(<div className="pointer-events-none fixed z-[120] max-w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 bg-white px-2.5 py-1 text-[15px] font-bold shadow-xl" style={{ left: drag.x, top: drag.y, borderColor: color }}><Rich text={s.cards[drag.i].t} /></div>, document.body)}
     </div>
   );
 };

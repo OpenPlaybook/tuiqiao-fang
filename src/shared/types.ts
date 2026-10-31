@@ -65,15 +65,10 @@ export interface Item {
   label: string; // 给老师看的短名
   intro: string; // 情境（**加粗**、___ 是空、\n 换行）
   art?: Art; // 情境图：点“不确定”或答完以后才出现
-  pic?: Art; // 一开始就显示的图（成语故事、读诗、英语场景）
   steps: Sub[];
   hints: string[]; // “不确定”时依次给出
   explain: string; // 答完的总结
   know?: string; // 来历 / 涨知识
-  slot?: number; // 竹简故事里的第几道谜
-  slip?: string; // 竹简故事：解开以后拾回的竹简上写的字
-  npc?: { good: string; bad: string }; // 英语：Ben 的反应
-  node?: string; // 讲的是哪个知识点（KNode）
   ext?: Ext[]; // 拓展（居中弹窗里的小题）
   back?: Back[]; // 回扣：回到前面（可以是别的回）看一看
   ask?: string; // 停在这道题时，“问我”框里的示例问题
@@ -83,21 +78,6 @@ export interface Ext { id: string; title: string; need: 'always' | 'wrong' | 'op
 /** 回扣：跳到某一回的某一句（ch 回，line 句号），看完可以跳回来 */
 export interface Back { ch: string; line: string; label: string }
 
-// ---------------- 知识点：老师怎么讲 ----------------
-/** 学生点“哪里还不明白”：一个问题 → 简短的回答（可以带画面、例子） */
-export interface Chip { q: string; a: string; viz?: Art; ex?: string[] }
-/** 知识网里的一项：词、意思、例子 */
-export interface WebItem { t: string; d: string; ex?: string; viz?: Art }
-export interface KNode {
-  id: string;
-  name: string;
-  line: 'zh' | 'en';
-  teach: { viz?: Art; lines: string[]; ex?: string[] }; // 老师讲：画面 + 两三句话 + 例子
-  chips: Chip[];
-  web?: { title: string; groups: { name: string; items: WebItem[] }[] }; // 这个点的一家人
-  practice: string[]; // 变式练习（题号），按能力挑
-  ai?: { target: string; brief: string; words?: string[] }; // AI 再举例：讲什么、有什么要求、例句里必须出现的词
-}
 // ---------------- 播放式故事（画面 + 配音 + 字幕，播到题就停） ----------------
 /** 可点的字（AI 眼镜释义）：文本里写 ⟦词⟧；拼音直接注在字上写 ⟪字⟫。释义在一回的 gloss 表里 */
 /** 可点的字。两层都记下来，老师能看出卡在字词还是卡在整句：
@@ -130,14 +110,8 @@ export interface Play { id: string; lang?: 'zh' | 'en'; no: number; title: strin
 /** 中文：旁白（女）、男声、AI 眼镜；英文：旁白、Ben、Green 老师、刘师傅 */
 export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu';
 
-// ---------------- 故事 ----------------
-export interface Beat { who?: string; t: string; art?: Art }
-/** 一章：一段一段的故事，中间夹着题（同一道题的几个难度版本） */
-export interface Chapter { id: string; line: 'zh' | 'en'; no: number; title: string; sub: string; scene: Art; color: string; flow: (Beat | { task: string[] })[]; end: Beat[]; next?: string }
 
 // ---------------- 竹简故事（旧版） ----------------
-export interface StoryBeat { who?: string; t: string } // 旁白或人物说的话
-export interface StorySlot { no: number; room: number; before: StoryBeat[]; after: StoryBeat[]; slip: string; scene: Art }
 export interface Room { no: number; name: string; time: string; scene: Art }
 
 // ---------------- 进度 ----------------
@@ -157,7 +131,6 @@ export interface Rec {
   t0: number;
   t1?: number;
 }
-export interface Vocab { known: string[]; fake: number; score: number; t: number }
 export interface Player {
   pid: string;
   token: string;
@@ -166,7 +139,6 @@ export interface Player {
   avatar: number;
   createdAt: number;
   recs: Record<string, Rec>;
-  vocab?: Vocab;
   updatedAt: number;
 }
 export interface GameConfig {
