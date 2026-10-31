@@ -111,7 +111,8 @@ export interface Line {
   wy?: string; // 这句在《史记》里的原文：选“文言”“对照”时显示、配音念它（旁白、引导、题目不写，始终是白话）
   wyRead?: string; // 原文的配音文字（多音字换成同音字）
   voice?: 'n' | 'm' | 'ai'; // 旁白（女）、男声、AI 眼镜
-  scene?: Art; // 换画面
+  shots?: [string, number?][]; // 分镜动画：这一句的几个镜头（镜头名，时长权重），见 src/film/shots*.ts 和 第六堂课/分镜/
+  scene?: Art; // 换画面（旧的静态画，没有 shots 时才用）
   cam?: [number, number, number, number, number, number]; // 镜头推拉：起点 x%、y%、放大 → 终点 x%、y%、放大
   card?: { t: string; kind: 'yuan' | 'poem' | 'ai' | 'note'; by?: string }; // 画面上的卡片：原文、诗、AI 译文
   hide?: boolean; // 停在题上时，这句字幕藏起来（题里已经有这句话，不重复）

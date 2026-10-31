@@ -16,6 +16,7 @@ import { api } from '../game/api';
 import { sfx } from '../game/sound';
 import { PlayStep, SaveCtx, TeachView, ansOf, layoutOf } from '../items/steps2';
 import { DEMO } from '../game/demo';
+import { Film } from '../film/Film';
 
 export const go = (path: string) => { window.location.hash = path; };
 const EST = (t: string) => Math.max(2.2, Array.from(t.replace(/[⟦⟧⟪⟫*]/g, '')).length / 5.2 + 0.5);
@@ -166,7 +167,9 @@ export default function PlayerPage({ id }: { id: string }) {
         <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#1C1916]">
           {/* 画面 */}
           <div className="absolute overflow-hidden" style={{ left: vx, top: vy, width: vw, height: vh }}>
-            <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>
+            {line.shots
+              ? <Film shots={line.shots} lid={`${id}-${idx}`} prog={() => (phase === 'play' ? (performance.now() - t0.current) / 1000 / lineDur(line) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
+              : <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>}
             <AnimatePresence>
               {showCard && (
                 <motion.div key={idx} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`absolute left-1/2 top-[7%] max-w-[86%] -translate-x-1/2 rounded-xl px-6 py-3 shadow-2xl ${line.card!.kind === 'ai' ? 'bg-sky-50/95' : 'bg-[#F7EFD9]/95'}`}>
