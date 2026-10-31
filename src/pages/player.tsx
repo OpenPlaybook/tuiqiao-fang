@@ -189,6 +189,13 @@ export default function PlayerPage({ id }: { id: string }) {
     setPhase('play');
   };
   const cont = () => { unlock(); if (idx >= n - 1) { setPhase('end'); return; } setIdx((k) => k + 1); setPhase('play'); };
+  // 点画面中间：播放 / 暂停（像看视频一样）。做题、封面、看完的时候不管；点字的小窗开着时，这一下只是关小窗
+  const [flash, setFlash] = useState<{ play: boolean; n: number } | null>(null);
+  const popAtDown = useRef(false);
+  const tapScreen = () => {
+    if (popAtDown.current || (phase !== 'play' && phase !== 'pause')) return;
+    sfx('click'); setFlash((f) => ({ play: phase !== 'play', n: (f?.n ?? 0) + 1 })); playPause();
+  };
   const jump = (b: Back) => { stop(); go(`/c/${b.ch}?at=${b.line}&ret=${id}:${idx}`); };
   // 句中解释按被点的那一处找：同一个字在别的句子里，不拿这句的解释
   const onGloss = (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => { const r = el.getBoundingClientRect(); sfx('hint'); setGlossPop({ w, g, sent: sentOf(g, w, at), x: r.left + r.width / 2, y: r.bottom, lv: 1, locked: lockedW.has(w) }); logPlay(id, 'gloss', w); };
@@ -218,7 +225,9 @@ export default function PlayerPage({ id }: { id: string }) {
         {/* ---------- 播放区：占满左边 ---------- */}
         <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#1C1916]">
           {/* 画面 */}
-          <div className="absolute overflow-hidden" style={{ left: vx, top: vy, width: vw, height: vh }}>
+          <div className={`absolute overflow-hidden ${phase === 'play' || phase === 'pause' ? 'cursor-pointer' : ''}`} style={{ left: vx, top: vy, width: vw, height: vh }} onPointerDown={() => { popAtDown.current = !!glossPop; }} onClick={tapScreen}>
+            {/* 点了一下：中间闪一下播放 / 暂停的图标 */}
+            <AnimatePresence>{flash && <motion.div key={flash.n} initial={{ opacity: 0.9, scale: 0.8 }} animate={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.6 }} className="pointer-events-none absolute left-1/2 top-1/2 z-30 -ml-9 -mt-9 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-black/45 text-white">{flash.play ? <PlayIcon size={34} /> : <Pause size={34} />}</motion.div>}</AnimatePresence>
             {line.shots
               ? <Film shots={line.shots} lid={`${id}-${idx}`} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
               : <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>}
@@ -246,7 +255,7 @@ export default function PlayerPage({ id }: { id: string }) {
             )}
             {/* 等配音：加载中（过 0.35 秒还没好才显示，免得一闪）；取不到就让学生选 */}
             {phase === 'play' && wait && (
-              <div className="absolute inset-0 z-[15] flex items-center justify-center">
+              <div className="absolute inset-0 z-[15] flex items-center justify-center" onClick={(e) => { if (wait === 'fail') e.stopPropagation(); }}>
                 {wait === 'load'
                   ? <div className="tq-appear flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-[15px] font-bold text-white"><Loader2 size={18} className="animate-spin" />配音加载中…</div>
                   : <div className="rounded-2xl bg-white/95 px-5 py-3 text-center shadow-xl">
