@@ -10,3 +10,4 @@ data/
 .DS_Store
 public/shorts/*.mp4
 dist-demo/
+build/

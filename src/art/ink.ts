@@ -250,6 +250,21 @@ const SCENES: Record<string, Scene> = {
     + `<path d="M0,320 L800,320 L800,500 L0,500 Z" fill="#D9CCAC"/>` + Array.from({ length: 34 }, (_, i) => figure(430 + (i % 12) * 30, 360 + Math.floor(i / 12) * 44, 0.62, 'robe', 0.75)).join('')
     + Array.from({ length: 6 }, (_, i) => `<g transform="translate(${450 + i * 60},90)"><line x1="0" y1="0" x2="0" y2="20" stroke="${INK}"/><ellipse cx="0" cy="34" rx="12" ry="15" fill="${RED}" opacity=".85"/></g>`).join('') + mist(id, 400, 10, 400, 0)
     + `<text x="110" y="420" font-size="20" fill="${INK}" opacity=".6" style="font-family:KaiTi, STKaiti, serif">巷子空了</text><text x="560" y="300" font-size="20" fill="${INK}" opacity=".6" style="font-family:KaiTi, STKaiti, serif">大街上满了</text>`,
+  bieji: (id) => `<rect width="800" height="500" fill="#2A2420"/><circle cx="400" cy="270" r="230" fill="${GOLD}" opacity=".16" filter="url(#${id}b)"/>`
+    + `<path d="M40,500 L400,40 L760,500 Z" fill="#3A302A" opacity=".85"/><path d="M400,40 L400,500" stroke="#1E1915" stroke-width="3" opacity=".6"/><path d="M220,500 L400,40 L580,500" stroke="#1E1915" stroke-width="2" fill="none" opacity=".4"/>`
+    + `<rect x="180" y="400" width="440" height="16" fill="#5A3A22"/><rect x="380" y="352" width="18" height="48" fill="#8E6A3A"/>` + fire(389, 352, 0.9, id)
+    + figure(300, 400, 1.15, 'sit', 0.95) + `<path d="M296,334 l-10,-14 l14,4 l6,-12 l6,12 l14,-4 l-10,14 z" fill="${INK}"/>` + figure(500, 400, 1.05, 'robe', 0.92, -1) + `<path d="M488,340 q12,-16 26,0" stroke="${INK}" stroke-width="5" fill="none"/>`
+    + `<g opacity=".8">${horse(690, 470, 1.1, '#15110E')}</g>` + `<path d="M330,330 l30,-10" stroke="#C9A46A" stroke-width="3"/>` + vtext(80, 70, '虞兮奈何', 26, '#EFE3C2', 0.85),
+  wujiang: (id) => `<rect width="800" height="500" fill="#E9C9A4" opacity=".4"/>` + sun(640, 150, 34, RED, id) + ridge(id, { y: 230, amp: 60, seed: 171, tone: 0.35 }) + mist(id, 250, 50)
+    + `<rect x="0" y="260" width="800" height="240" fill="#D8CFBC" opacity=".55"/>` + water(81, 270, 480, 800, 44, 0.42)
+    + `<path d="M-10,500 L-10,330 Q120,300 260,340 Q330,360 360,500 Z" fill="#B7AA8E"/>` + reeds(91, 0, 300, 420, 30, 110, 0.15)
+    + figure(190, 340, 1.0, 'soldier', 0.95) + `<g opacity=".9">${horse(110, 372, 0.85)}</g>` + boat(470, 360, 1.3, true)
+    + geese(560, 90, 5, 1) + vtext(712, 60, '不肯过江东', 24) + seal(696, 205, '乌江'),
+  shiren: (id) => ridge(id, { y: 210, amp: 70, seed: 181, tone: 0.2 }) + mist(id, 230, 50) + water(91, 260, 480, 800, 30, 0.32)
+    + `<rect x="0" y="300" width="330" height="200" fill="#E4D9BF" opacity=".7"/>` + `<g transform="translate(200,300)"><rect x="-6" y="-70" width="8" height="70" fill="${INK}" opacity=".8"/><rect x="62" y="-70" width="8" height="70" fill="${INK}" opacity=".8"/><path d="M-30,-70 Q32,-108 100,-70 L92,-62 Q32,-96 -22,-62 Z" fill="${INK}"/></g>`
+    + figure(120, 330, 0.9, 'scholar', 0.9) + figure(232, 312, 0.8, 'scholar', 0.75) + figure(300, 340, 0.85, 'robe', 0.8, -1)
+    + `<text x="120" y="252" font-size="18" text-anchor="middle" fill="${INK2}" style="font-family:KaiTi, STKaiti, &apos;Kaiti SC&apos;, serif">杜牧</text><text x="232" y="214" font-size="18" text-anchor="middle" fill="${INK2}" style="font-family:KaiTi, STKaiti, &apos;Kaiti SC&apos;, serif">王安石</text><text x="300" y="262" font-size="18" text-anchor="middle" fill="${INK2}" style="font-family:KaiTi, STKaiti, &apos;Kaiti SC&apos;, serif">李清照</text>`
+    + boat(560, 400, 0.9, false) + geese(500, 110, 6, 1) + vtext(712, 60, '题乌江亭', 24) + seal(696, 180, '诗'),
   piaomu: (id) => ridge(id, { y: 190, amp: 50, seed: 161, tone: 0.16 }) + wallGate(620, 250, 380, 0.7, 0.55) + mist(id, 255, 40)
     + `<rect x="0" y="270" width="800" height="230" fill="#E4DCC6" opacity=".55"/>` + water(61, 285, 470, 800, 34, 0.32)
     + willow(11, 90, 300, 0.85, 0.6) + figure(160, 300, 0.85, 'robe', 0.9) + `<path d="M172,262 Q240,250 300,330" stroke="${INK}" stroke-width="2" fill="none"/><line x1="300" y1="330" x2="300" y2="345" stroke="${INK}" stroke-width="1"/>`

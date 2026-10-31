@@ -2,9 +2,15 @@
 import type { Item, KNode, Lv, Player, Rec, StationId, Track, Vocab } from './types';
 import { ITEMS, ITEM_BY_ID, VOCAB } from './bank';
 import { CHAPTERS, CHAPTER_BY_ID, NODE_BY_ID, chapterSlots } from './story';
+import { PLAYS, PLAY_BY_ID } from './play';
 
 export interface StationMeta { id: StationId; name: string; sub: string; n: number; track: Track; emoji: string; color: string; part: string }
-export const STATIONS: StationMeta[] = CHAPTERS.map((c) => ({ id: c.id, name: c.title, sub: c.sub, n: chapterSlots(c).length, track: c.line, emoji: c.line === 'zh' ? '📜' : '🔎', color: c.color, part: c.line === 'zh' ? '中文 · 楚汉' : 'English · The Golden Panda' }));
+/** 一章里的题（每道题是几个难度版本）：中文用播放式（PLAYS），英文还是第二版的故事页（CHAPTERS） */
+export const slotsOf = (st: StationId): string[][] => PLAY_BY_ID[st] ? PLAY_BY_ID[st].lines.filter((l) => l.task).map((l) => l.task!) : CHAPTER_BY_ID[st] ? chapterSlots(CHAPTER_BY_ID[st]).map((x) => x.task) : [];
+export const STATIONS: StationMeta[] = [
+  ...PLAYS.map((c) => ({ id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 楚汉' })),
+  ...CHAPTERS.filter((c) => c.line === 'en').map((c) => ({ id: c.id, name: c.title, sub: c.sub, n: chapterSlots(c).length, track: c.line, emoji: '🔎', color: c.color, part: 'English · The Golden Panda' })),
+];
 export const ST: Record<StationId, StationMeta> = Object.fromEntries(STATIONS.map((s) => [s.id, s]));
 export const TRACKS: { id: Track; name: string }[] = [{ id: 'zh', name: '中文' }, { id: 'en', name: '英语' }];
 export const trackOf = (st: StationId): Track => ST[st]?.track ?? (/^e/.test(st) ? 'en' : 'zh');
@@ -44,14 +50,14 @@ export const stationDone = (p: Player, st: StationId) => stationRecs(p, st).filt
 export const stationFinished = (p: Player, st: StationId) => stationDone(p, st) >= (ST[st]?.n ?? 0);
 const pickLv = (vs: Item[], target: number) => vs.reduce((a, b) => (Math.abs(B[b.lv] - target) < Math.abs(B[a.lv] - target) - 1e-9 ? b : a), vs[0]);
 /** 第 k 道题（同一道题的几个难度版本里挑一个；做过的就是做过的那个） */
-export const slotItem = (p: Player, st: StationId, k: number): Item | null => {
-  const c = CHAPTER_BY_ID[st];
-  const slot = c ? chapterSlots(c)[k] : undefined;
-  if (!slot) return null;
-  const had = slot.task.find((id) => p.recs[id] && !p.recs[id].prac);
+export const slotItem = (p: Player, st: StationId, k: number): Item | null => taskItem(p, slotsOf(st)[k], trackOf(st));
+/** 一道题的几个难度版本里挑一个（做过的就是做过的那个） */
+export const taskItem = (p: Player, ids: string[] | undefined, tr: Track): Item | null => {
+  if (!ids?.length) return null;
+  const had = ids.find((id) => p.recs[id] && !p.recs[id].prac);
   if (had) return ITEM_BY_ID[had];
-  const vs = slot.task.map((id) => ITEM_BY_ID[id]).filter(Boolean);
-  return pickLv(vs, thetaOf(p, c.line) - 0.1);
+  const vs = ids.map((id) => ITEM_BY_ID[id]).filter(Boolean);
+  return vs.length ? pickLv(vs, thetaOf(p, tr) - 0.1) : null;
 };
 export const nextItem = (p: Player, st: StationId): Item | null => {
   const n = ST[st]?.n ?? 0;

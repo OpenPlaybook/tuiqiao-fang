@@ -120,3 +120,17 @@ export const exUser = (node: { name: string; ai?: { target: string; brief: strin
 export const cleanEx = (j: { examples?: { s?: unknown; note?: unknown }[] }, words?: string[]) =>
   (Array.isArray(j.examples) ? j.examples : []).slice(0, 3).map((e) => ({ s: String(e?.s ?? '').slice(0, 160), note: String(e?.note ?? '').slice(0, 80) }))
     .filter((e) => e.s && (!words?.length || words.some((w) => e.s.toLowerCase().includes(w.toLowerCase()))));
+
+// ---------------- 学生自己提问（AI 读书眼镜） ----------------
+export const ASK_SYSTEM = `你是一副“AI 读书眼镜”，陪初一、初二的学生读《史记》里楚汉相争的故事（韩信、项羽、刘邦）。学生正在看故事里的某一句，问了你一个问题。
+- 用 2—4 句话回答，不超过 120 字，口语化，初中生一听就懂。
+- 结合学生正在看的这一句、这一回的故事来回答；讲字词时，说清意思，再给一个简单的例子。
+- 史实要准确；拿不准就说“我不确定，可以查《史记》或者问老师”；传说要说明是传说。
+- 如果学生在问正在做的题的答案，不要直接说出答案，给一个想的方向。题已经做完的，可以讲。
+- 和学习无关的问题，礼貌地拉回故事。
+只输出回答本身。`;
+export const askUser = (o: { title: string; line: string; task?: string; taskDone?: boolean; q: string }) => [
+  `这一回：${o.title}`, `学生正在看的一句：${o.line}`,
+  o.task ? `学生正在做的题：${o.task}（${o.taskDone ? '已经做完了' : '还没做完'}）` : '',
+  `学生的问题：${o.q}`,
+].filter(Boolean).join('\n');

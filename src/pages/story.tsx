@@ -5,6 +5,7 @@ import { BookOpen, ChevronDown, Loader2, Lock, Network, Sparkles } from 'lucide-
 import type { Beat, Chapter, Item, KNode } from '../shared/types';
 import { ITEM_BY_ID } from '../shared/bank';
 import { CHAPTERS, CHAPTER_BY_ID, NODE_BY_ID, PLANNED, chapterSlots } from '../shared/story';
+import { PLAYS, PLAY_BY_ID } from '../shared/play';
 import { cleanFirst, pickPractice, slotItem, stationDone, stationStars } from '../shared/adapt';
 import { Art, Btn, Rich, Stars } from '../components/ui';
 import { Viz, isViz } from '../components/viz';
@@ -23,7 +24,7 @@ export function StoryMap() {
   const p = useGame((s) => s.player)!;
   const st = useGame((s) => s);
   const lines = [
-    { id: 'zh' as const, name: '楚汉', en: '中文主线', desc: '戴上 AI 读书眼镜，走进《史记》：跟着韩信，从钻人胯下的穷小子，到打败项羽的大将军。', art: { k: 'ink', p: { k: 'gaixia' } } },
+    { id: 'zh' as const, name: '楚汉', en: '中文主线', desc: '戴上 AI 读书眼镜，走进《史记》：故事一句一句播，播到题就停。看不懂的字，鼠标放上去点一点。', art: { k: 'ink', p: { k: 'gaixia' } } },
     { id: 'en' as const, name: 'The Case of the Golden Panda', en: 'English', desc: '英语节的奖杯不见了。和交换生 Ben 一起破案——语法就是线索。', art: { k: 'en', p: { k: 'hall' } } },
   ];
   return (
@@ -37,8 +38,8 @@ export function StoryMap() {
             <div className="p-5">
               <div className="text-ink2">{L.desc}</div>
               <div className="mt-4 space-y-2">
-                {CHAPTERS.filter((c) => c.line === L.id).map((c) => {
-                  const open = isOpen(st, c.id), n = chapterSlots(c).length, dn = stationDone(p, c.id);
+                {[...(L.id === 'zh' ? PLAYS.map((x) => ({ id: x.id, title: x.title, sub: x.sub, color: x.color, n: x.lines.filter((l) => l.task).length })) : CHAPTERS.filter((c) => c.line === L.id).map((c) => ({ id: c.id, title: c.title, sub: c.sub, color: c.color, n: chapterSlots(c).length })))].map((c) => {
+                  const open = isOpen(st, c.id), n = c.n, dn = stationDone(p, c.id);
                   return (
                     <motion.button key={c.id} whileHover={open ? { y: -2 } : {}} disabled={!open} onClick={() => { sfx('click'); go(`/c/${c.id}`); }}
                       className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left ${open ? 'bg-white hover:shadow' : 'bg-[#F1EBDD] opacity-70'}`} style={{ borderColor: open ? c.color + '66' : '#E6DCC6' }}>
@@ -47,7 +48,7 @@ export function StoryMap() {
                     </motion.button>
                   );
                 })}
-                {PLANNED.filter((c) => c.line === L.id).map((c) => (
+                {PLANNED.filter((c) => c.line === L.id && !PLAY_BY_ID[c.id]).map((c) => (
                   <div key={c.id} className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-[#E6DCC6] px-4 py-2.5 text-ink2"><div className="flex-1"><div className={`font-black ${L.id === 'zh' ? 'kai text-lg' : ''}`}>{c.title}</div><div className="text-sm">{c.sub}</div></div><span className="text-sm">制作中</span></div>
                 ))}
               </div>

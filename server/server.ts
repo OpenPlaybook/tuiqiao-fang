@@ -99,10 +99,22 @@ const currentOf = (p: Player) => {
 const summary = (p: Player) => ({
   pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
   done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p), prac: pracOf(p),
+  gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
   stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
   vocab: p.vocab?.score, lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
 });
+/** 学生的提问（和“清楚了 / 没说清 / 好像不对”的反馈） */
+const askList = (ps: Player[]) => {
+  const out: { name: string; play: string; q: string; a: string; fb: string; t: number }[] = [];
+  const answers = new Map(ai.asks().map((l) => [l.pid + '|' + l.text, l.out && 'a' in l.out ? l.out.a : '']));
+  for (const p of ps) for (const r of Object.values(p.recs)) {
+    if (!r.id.endsWith('-log')) continue;
+    const fbs = r.log.filter((e) => e.q === 'askfb');
+    for (const e of r.log) if (e.q === 'ask') out.push({ name: p.name, play: r.id.replace('-log', ''), q: e.v, a: answers.get(p.pid + '|' + e.v) ?? '', fb: fbs.find((f) => f.v.endsWith('｜' + e.v))?.v.split('｜')[0] ?? '', t: e.t });
+  }
+  return out.sort((a, b) => b.t - a.t).slice(0, 300);
+};
 const teacherState = () => {
   const ps = [...players.values()];
   const items = ITEMS.map((it) => {
@@ -113,15 +125,15 @@ const teacherState = () => {
     for (const r of rs) {
       const seen = new Set<string>();
       for (const e of r.log) {
-        if (e.q === 'open') { opens.set(e.v, (opens.get(e.v) ?? 0) + 1); continue; }
+        if (e.q === 'open' || e.q === 'gloss') { opens.set(e.v, (opens.get(e.v) ?? 0) + 1); continue; }
         if (e.ok === null) continue;
         if (!seen.has(e.q)) { seen.add(e.q); firstN++; if (e.ok) firstOk++; }
         if (!e.ok) wrong.set(e.v, (wrong.get(e.v) ?? 0) + 1);
       }
     }
-    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
-  }).filter((x) => x.n > 0 || STATIONS.some((s) => s.id === x.st));
-  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), now: Date.now(), ai: ai.status() };
+    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
+  }).filter((x) => x.st !== 'log' && (x.n > 0 || STATIONS.some((s) => s.id === x.st)));
+  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), now: Date.now(), ai: ai.status() };
 };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 const exportCsv = () => {
@@ -131,7 +143,7 @@ const exportCsv = () => {
 };
 
 // ---------------- HTTP ----------------
-const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
+const MIME: Record<string, string> = { '.mp3': 'audio/mpeg', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
 const send = (res: http.ServerResponse, code: number, body: unknown, type = 'application/json; charset=utf-8', extra: Record<string, string> = {}) => {
   res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', ...extra });
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
@@ -145,8 +157,8 @@ const readBody = (req: http.IncomingMessage) => new Promise<unknown>((ok, bad) =
 /** 静态文件；视频支持 Range（拖动进度条） */
 const serveStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: string) => {
   let rel = decodeURIComponent(url.split('?')[0]);
-  const i = rel.lastIndexOf('/assets/'), j = rel.lastIndexOf('/shorts/');
-  rel = i >= 0 ? rel.slice(i) : j >= 0 ? rel.slice(j) : '/' + path.basename(rel);
+  const sub = ['/assets/', '/shorts/', '/voice/'].map((d) => rel.lastIndexOf(d)).find((k) => k >= 0);
+  rel = sub !== undefined ? rel.slice(sub) : '/' + path.basename(rel);
   if (rel === '/' || !path.extname(rel)) rel = '/index.html';
   const f = path.join(DIST, path.normalize(rel));
   if (!f.startsWith(DIST) || !fs.existsSync(f)) return send(res, 404, 'not found', 'text/plain');
@@ -159,7 +171,7 @@ const serveStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: s
     return fs.createReadStream(f, { start: a, end: b }).pipe(res);
   }
   const immutable = rel.startsWith('/assets/');
-  res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Accept-Ranges': 'bytes', 'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : type === 'video/mp4' ? 'public, max-age=86400' : 'no-cache' });
+  res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Accept-Ranges': 'bytes', 'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : type === 'video/mp4' || type === 'audio/mpeg' ? 'public, max-age=86400' : 'no-cache' });
   fs.createReadStream(f).pipe(res);
 };
 
@@ -202,6 +214,10 @@ const server = http.createServer(async (req, res) => {
       lastSeen.set(inc.pid, Date.now());
       dirty = true;
       return send(res, 200, { ok: true, player: players.get(inc.pid) });
+    }
+    if (route === 'ai/ask' && req.method === 'POST') {
+      if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');
+      return void (await ai.handleAsk((await readBody(req)) as Record<string, unknown>, (code, body) => send(res, code, body)));
     }
     if (route === 'ai/examples' && req.method === 'POST') {
       if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');

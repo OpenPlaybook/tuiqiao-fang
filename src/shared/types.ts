@@ -11,7 +11,8 @@ export type Art = string | { k: string; p?: Record<string, unknown>; cap?: strin
 export interface Opt { t: string; why: string; art?: Art }
 interface SubBase { key: string; q: string }
 /** 选择：单选或多选；每个选项都写了为什么对 / 为什么不对 */
-export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: number[]; multi?: boolean; keep?: boolean; fine?: number[]; cols?: 1 | 2; master?: boolean }
+/** reveal：答对以后其他选项的解释怎么显示——'all' 全部显示；'chosen' 只显示点过的（其余“问题不在这儿”）；'ext' 做完拓展才揭开 */
+export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: number[]; multi?: boolean; keep?: boolean; fine?: number[]; cols?: 1 | 2; master?: boolean; reveal?: 'all' | 'chosen' | 'ext'; py?: Record<string, string> }
 /** 点出毛病：句子切成几段，点出有毛病的那段，再选改法 */
 export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: number[]; miss?: Record<number, string>; fix?: ChoiceSub }
 /** 分类：把卡片放进几个格子 */
@@ -21,8 +22,9 @@ export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right
 /** 排序：items 按正确顺序写；tags 是排好以后显示的年份等 */
 export interface OrderSub extends SubBase { kind: 'order'; items: string[]; tags?: string[]; why: string }
 /** AI 误译：AI 的译文切成几段，有错的段写了正确意思 */
-export interface MisSeg { t: string; bad?: { word: string; opts: string[]; ok: number; why: string } }
-export interface MisSub extends SubBase { kind: 'mis'; src: string; segs: MisSeg[] }
+export interface MisSeg { t: string; bad?: { word: string; opts: string[]; ok: number; why: string; fixed?: string } }
+/** src 为空：不是翻译，是一段有毛病的文字（旁白稿），改对以后显示 fixed */
+export interface MisSub extends SubBase { kind: 'mis'; src: string; segs: MisSeg[]; title?: string }
 /** 自己写：交给 AI 评 */
 export interface WriteSub extends SubBase {
   kind: 'write';
@@ -37,7 +39,15 @@ export interface WriteSub extends SubBase {
   ph?: string; // 输入框里的提示
   bonus?: boolean; // 只是加分（不写也能过关）
 }
-export type Sub = ChoiceSub | SpotSub | SortSub | MatchSub | OrderSub | MisSub | WriteSub;
+/** 选词填句：几句话、一组词 */
+export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: { t: string; a: string; why: string }[] }
+/** 打字短答：accept 里任意一个就算对；near：常见的“差一点”的答案和对应的提醒 */
+export interface TypeSub extends SubBase { kind: 'type'; accept: string[]; near?: Record<string, string>; why: string; ph?: string }
+/** 碎片拼接（概括、鉴赏）：碎片带层次标签 f 事实 / t 特点 / m 意义，x 是干扰；need 是缺了某层时的提醒（不点明“三步”） */
+export interface FragSub extends SubBase { kind: 'frag'; frags: { t: string; tag: 'f' | 't' | 'm' | 'x'; why?: string }[]; need: Record<'f' | 't' | 'm', string>; model: string }
+/** 长文本：文本里用 ⟨1⟩⟨2⟩ 标出题的位置，点哪个做哪个 */
+export interface LongSub extends SubBase { kind: 'long'; text: string; qs: Record<string, ChoiceSub | TypeSub>; title?: string }
+export type Sub = ChoiceSub | SpotSub | SortSub | MatchSub | OrderSub | MisSub | WriteSub | FillSub | TypeSub | FragSub | LongSub;
 
 export interface Item {
   id: string;
@@ -57,7 +67,13 @@ export interface Item {
   slip?: string; // 竹简故事：解开以后拾回的竹简上写的字
   npc?: { good: string; bad: string }; // 英语：Ben 的反应
   node?: string; // 讲的是哪个知识点（KNode）
+  ext?: Ext[]; // 拓展（居中弹窗里的小题）
+  back?: Back[]; // 回扣：回到前面（可以是别的回）看一看
 }
+/** 拓展：need 'always' 必做；'wrong' 答错过或点过“不确定”才必做；'opt' 选做。reveal：做完以后揭开这道题选项的解释 */
+export interface Ext { id: string; title: string; need: 'always' | 'wrong' | 'opt'; steps: Sub[]; reveal?: boolean }
+/** 回扣：跳到某一回的某一句（ch 回，line 句号），看完可以跳回来 */
+export interface Back { ch: string; line: string; label: string }
 
 // ---------------- 知识点：老师怎么讲 ----------------
 /** 学生点“哪里还不明白”：一个问题 → 简短的回答（可以带画面、例子） */
@@ -74,6 +90,24 @@ export interface KNode {
   practice: string[]; // 变式练习（题号），按能力挑
   ai?: { target: string; brief: string; words?: string[] }; // AI 再举例：讲什么、有什么要求、例句里必须出现的词
 }
+// ---------------- 播放式故事（画面 + 配音 + 字幕，播到题就停） ----------------
+/** 可点的字（AI 眼镜释义）：文本里写 ⟦词⟧；拼音直接注在字上写 ⟪字⟫。释义在一回的 gloss 表里 */
+export interface Gloss { d: string; py?: string; ex?: string; back?: Back }
+export interface Line {
+  id?: string; // 回扣用的句号
+  who?: string; // 说话人（旁白不写）
+  t: string; // 字幕：⟦词⟧ 可点，⟪字⟫ 注拼音，**加粗**，___ 空
+  read?: string; // 配音念的文字（默认是去掉标记的字幕；文言里的多音字在这里换成同音字）
+  voice?: 'n' | 'm' | 'ai'; // 旁白（女）、男声、AI 眼镜
+  scene?: Art; // 换画面
+  cam?: [number, number, number, number, number, number]; // 镜头推拉：起点 x%、y%、放大 → 终点 x%、y%、放大
+  card?: { t: string; kind: 'yuan' | 'poem' | 'ai' | 'note'; by?: string }; // 画面上的卡片：原文、诗、AI 译文
+  hide?: boolean; // 停在题上时，这句字幕藏起来（题里已经有这句话，不重复）
+  task?: string[]; // 在这一句停下来做的题（几个难度版本）
+  pause?: number;
+}
+export interface Play { id: string; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string }
+
 // ---------------- 故事 ----------------
 export interface Beat { who?: string; t: string; art?: Art }
 /** 一章：一段一段的故事，中间夹着题（同一道题的几个难度版本） */

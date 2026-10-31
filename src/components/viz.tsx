@@ -156,7 +156,17 @@ const LSW = () => (
   </div>
 );
 
-const VIZ: Record<string, (props: { p: P }) => React.ReactElement> = { timeline: Timeline, give: Give, scale: Scale, meter: Meter, trunk: Trunk, morph: Morph, gloss: Gloss, eyesgrid: EyesGrid, lsw: LSW };
+// ---------------- 两个场景对比：这个词说的是左边，原文发生的是右边 ----------------
+const Contrast = ({ p }: { p: P }) => {
+  const a = (p.a as string[]) ?? ['', ''], b = (p.b as string[]) ?? ['', ''];
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {[a, b].map(([ic, t], i) => <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.3 }} className={`rounded-xl px-3 py-2 text-center ${i ? 'bg-emerald-50' : 'bg-rose-50'}`}><div className="text-3xl">{ic}</div><div className="mt-1 text-sm font-bold">{t}</div></motion.div>)}
+    </div>
+  );
+};
+
+const VIZ: Record<string, (props: { p: P }) => React.ReactElement> = { timeline: Timeline, give: Give, scale: Scale, meter: Meter, trunk: Trunk, morph: Morph, gloss: Gloss, eyesgrid: EyesGrid, lsw: LSW, contrast: Contrast };
 export const isViz = (spec?: ArtSpec) => !!spec && typeof spec !== 'string' && !!VIZ[spec.k];
 export const Viz = ({ spec, className = '' }: { spec: ArtSpec; className?: string }) => {
   if (typeof spec !== 'string' && VIZ[spec.k]) { const C = VIZ[spec.k]; return <div className={className}><C p={(spec.p ?? {}) as P} /></div>; }

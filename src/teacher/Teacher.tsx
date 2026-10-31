@@ -14,7 +14,7 @@ export default function Teacher() {
   const [input, setInput] = useState('');
   const [st, setSt] = useState<TeacherState | null>(null);
   const [err, setErr] = useState('');
-  const [tab, setTab] = useState<'players' | 'items' | 'good' | 'ai' | 'set'>('players');
+  const [tab, setTab] = useState<'players' | 'items' | 'asks' | 'good' | 'ai' | 'set'>('players');
   const [big, setBig] = useState<string | null>(null);
   const [keyIn, setKeyIn] = useState('');
   const load = async (p = pin) => { try { const s = await api.teacher.state(p); setSt(s); setErr(''); try { localStorage.setItem(PIN_KEY, p); } catch { /* */ } } catch (e) { setErr(String((e as Error).message)); if (String((e as Error).message).includes('口令')) setPin(''); } };
@@ -37,7 +37,7 @@ export default function Teacher() {
         <span className="text-ink2">{st.players.length} 人，在线 {online} 人</span>
         <div className="ml-auto flex flex-wrap gap-2">
           <button onClick={() => setCfg({ attention: !c.attention })} className={`rounded-full px-4 py-2 font-black ${c.attention ? 'bg-rose-600 text-white' : 'bg-white chunky'}`}>{c.attention ? '取消“请看大屏幕”' : '请看大屏幕'}</button>
-          {(['players', 'items', 'good', 'ai', 'set'] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-2 font-black ${tab === t ? 'bg-[#2B2722] text-white' : 'bg-white chunky'}`}>{{ players: '学生', items: '题目', good: '好句子', ai: 'AI', set: '开放与设置' }[t]}</button>)}
+          {(['players', 'items', 'asks', 'good', 'ai', 'set'] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-2 font-black ${tab === t ? 'bg-[#2B2722] text-white' : 'bg-white chunky'}`}>{{ players: '学生', items: '题目', asks: '学生的提问', good: '好句子', ai: 'AI', set: '开放与设置' }[t]}</button>)}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white/70 px-4 py-2">
@@ -49,7 +49,7 @@ export default function Teacher() {
       {tab === 'players' && (
         <div className="card mt-4 overflow-x-auto p-0">
           <table className="w-full text-sm">
-            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星', '加权分', '妙笔', '完成', '变式练习（对/做）', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', '词汇', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
+            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星', '加权分', '妙笔', '完成', '变式练习（对/做）', '点字', '提问', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', '词汇', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
             <tbody>
               {st.players.map((p, i) => (
                 <tr key={p.pid} className="border-t border-[#EFE6D2]">
@@ -61,6 +61,8 @@ export default function Teacher() {
                   <td className="px-2.5 py-1.5">{p.bonus || ''}</td>
                   <td className="px-2.5 py-1.5">{p.done}</td>
                   <td className="px-2.5 py-1.5">{p.prac?.n ? `${p.prac.ok}/${p.prac.n}` : ''}</td>
+                  <td className="px-2.5 py-1.5">{p.gloss || ''}</td>
+                  <td className="px-2.5 py-1.5">{p.asks || ''}</td>
                   <td className="px-2.5 py-1.5">{lvText(p.avgLv)}</td>
                   {TRACKS.map((t) => <td key={t.id} className="px-2.5 py-1.5"><span className="inline-block h-2 rounded-full bg-amber-400 align-middle" style={{ width: (p.theta[t.id] - 1) * 18 + 4 }} /> {p.theta[t.id].toFixed(1)}</td>)}
                   <td className="px-2.5 py-1.5">{p.unsure || ''}</td>
@@ -81,7 +83,7 @@ export default function Teacher() {
           {STATIONS.map((s) => (
             <div key={s.id} className="card p-0">
               <div className="px-4 py-2 text-lg font-black" style={{ color: s.color }}>{s.emoji} {s.name}</div>
-              <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['题', '难度', '做过', '完成', '平均星', '第一次就对', '不确定', '选得最多的错答', '学生点开的“不明白”'].map((h) => <th key={h} className="px-3 py-1.5 font-black">{h}</th>)}</tr></thead>
+              <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['题', '难度', '做过', '完成', '平均星', '第一次就对', '不确定', '错选（次数）', '学生点开的字 / 不明白'].map((h) => <th key={h} className="px-3 py-1.5 font-black">{h}</th>)}</tr></thead>
                 <tbody>{st.items.filter((x) => x.st === s.id).map((x) => (
                   <tr key={x.id} className="border-t border-[#EFE6D2]"><td className="px-3 py-1.5 font-bold">{x.label}</td><td className="px-3 py-1.5">{LV_NAME[x.lv as Lv]}</td><td className="px-3 py-1.5">{x.n || ''}</td><td className="px-3 py-1.5">{x.done || ''}</td><td className="px-3 py-1.5">{x.done ? x.avgStars.toFixed(1) : ''}</td>
                     <td className="px-3 py-1.5">{x.firstN ? `${Math.round((100 * x.firstOk) / x.firstN)}%` : ''}</td><td className="px-3 py-1.5">{x.unsure || ''}</td>
@@ -90,6 +92,14 @@ export default function Teacher() {
                 ))}</tbody></table>
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === 'asks' && (
+        <div className="card mt-4 overflow-x-auto p-0">
+          <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['学生', '哪一回', '问题', 'AI 的回答', '学生觉得', '时间'].map((h) => <th key={h} className="px-3 py-2 font-black">{h}</th>)}</tr></thead>
+            <tbody>{(st.asks ?? []).map((a, i) => <tr key={i} className="border-t border-[#EFE6D2] align-top"><td className="whitespace-nowrap px-3 py-1.5 font-bold">{a.name}</td><td className="px-3 py-1.5">{a.play}</td><td className="px-3 py-1.5 font-bold">{a.q}</td><td className="px-3 py-1.5 text-ink2">{a.a}</td><td className={`whitespace-nowrap px-3 py-1.5 font-bold ${a.fb === '清楚了' ? 'text-emerald-700' : a.fb ? 'text-rose-700' : ''}`}>{a.fb}</td><td className="whitespace-nowrap px-3 py-1.5 text-ink2">{ago(a.t, st.now)}</td></tr>)}</tbody></table>
+          {!(st.asks ?? []).length && <div className="px-4 py-3 text-ink2">还没有学生提问。</div>}
         </div>
       )}
 

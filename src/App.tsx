@@ -6,6 +6,8 @@ import { StoryMap, ChapterPage } from './pages/story';
 import Teacher from './teacher/Teacher';
 import { DEMO } from './game/demo';
 import { CHAPTER_BY_ID } from './shared/story';
+import { PLAY_BY_ID } from './shared/play';
+import PlayerPage from './pages/player';
 
 const useHash = () => {
   const [h, setH] = useState(() => window.location.hash.slice(1) || '/');
@@ -33,7 +35,8 @@ export default function App() {
   if (isTeacher) return <Teacher />;
   if (!player) return <JoinPage />;
   const parts = route.split('/').filter(Boolean);
-  const page = parts[0] === 'c' && parts[1] && CHAPTER_BY_ID[parts[1]] ? <ChapterPage key={parts[1]} id={parts[1]} /> : parts[0] === 'me' ? <MePage /> : <StoryMap />;
+  const cid = (parts[1] ?? '').split('?')[0];
+  const page = parts[0] === 'c' && PLAY_BY_ID[cid] ? <PlayerPage key={route} id={cid} /> : parts[0] === 'c' && CHAPTER_BY_ID[cid] ? <ChapterPage key={cid} id={cid} /> : parts[0] === 'me' ? <MePage /> : <StoryMap />;
   return (
     <div className="min-h-full pb-16">
       <TopBar />

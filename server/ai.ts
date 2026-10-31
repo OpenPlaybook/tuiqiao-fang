@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Player, WriteSub } from '../src/shared/types';
 import { ITEM_BY_ID } from '../src/shared/bank';
-import { AI_QUOTA, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
+import { AI_QUOTA, ASK_SYSTEM, askUser, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
 import { NODE_BY_ID } from '../src/shared/story';
+import { PLAY_BY_ID, plainText } from '../src/shared/play';
 
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
-export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { examples: { s: string; note: string }[] } | null; ms: number; ok: boolean; err?: string }
+export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { examples: { s: string; note: string }[] } | { a: string } | null; ms: number; ok: boolean; err?: string }
 
 const MODELS = ['deepseek-flash', 'deepseek-v4-pro'];
 const ENDPOINT = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions';
@@ -33,9 +34,8 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
   const left = (pid: string) => Math.max(0, settings.quota + (settings.extra[pid] ?? 0) - (used.get(pid) ?? 0));
   const log = (e: AiLog) => { logs.push(e); if (logs.length > 8000) logs.splice(0, 2000); fs.appendFile(LOG_FILE, JSON.stringify(e) + '\n', () => {}); };
 
-  const complete = async (messages: Msg[], json = true) => {
-    const once = async (asJson: boolean) => {
-      const body: Record<string, unknown> = { model: settings.model, messages, stream: false, max_tokens: 600, temperature: 0.2, thinking: { type: 'disabled' } };
+  const callOnce = async (messages: Msg[], asJson: boolean, maxTokens = 600) => {
+      const body: Record<string, unknown> = { model: settings.model, messages, stream: false, max_tokens: maxTokens, temperature: 0.2, thinking: { type: 'disabled' } };
       if (asJson) body.response_format = { type: 'json_object' };
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 40000);
@@ -46,7 +46,11 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
       }
       const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
       return j.choices?.[0]?.message?.content ?? '';
-    };
+  };
+  /** 普通文字回答（学生提问） */
+  const completeText = (messages: Msg[]) => callOnce(messages, false, 400);
+  const complete = async (messages: Msg[], json = true) => {
+    const once = (asJson: boolean) => callOnce(messages, asJson);
     let out = await once(json);
     if (!/\{[\s\S]*"/.test(out)) out = await once(false); // JSON 模式偶尔返回空白：换普通模式再要一次
     const m = out.match(/\{[\s\S]*\}/);
@@ -131,6 +135,33 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
     } finally { active--; }
   };
 
+  // 学生自己提问：结合正在看的那一句回答
+  const handleAsk = async (b: Record<string, unknown>, send: (code: number, body: unknown) => void) => {
+    const p = b.pid ? players.get(String(b.pid)) : undefined;
+    if (!p || p.token !== b.token) return send(403, '身份不对，请重新登录');
+    const play = PLAY_BY_ID[String(b.play)], it = ITEM_BY_ID[String(b.item)];
+    const q = String(b.q ?? '').trim().slice(0, 120);
+    if (!play || !q) return send(400, '先写下你的问题');
+    if (!ready()) return send(503, 'AI 还没有接好，请告诉老师');
+    if (left(p.pid) <= 0) return send(429, '这节课的 AI 次数用完了');
+    if (active >= 12) return send(429, '同时找 AI 的人太多了，等几秒再问');
+    active++;
+    const t0 = Date.now();
+    try {
+      const step = it?.steps.find((x) => 'q' in x) as { q?: string } | undefined;
+      const ans = MOCK ? `（模拟）你问的是“${q}”。我结合这一句来说……` : await completeText([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone: it ? p.recs[it.id]?.status === 'done' : undefined, q }) }]);
+      const a = ans.trim().slice(0, 400);
+      if (!a) throw new Error('AI 这次没回答上来，再问一次');
+      used.set(p.pid, (used.get(p.pid) ?? 0) + 1);
+      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: { a }, ms: Date.now() - t0, ok: true });
+      return send(200, { a, left: left(p.pid) });
+    } catch (e) {
+      const msg = String((e as Error).message || e);
+      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: null, ms: Date.now() - t0, ok: false, err: msg });
+      return send(502, msg.includes('abort') ? 'AI 回复太慢了，再问一次' : msg);
+    } finally { active--; }
+  };
+
   const status = () => ({ ready: ready(), mock: MOCK, hasKey: !!key, keyTail: key ? key.slice(-4) : '', model: settings.model, models: MODELS, quota: settings.quota, lastTest, active, used: [...used.values()].reduce((a, b) => a + b, 0) });
   const teacher = async (r: string, body: Record<string, unknown>, send: (code: number, body: unknown) => void) => {
     if (r === 'ai/status') return send(200, status());
@@ -157,5 +188,6 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
   const resetUsage = () => { used.clear(); settings.extra = {}; saveSettings(); };
   /** 好句子：中文 3 分、英语 perfect 的，最新的在前 */
   const goodTexts = () => logs.filter((l) => l.ok && l.out && ('grade' in l.out ? l.out.grade >= 3 : 'verdict' in l.out && l.out.verdict === 'perfect')).slice(-300).reverse();
-  return { ready, left, handleJudge, handleExamples, teacher, status, logs, resetUsage, goodTexts };
+  const asks = () => logs.filter((l) => l.role === 'ask' && l.ok).slice(-300).reverse();
+  return { ready, left, handleJudge, handleExamples, handleAsk, asks, teacher, status, logs, resetUsage, goodTexts };
 };

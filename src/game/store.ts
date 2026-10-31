@@ -93,3 +93,10 @@ export const setData = (it: Item, data: Record<string, unknown>) => mutate((p) =
 export const finishItem = (it: Item, stars: number, perf: number) => mutate((p) => { const r = ensure(p, it); if (r.status === 'done') return; r.status = 'done'; r.stars = stars; r.perf = perf; r.t1 = Date.now(); });
 export const addBonus = (it: Item, n: number) => mutate((p) => { const r = ensure(p, it); r.bonus = Math.max(r.bonus, n); });
 export const setVocab = (known: string[]) => mutate((p) => { const s = vocabScore(known); p.vocab = { known, fake: s.fake, score: s.score, t: Date.now() }; });
+/** 播放式故事里的记录（点字、提问）：记在这一回的“记录”条目上 */
+export const logPlay = (playId: string, q: 'gloss' | 'ask' | 'askfb', v: string) => mutate((p) => {
+  const r = (p.recs[`${playId}-log`] ??= { id: `${playId}-log`, st: 'p', prac: true, status: 'doing', stars: 0, perf: 0, unsure: 0, tries: {}, bonus: 0, log: [], t0: Date.now() });
+  r.log.push({ q, v: v.slice(0, 300), ok: null, t: Date.now() });
+});
+/** 拓展做完了：记在这道题的 data.ext 里 */
+export const setExtDone = (it: Item, extId: string, score: number) => mutate((p) => { const r = ensure(p, it); r.data = { ...(r.data ?? {}), ext: { ...((r.data?.ext as Record<string, number>) ?? {}), [extId]: score } }; });

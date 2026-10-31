@@ -99,7 +99,7 @@ export const ChoiceView = ({ it, s, onDone, color }: StepProps<ChoiceSub>) => {
 };
 
 // ---------------- 点出毛病 ----------------
-export const SpotView = ({ it, s, onDone, color }: StepProps<SpotSub>) => {
+export const SpotView = ({ it, s, onDone, color, renderFix }: StepProps<SpotSub> & { renderFix?: (fix: ChoiceSub, done: (x: number) => void) => React.ReactNode }) => {
   const [tries, setTries] = useState(0);
   const [found, setFound] = useState(false);
   const [missed, setMissed] = useState<number[]>([]);
@@ -124,7 +124,7 @@ export const SpotView = ({ it, s, onDone, color }: StepProps<SpotSub>) => {
         ))}
       </div>
       {msg && <Msg ok={msg.ok}>{msg.text}</Msg>}
-      {found && s.fix && <div className="mt-5"><ChoiceView it={it} s={s.fix} color={color} onDone={(x) => onDone((spotScore + x) / 2)} /></div>}
+      {found && s.fix && <div className="mt-5">{renderFix ? renderFix(s.fix, (x) => onDone((spotScore + x) / 2)) : <ChoiceView it={it} s={s.fix} color={color} onDone={(x) => onDone((spotScore + x) / 2)} />}</div>}
     </div>
   );
 };
@@ -153,7 +153,7 @@ export const SortView = ({ it, s, onDone, color }: StepProps<SortSub>) => {
           const c = s.cards[i];
           return (
             <div key={i} className={`rounded-2xl border-2 bg-white px-4 py-2.5 ${bad.includes(i) ? 'border-rose-300' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
-              <div className="text-[17px] font-bold">{c.t}</div>
+              <div className="text-[17px] font-bold"><Rich text={c.t} /></div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {s.bins.map((b, j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setPut((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${put[i] === j ? 'text-white' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink2'}`} style={put[i] === j ? { background: color, borderColor: color } : {}}>{b}</button>)}
               </div>
@@ -190,7 +190,7 @@ export const MatchView = ({ it, s, onDone, color }: StepProps<MatchSub>) => {
         <div className="grid grid-cols-[1fr_1.4fr] gap-3 px-1 text-sm font-black text-ink2"><div>{s.lh ?? ''}</div><div>{s.rh ?? ''}</div></div>
         {s.left.map((l, i) => (
           <div key={i} className={`grid grid-cols-[1fr_1.4fr] items-center gap-3 rounded-2xl border-2 bg-white px-4 py-2.5 ${bad.includes(i) ? 'border-rose-300' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
-            <div className="text-[17px] font-black">{l}</div>
+            <div className="text-[17px] font-black"><Rich text={l} /></div>
             <div className="flex flex-wrap gap-1.5">
               {rorder.map((j) => <button key={j} disabled={solved} onClick={() => { sfx('click'); setSel((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); }} className={`rounded-xl border-2 px-2.5 py-1 text-left text-sm font-bold ${sel[i] === j ? 'text-white' : 'border-[#E6DCC6] bg-[#FBF7EE] text-ink'}`} style={sel[i] === j ? { background: color, borderColor: color } : {}}>{s.right[j]}</button>)}
             </div>
@@ -253,7 +253,7 @@ export const MisView = ({ it, s, onDone, color }: StepProps<MisSub>) => {
     if (ok.includes(String(i))) return;
     sfx('no'); setOk((x) => [...x, String(i)]); setPenalty((p) => p + 0.12);
     logAnswer(it, { q: s.key, v: `误点：${g.t}`, ok: false });
-    setMsg({ ok: false, text: '这一段 AI 译得没问题。' });
+    setMsg({ ok: false, text: s.src ? '这一段 AI 译得没问题。' : '这一段没问题。' });
   };
   const choose = (word: string, k: number) => {
     const b = s.segs.find((g) => g.bad?.word === word)!.bad!;
@@ -263,22 +263,22 @@ export const MisView = ({ it, s, onDone, color }: StepProps<MisSub>) => {
     sfx('ok');
     const f = [...fixed, word]; setFixed(f); setOpen(null);
     setMsg({ ok: true, text: <><b>{word}</b>：{b.why}</> });
-    if (f.length === groups.length) { setDone(true); const sc = Math.max(0.34, 1 - penalty); onDone(sc); toast({ emoji: '🔍', title: '你比 AI 译得准！', text: `挑出了 ${groups.length} 处错` }); }
+    if (f.length === groups.length) { setDone(true); const sc = Math.max(0.34, 1 - penalty); onDone(sc); toast({ emoji: '🔍', title: '你比 AI 眼镜还细心！', text: `挑出了 ${groups.length} 处毛病` }); }
   };
   const giveUp = () => { setFixed(groups); setDone(true); setOpen(null); setMsg({ ok: null, text: '错处都标出来了，看看每一处为什么错。' }); onDone(0.34); };
   const ob = open ? s.segs.find((g) => g.bad?.word === open)!.bad! : null;
   return (
     <div>
       <Q text={s.q} />
-      <div className="rounded-2xl border-2 border-[#D8C08A] bg-[#F7EFD9] px-5 py-3"><div className="text-sm font-black text-[#8A6A2F]">原文</div><div className="kai mt-1 text-2xl leading-relaxed">{s.src}</div></div>
-      <div className="mt-3 rounded-2xl border-2 border-sky-200 bg-sky-50/70 px-5 py-3">
-        <div className="flex items-center gap-1.5 text-sm font-black text-sky-800"><Sparkles size={16} />翻译 AI 的译文（点你觉得译错的地方）</div>
+      {s.src && <div className="mb-3 rounded-2xl border-2 border-[#D8C08A] bg-[#F7EFD9] px-5 py-3"><div className="text-sm font-black text-[#8A6A2F]">原文</div><div className="kai mt-1 text-2xl leading-relaxed">{s.src}</div></div>}
+      <div className="rounded-2xl border-2 border-sky-200 bg-sky-50/70 px-5 py-3">
+        <div className="flex items-center gap-1.5 text-sm font-black text-sky-800"><Sparkles size={16} />{s.title ?? (s.src ? 'AI 眼镜的译文' : 'AI 眼镜写的稿子')}（点你觉得有问题的地方）</div>
         <div className="mt-1 text-xl leading-[2.1]">
           {s.segs.map((g, i) => {
             const isFixed = g.bad && fixed.includes(g.bad.word);
             return (
               <span key={i} onClick={() => click(i)} className={`seg ${!done && !isFixed ? 'seg-click' : ''} ${isFixed ? 'bg-emerald-100' : ok.includes(String(i)) ? 'text-ink2/70' : open && g.bad?.word === open ? 'bg-amber-200' : ''}`}>
-                {isFixed ? <><s className="text-rose-500/80">{g.t}</s> <b className="text-emerald-800">{g.bad!.opts[g.bad!.ok]}</b></> : g.t}
+                {isFixed ? (g.bad!.fixed ? <b className="text-emerald-800">{g.bad!.fixed}</b> : <><s className="text-rose-500/80">{g.t}</s> <b className="text-emerald-800">{g.bad!.opts[g.bad!.ok]}</b></>) : g.t}
               </span>
             );
           })}
@@ -286,13 +286,13 @@ export const MisView = ({ it, s, onDone, color }: StepProps<MisSub>) => {
       </div>
       {ob && open && (
         <div className="mt-3 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
-          <div className="font-black">原文里的“<span className="kai text-xl">{open}</span>”，在这里是什么意思？</div>
+          <div className="font-black">{s.src ? <>原文里的“<span className="kai text-xl">{open}</span>”，在这里是什么意思？</> : <>这里有毛病。怎么改？</>}</div>
           <div className="mt-2 flex flex-wrap gap-2">{ob.opts.map((o, k) => <button key={k} onClick={() => choose(open, k)} className="rounded-xl border-2 border-[#E6DCC6] bg-white px-3 py-1.5 font-bold hover:border-amber-400">{o}</button>)}</div>
         </div>
       )}
       {msg && <Msg ok={msg.ok}>{msg.text}</Msg>}
-      {!done && <div className="mt-3 flex items-center gap-3 text-sm text-ink2"><span>还有 <b className="text-ink">{groups.length - fixed.length}</b> 处错没挑出来</span>{fixed.length < groups.length && <button onClick={giveUp} className="underline">我找不到了，告诉我</button>}</div>}
-      {done && <div className="mt-3 text-sm text-ink2" style={{ color }}>AI 也会按今天的意思去套古代的字——和我们最容易犯的错一模一样。</div>}
+      {!done && <div className="mt-3 flex items-center gap-3 text-sm text-ink2"><span>还有 <b className="text-ink">{groups.length - fixed.length}</b> 处没挑出来</span>{fixed.length < groups.length && <button onClick={giveUp} className="underline">我找不到了，告诉我</button>}</div>}
+      
     </div>
   );
 };

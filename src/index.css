@@ -47,3 +47,9 @@ button:disabled { cursor: not-allowed; }
 .seg-click { cursor: pointer; }
 .seg-click:hover { background: rgba(217, 164, 65, .25); box-shadow: 0 0 0 2px rgba(217, 164, 65, .3); }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* 可点的字：平时看不出来，鼠标放上去才显示能点 */
+.gloss { cursor: pointer; border-radius: 4px; transition: background .12s, box-shadow .12s; }
+.gloss:hover { background: rgba(37, 99, 235, .12); box-shadow: 0 2px 0 rgba(37, 99, 235, .6); }
+ruby rt { font-size: .5em; color: #7A7068; font-weight: 600; }
+.kai b { color: var(--color-zhu); }

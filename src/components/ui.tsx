@@ -8,22 +8,33 @@ import { renderArt } from '../art/ink';
 import type { Art as ArtSpec } from '../shared/types';
 import { DEMO } from '../game/demo';
 
-// ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行 ----------------
+// ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置 ----------------
+import { createContext, useContext } from 'react';
+import type { Gloss } from '../shared/types';
+export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement) => void; marker?: (n: string) => ReactNode }
+export const GlossContext = createContext<GlossCtx>({ gloss: {} });
+const TOK = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_{3,}|⟦[^⟧]+⟧|⟪[^⟫]+⟫|⟨[^⟩]+⟩)/;
 export const Rich = ({ text, className = '', fill, fills }: { text: string; className?: string; fill?: string; fills?: string[] }) => {
+  const ctx = useContext(GlossContext);
   const lines = text.split('\n');
   let b = 0;
+  const piece = (part: string, j: number): ReactNode => {
+    if (/^\*\*/.test(part)) return <b key={j}>{part.slice(2, -2).split(TOK).map(piece)}</b>;
+    if (/^\*[^*]/.test(part) && part.endsWith('*')) return <em key={j}>{part.slice(1, -1)}</em>;
+    if (/^_{3,}$/.test(part)) return <span key={j} className="blank">{fills?.[b++] ?? fill ?? '\u00a0'}</span>;
+    if (part.startsWith('⟦')) {
+      const w = part.slice(1, -1), g = ctx.gloss[w];
+      if (!g) return <span key={j}>{w}</span>;
+      // 鼠标放上去才看得出能点；点了才出释义
+      return <span key={j} className="gloss" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); ctx.onGloss?.(w, g, e.currentTarget); }}>{w}</span>;
+    }
+    if (part.startsWith('⟪')) { const w = part.slice(1, -1), py = ctx.gloss[w]?.py; return py ? <ruby key={j}>{w}<rt>{py}</rt></ruby> : <span key={j}>{w}</span>; }
+    if (part.startsWith('⟨')) return <span key={j}>{ctx.marker?.(part.slice(1, -1))}</span>;
+    return <span key={j}>{part}</span>;
+  };
   return (
     <span className={className}>
-      {lines.map((ln, i) => (
-        <span key={i}>
-          {i > 0 && <br />}
-          {ln.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_{3,})/).map((part, j) =>
-            /^\*\*/.test(part) ? <b key={j}>{part.slice(2, -2)}</b>
-              : /^\*[^*]/.test(part) ? <em key={j}>{part.slice(1, -1)}</em>
-                : /^_{3,}$/.test(part) ? <span key={j} className="blank">{fill ?? ' '}</span>
-                  : <span key={j}>{part}</span>)}
-        </span>
-      ))}
+      {lines.map((ln, i) => <span key={i}>{i > 0 && <br />}{ln.split(TOK).map(piece)}</span>)}
     </span>
   );
 };
