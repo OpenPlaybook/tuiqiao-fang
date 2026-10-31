@@ -119,7 +119,7 @@ export const slipsBundle = (x: number, y: number, n = 9, s = 1, a = 1, chars = '
   let o = `<g transform="translate(${x},${y}) scale(${s})" opacity="${a}">`;
   for (let i = 0; i < n; i++) {
     o += `<rect x="${i * 22}" y="0" width="18" height="180" rx="3" fill="#D8C08A" stroke="#9C8150" stroke-width="1"/>`;
-    const ch = chars[i]; if (ch) o += `<text x="${i * 22 + 9}" y="40" font-size="14" text-anchor="middle" fill="${INK}" style="font-family:KaiTi, STKaiti, serif">${ch}</text>`;
+    const ch = chars[n - 1 - i]; if (ch) o += `<text x="${i * 22 + 9}" y="40" font-size="14" text-anchor="middle" fill="${INK}" style="font-family:KaiTi, STKaiti, serif">${ch}</text>`;
     else for (let k = 0; k < 6; k++) o += `<rect x="${i * 22 + 6}" y="${22 + k * 24}" width="6" height="${8 + ((i * 7 + k * 3) % 8)}" fill="${INK}" opacity=".55"/>`;
   }
   return o + `<line x1="-6" y1="40" x2="${n * 22 + 2}" y2="40" stroke="#6E5530" stroke-width="2"/><line x1="-6" y1="140" x2="${n * 22 + 2}" y2="140" stroke="#6E5530" stroke-width="2"/></g>`;

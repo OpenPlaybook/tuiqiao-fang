@@ -14,7 +14,7 @@ import { finishItem, fly, getState as useGameState, logPlay, markUnsure, setData
 import type { AskOut } from '../shared/ai';
 import { api } from '../game/api';
 import { sfx } from '../game/sound';
-import { PlayStep, SaveCtx, TeachView, ansOf, layoutOf } from '../items/steps2';
+import { Bubble, ChoiceChat, PlayStep, SaveCtx, TeachView, ansOf, layoutOf } from '../items/steps2';
 import { DEMO } from '../game/demo';
 import { Film } from '../film/Film';
 
@@ -517,22 +517,21 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
       <motion.div ref={boxRef} initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} className="card relative max-h-[90vh] w-full max-w-[860px] overflow-auto px-5 py-4" onClick={(e) => e.stopPropagation()}>
         <GlossContext.Provider value={{ gloss, onGloss }}>
           <SaveCtx.Provider value={pre}>
-            <div className="mb-2 flex items-center gap-2"><span className="text-lg font-black">{ext.title}</span>
+            <div className="mb-3 flex items-center gap-2 border-b border-[#EFE6D2] pb-2"><Glasses size={20} className="text-sky-600" /><span className="text-lg font-black">{ext.title}</span>
               {qs.length > 1 && <span className="flex gap-1">{qs.map((_, k) => <span key={k} className={`h-1.5 w-4 rounded-full ${k < cur ? 'bg-emerald-500' : k === cur ? '' : 'bg-[#E6DCC6]'}`} style={k === cur && !finished ? { background: color } : {}} />)}</span>}
               {canClose && <button onClick={onClose} className="ml-auto rounded-full p-1.5 text-ink2 hover:bg-black/5" aria-label="关闭"><X size={20} /></button>}</div>
-            <div className="space-y-2">
+            {/* 和读书眼镜的对话：它在左边讲、问，我的回答在右边 */}
+            <div className="space-y-2.5">
               {ext.steps.map((s, i) => i <= upto && (
                 <motion.div key={s.key} ref={(el) => { refs.current[i] = el; }} initial={i > (qs[firstShown.current] ?? -1) ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
-                  {s.kind === 'teach' ? <TeachView s={s} color={color} /> : <PlayStep it={it} s={s} color={color} onDone={(x) => answered(i, x)} />}
+                  {s.kind === 'teach' ? <TeachView s={s} />
+                    : s.kind === 'choice' ? <ChoiceChat it={it} s={s} color={color} onDone={(x) => answered(i, x)} />
+                    : <Bubble who="ai" wide><PlayStep it={it} s={s} color={color} onDone={(x) => answered(i, x)} /></Bubble>}
                 </motion.div>
               ))}
+              {finished && <Bubble who="ai" tone="ok">{ext.reveal ? '这一段讲完了。刚才那道题每个选项为什么对、为什么不对，现在都能看了。' : '这一段讲完了。'}</Bubble>}
             </div>
-            {finished && (
-              <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
-                {ext.reveal && <span className="text-sm text-emerald-700">刚才那道题每个选项的解释，已经揭开了。</span>}
-                <Btn color={color} onClick={onClose}>回到故事 ›</Btn>
-              </div>
-            )}
+            {finished && <div className="mt-3 text-right"><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
             {!finished && !required && <div className="mt-2 text-right"><button onClick={onClose} className="text-sm font-bold text-ink2 underline">先不做了，回到故事</button></div>}
           </SaveCtx.Provider>
         </GlossContext.Provider>

@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { createPortal } from 'react-dom';
 import type React from 'react';
 import { Reorder, motion } from 'motion/react';
-import { GripVertical, Lock, X } from 'lucide-react';
+import { Glasses, GripVertical, Lock, X } from 'lucide-react';
 import type { ChoiceSub, FillSub, FragSub, Item, LongSub, MatchSub, MisSub, SortSub, SpotSub, Sub, TeachSub, TypeSub } from '../shared/types';
 import { Art, Btn, GlossContext, LETTERS, Rich, shuffleIdx } from '../components/ui';
 import { Viz, isViz } from '../components/viz';
@@ -468,14 +468,79 @@ export const MisCard = ({ it, s, onDone, color }: StepProps<MisSub>) => {
 };
 
 // ---------------- 讲：老师讲一小段，和后面那一问一起出现 ----------------
-export const TeachView = ({ s, color }: { s: TeachSub; color: string }) => (
-  <div className="rounded-lg border-l-4 bg-[#FBF6EA] px-3.5 py-2 text-[16px] leading-[1.85]" style={{ borderColor: color }}>
+export const TeachView = ({ s }: { s: TeachSub; color?: string }) => (
+  <Bubble who="ai">
     {s.q && <div className="font-black">{s.q}</div>}
     <Rich text={s.t} />
-    {s.art && <div className="mx-auto mt-1.5 max-w-[560px]">{isViz(s.art) ? <Viz spec={s.art} /> : <Art spec={s.art} className="aspect-[56/22] rounded-lg" />}</div>}
-    {s.ex && <div className="mt-1 space-y-0.5 border-t border-dashed border-[#E2D5B8] pt-1">{s.ex.map((e, i) => <div key={i}><Rich text={e} /></div>)}</div>}
-  </div>
+    {s.art && <div className="mt-1.5 max-w-[520px]">{isViz(s.art) ? <Viz spec={s.art} /> : <Art spec={s.art} className="aspect-[56/22] rounded-lg" />}</div>}
+    {s.ex && <div className="mt-1 space-y-0.5">{s.ex.map((e, i) => <div key={i} className="kai text-[17px]"><Rich text={e} /></div>)}</div>}
+  </Bubble>
 );
+
+// ---------------- 对话：眼镜在左边讲、问；我的回答在右边 ----------------
+/** 一个对话气泡。who='ai' 在左边（读书眼镜），'me' 在右边（学生自己）；tone 是眼镜回话的颜色（对 / 错） */
+export const Bubble = ({ who, tone, wide, children }: { who: 'ai' | 'me'; tone?: 'ok' | 'no'; wide?: boolean; children: React.ReactNode }) => (
+  who === 'ai'
+    ? <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700"><Glasses size={16} /></span>
+        <div className={`rounded-2xl rounded-tl-md px-3.5 py-2 text-[16px] leading-[1.8] ${wide ? 'min-w-0 flex-1' : 'max-w-[86%]'} ${tone === 'ok' ? 'bg-emerald-50 text-emerald-950' : tone === 'no' ? 'bg-rose-50 text-rose-950' : 'bg-[#F2F5F7] text-ink'}`}>{children}</div>
+      </div>
+    : <div className="flex justify-end"><div className="max-w-[80%] rounded-2xl rounded-tr-md bg-[#F6E3BF] px-3.5 py-2 text-[16px] font-bold leading-[1.7] text-[#4A3A20]">{children}</div></div>
+);
+/** 选择题做成对话：眼镜问 → 我点一个回答（出现在右边）→ 眼镜接着说为什么；错了接着选 */
+export const ChoiceChat = ({ it, s, onDone, color }: StepProps<ChoiceSub>) => {
+  const pid = useGame((g) => g.player?.pid ?? '');
+  const [sv, save] = useSaved<ChoiceSaved>(it, s.key);
+  const order = useMemo(() => (s.keep ? s.opts.map((_, i) => i) : shuffleIdx(s.opts.length, pid + it.id + s.key)), [pid, it.id, s.key]);
+  // 回答的记录：每次交的那几个选项（做过的从存档里排出来：先是答错的，最后是答对的）
+  const [hist, setHist] = useState<number[][]>(() => (sv ? [...sv.wrong.map((i) => [i]), sv.pick] : []));
+  const [tries, setTries] = useState(0);
+  const [solved, setSolved] = useState(!!sv);
+  const [sel, setSel] = useState<number[]>([]);
+  const [gave, setGave] = useState(false); // 三次都没对：眼镜直接说答案
+  const multi = !!s.multi;
+  const wrong = hist.flat().filter((i) => !s.ok.includes(i));
+  const send = (p: number[]) => {
+    if (!p.length || solved) return;
+    const t = tries + 1; setTries(t);
+    const right = multi ? p.length === s.ok.length && p.every((i) => s.ok.includes(i)) : s.ok.includes(p[0]);
+    logAnswer(it, { q: s.key, v: p.map((i) => plain(s.opts[i].t)).join(' / '), ok: right }, [s.key, t]);
+    const h = [...hist, p]; setHist(h); setSel([]);
+    const w = h.flat().filter((i) => !s.ok.includes(i));
+    if (right) { sfx('ok'); setSolved(true); save({ sc: triesScore(t), wrong: w, pick: p }); onDone(triesScore(t)); return; }
+    sfx('no');
+    if (t >= 3) { setSolved(true); setGave(true); save({ sc: 0.34, wrong: w, pick: s.ok }); onDone(0.34); }
+  };
+  const reply = (p: number[], k: number) => {
+    const right = multi ? p.length === s.ok.length && p.every((i) => s.ok.includes(i)) : s.ok.includes(p[0]);
+    if (right) return <Bubble who="ai" tone="ok">{multi ? (s.ok.length > 1 ? '都对了。' : '对。') : <Rich text={s.opts[p[0]].why} />}{multi && p.map((i) => <div key={i} className="text-[15px]">· {plain(s.opts[i].t)}：<Rich text={s.opts[i].why} /></div>)}</Bubble>;
+    const bad = p.filter((i) => !s.ok.includes(i)), miss = s.ok.filter((i) => !p.includes(i)).length;
+    return <Bubble who="ai" tone="no">{bad.map((i) => <div key={i}>{bad.length > 1 && <b>{plain(s.opts[i].t)}：</b>}<Rich text={s.opts[i].why} /></div>)}{!bad.length && multi && <div>还少了 {miss} 个。</div>}{k === hist.length - 1 && !solved && <div className="mt-0.5 text-[14px] opacity-75">再想想，换一个。</div>}</Bubble>;
+  };
+  const left = order.filter((i) => !wrong.includes(i));
+  return (
+    <div className="space-y-2">
+      <Bubble who="ai"><span className="font-bold"><Rich text={s.q} /></span>{multi && <span className="ml-1 text-[14px] opacity-70">（可以选好几个）</span>}</Bubble>
+      {hist.map((p, k) => (
+        <div key={k} className="space-y-2">
+          <Bubble who="me">{p.map((i) => plain(s.opts[i].t)).join('、')}</Bubble>
+          {reply(p, k)}
+        </div>
+      ))}
+      {gave && <Bubble who="ai" tone="ok">答案是：<b>{s.ok.map((i) => plain(s.opts[i].t)).join('、')}</b>。{s.ok.length === 1 && <Rich text={s.opts[s.ok[0]].why} />}</Bubble>}
+      {!solved && (
+        <div className="flex flex-wrap items-center justify-end gap-1.5 pl-10">
+          {left.map((i) => (
+            <button key={i} onClick={() => { sfx('click'); if (multi) setSel((x) => (x.includes(i) ? x.filter((y) => y !== i) : [...x, i])); else send([i]); }}
+              className={`max-w-full rounded-2xl border-2 px-3 py-1 text-left text-[15px] font-bold leading-snug transition ${sel.includes(i) ? 'bg-[#F6E3BF]' : 'border-[#E6DCC6] bg-white hover:border-[#D9B77A] hover:bg-[#FFF8EA]'}`}
+              style={sel.includes(i) ? { borderColor: color } : {}}><Rich text={s.opts[i].t} /></button>
+          ))}
+          {multi && <button disabled={!sel.length} onClick={() => send(sel)} className="rounded-full px-3.5 py-1 text-[14px] font-black text-white disabled:opacity-40" style={{ background: color }}>就这些</button>}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ---------------- 分类、连线：一项一行，几列并排，省地方 ----------------
 export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { init?: boolean }) => {
