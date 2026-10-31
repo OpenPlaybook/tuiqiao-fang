@@ -53,3 +53,11 @@ button:disabled { cursor: not-allowed; }
 .gloss:hover { background: rgba(37, 99, 235, .12); box-shadow: 0 2px 0 rgba(37, 99, 235, .6); }
 ruby rt { font-size: .5em; color: #7A7068; font-weight: 600; }
 .kai b { color: var(--color-zhu); }
+
+/* 长文本里题针对的字词句：画线 + 编号，点它做题 */
+.mark { cursor: pointer; border-radius: 4px; text-decoration: underline; text-decoration-color: var(--c); text-decoration-thickness: 3px; text-underline-offset: 7px; transition: background .12s; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.mark:hover { background: rgba(217, 164, 65, .22); }
+.mark-on { background: rgba(217, 164, 65, .38); }
+.mark-done { text-decoration-color: #059669; }
+.mark-no { display: inline-flex; align-items: center; justify-content: center; min-width: 1.15rem; height: 1.15rem; margin-left: 1px; border-radius: 999px; background: var(--c); color: #fff; font: 900 11px/1 system-ui, sans-serif; vertical-align: super; }
+.mark-done .mark-no { background: #059669; }

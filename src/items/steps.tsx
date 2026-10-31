@@ -130,13 +130,13 @@ export const SpotView = ({ it, s, onDone, color, renderFix }: StepProps<SpotSub>
 };
 
 // ---------------- 分类 ----------------
-export const SortView = ({ it, s, onDone, color }: StepProps<SortSub>) => {
+export const SortView = ({ it, s, onDone, color, init }: StepProps<SortSub> & { init?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const order = useMemo(() => shuffleIdx(s.cards.length, pid + it.id + s.key), [pid]);
-  const [put, setPut] = useState<Record<number, number>>({});
+  const [put, setPut] = useState<Record<number, number>>(init ? Object.fromEntries(s.cards.map((c, i) => [i, c.bin])) : {});
   const [bad, setBad] = useState<number[]>([]);
   const [tries, setTries] = useState(0);
-  const [solved, setSolved] = useState(false);
+  const [solved, setSolved] = useState(!!init);
   const all = Object.keys(put).length === s.cards.length;
   const check = () => {
     const t = tries + 1; setTries(t);
@@ -168,13 +168,13 @@ export const SortView = ({ it, s, onDone, color }: StepProps<SortSub>) => {
 };
 
 // ---------------- 连线（每一行选一个） ----------------
-export const MatchView = ({ it, s, onDone, color }: StepProps<MatchSub>) => {
+export const MatchView = ({ it, s, onDone, color, init }: StepProps<MatchSub> & { init?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const rorder = useMemo(() => shuffleIdx(s.right.length, pid + it.id + s.key + 'r'), [pid]);
-  const [sel, setSel] = useState<Record<number, number>>({});
+  const [sel, setSel] = useState<Record<number, number>>(init ? Object.fromEntries(s.pairs.map((p, i) => [i, p])) : {});
   const [bad, setBad] = useState<number[]>([]);
   const [tries, setTries] = useState(0);
-  const [solved, setSolved] = useState(false);
+  const [solved, setSolved] = useState(!!init);
   const all = Object.keys(sel).length === s.left.length;
   const check = () => {
     const t = tries + 1; setTries(t);

@@ -12,7 +12,7 @@ export interface Opt { t: string; why: string; art?: Art }
 interface SubBase { key: string; q: string }
 /** 选择：单选或多选；每个选项都写了为什么对 / 为什么不对 */
 /** reveal：答对以后其他选项的解释怎么显示——'all' 全部显示；'chosen' 只显示点过的（其余“问题不在这儿”）；'ext' 做完拓展才揭开 */
-export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: number[]; multi?: boolean; keep?: boolean; fine?: number[]; cols?: 1 | 2; master?: boolean; reveal?: 'all' | 'chosen' | 'ext'; py?: Record<string, string> }
+export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: number[]; multi?: boolean; keep?: boolean; fine?: number[]; cols?: number; master?: boolean; reveal?: 'all' | 'chosen' | 'ext'; py?: Record<string, string> }
 /** 点出毛病：句子切成几段，点出有毛病的那段，再选改法 */
 export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: number[]; miss?: Record<number, string>; fix?: ChoiceSub }
 /** 分类：把卡片放进几个格子 */
@@ -45,9 +45,11 @@ export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: 
 export interface TypeSub extends SubBase { kind: 'type'; accept: string[]; near?: Record<string, string>; why: string; ph?: string }
 /** 碎片拼接（概括、鉴赏）：碎片带层次标签 f 事实 / t 特点 / m 意义，x 是干扰；need 是缺了某层时的提醒（不点明“三步”） */
 export interface FragSub extends SubBase { kind: 'frag'; frags: { t: string; tag: 'f' | 't' | 'm' | 'x'; why?: string }[]; need: Record<'f' | 't' | 'm', string>; model: string }
-/** 长文本：文本里用 ⟨1⟩⟨2⟩ 标出题的位置，点哪个做哪个 */
+/** 长文本：文本里用 ⟨1|这几个字⟩ 把题针对的字、词、句标出来（下划线 + 编号），点哪个做哪个 */
 export interface LongSub extends SubBase { kind: 'long'; text: string; qs: Record<string, ChoiceSub | TypeSub>; title?: string }
-export type Sub = ChoiceSub | SpotSub | SortSub | MatchSub | OrderSub | MisSub | WriteSub | FillSub | TypeSub | FragSub | LongSub;
+/** 讲：老师讲一段（可以带例子、画面），点“接着”往下 */
+export interface TeachSub extends SubBase { kind: 'teach'; t: string; ex?: string[]; art?: Art }
+export type Sub = ChoiceSub | SpotSub | SortSub | MatchSub | OrderSub | MisSub | WriteSub | FillSub | TypeSub | FragSub | LongSub | TeachSub;
 
 export interface Item {
   id: string;
@@ -69,6 +71,7 @@ export interface Item {
   node?: string; // 讲的是哪个知识点（KNode）
   ext?: Ext[]; // 拓展（居中弹窗里的小题）
   back?: Back[]; // 回扣：回到前面（可以是别的回）看一看
+  ask?: string; // 停在这道题时，“问我”框里的示例问题
 }
 /** 拓展：need 'always' 必做；'wrong' 答错过或点过“不确定”才必做；'opt' 选做。reveal：做完以后揭开这道题选项的解释 */
 export interface Ext { id: string; title: string; need: 'always' | 'wrong' | 'opt'; steps: Sub[]; reveal?: boolean }
@@ -105,6 +108,7 @@ export interface Line {
   hide?: boolean; // 停在题上时，这句字幕藏起来（题里已经有这句话，不重复）
   task?: string[]; // 在这一句停下来做的题（几个难度版本）
   pause?: number;
+  ask?: string; // 播到这里以后，“问我”框里的示例问题（一直用到下一句有 ask 为止）
 }
 export interface Play { id: string; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string }
 

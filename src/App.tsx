@@ -38,7 +38,7 @@ export default function App() {
   const cid = (parts[1] ?? '').split('?')[0];
   const page = parts[0] === 'c' && PLAY_BY_ID[cid] ? <PlayerPage key={route} id={cid} /> : parts[0] === 'c' && CHAPTER_BY_ID[cid] ? <ChapterPage key={cid} id={cid} /> : parts[0] === 'me' ? <MePage /> : <StoryMap />;
   return (
-    <div className="min-h-full pb-16">
+    <div className={parts[0] === 'c' && PLAY_BY_ID[cid] ? 'h-full overflow-hidden' : 'min-h-full pb-16'}>
       <TopBar />
       {page}
       <FlyLayer />

@@ -11,7 +11,7 @@ import { DEMO } from '../game/demo';
 // ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置 ----------------
 import { createContext, useContext } from 'react';
 import type { Gloss } from '../shared/types';
-export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement) => void; marker?: (n: string) => ReactNode }
+export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement) => void; marker?: (n: string, text?: string) => ReactNode }
 export const GlossContext = createContext<GlossCtx>({ gloss: {} });
 const TOK = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_{3,}|⟦[^⟧]+⟧|⟪[^⟫]+⟫|⟨[^⟩]+⟩)/;
 export const Rich = ({ text, className = '', fill, fills }: { text: string; className?: string; fill?: string; fills?: string[] }) => {
@@ -29,7 +29,7 @@ export const Rich = ({ text, className = '', fill, fills }: { text: string; clas
       return <span key={j} className="gloss" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); ctx.onGloss?.(w, g, e.currentTarget); }}>{w}</span>;
     }
     if (part.startsWith('⟪')) { const w = part.slice(1, -1), py = ctx.gloss[w]?.py; return py ? <ruby key={j}>{w}<rt>{py}</rt></ruby> : <span key={j}>{w}</span>; }
-    if (part.startsWith('⟨')) return <span key={j}>{ctx.marker?.(part.slice(1, -1))}</span>;
+    if (part.startsWith('⟨')) { const [n, ...t] = part.slice(1, -1).split('|'); return <span key={j}>{ctx.marker ? ctx.marker(n, t.length ? t.join('|') : undefined) : t.length ? <Rich text={t.join('|')} /> : null}</span>; }
     return <span key={j}>{part}</span>;
   };
   return (
