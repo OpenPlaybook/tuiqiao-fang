@@ -14,7 +14,7 @@ const frag = (q: string, rows: [string, 1 | 2 | 3, string?][], events: Record<st
 const ch = (key: string, q: string, opts: [string, string][], x: Partial<ChoiceSub> = {}) => C(key, q, opts, x);
 
 export const PLAY_ZH6: Play = {
-  id: 'zh6', no: 6, title: '第六回　四面楚歌', sub: '垓下、乌江', color: '#3F3A6B', nextNote: '尾声《鸟尽弓藏》还在写', endAsk: ['韩信后来怎么样了？', '“鸟尽弓藏”是什么意思？', '刘邦为什么要抓韩信？'],
+  id: 'zh6', no: 6, title: '第六回　四面楚歌', sub: '垓下、乌江', color: '#3F3A6B', next: 'zh7', endAsk: ['韩信后来怎么样了？', '“鸟尽弓藏”是什么意思？', '刘邦为什么要抓韩信？'],
   gloss: {
     幸从: { d: '受宠爱，常跟在身边。' },
     阕: { d: '一首歌从头唱到尾叫一阕。“歌数阕”：唱了好几遍。', py: 'què' },

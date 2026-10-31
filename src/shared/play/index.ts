@@ -1,25 +1,25 @@
 // 播放式故事：每一回一份（画面 + 配音 + 字幕，播到题就停）。
 import type { Item, Play, VoiceId } from '../types';
 import { PLAY_ZH1, PLAY_ZH1_ITEMS } from './zh1';
+import { PLAY_ZH2, PLAY_ZH2_ITEMS } from './zh2';
+import { PLAY_ZH3, PLAY_ZH3_ITEMS } from './zh3';
+import { PLAY_ZH4, PLAY_ZH4_ITEMS } from './zh4';
+import { PLAY_ZH5, PLAY_ZH5_ITEMS } from './zh5';
 import { PLAY_ZH6, PLAY_ZH6_ITEMS } from './zh6';
+import { PLAY_ZH7, PLAY_ZH7_ITEMS } from './zh7';
 import { PLAY_EN1, PLAY_EN1_ITEMS } from './en1';
 
-export const PLAYS: Play[] = [PLAY_ZH1, PLAY_ZH6, PLAY_EN1];
+export const PLAYS: Play[] = [PLAY_ZH1, PLAY_ZH2, PLAY_ZH3, PLAY_ZH4, PLAY_ZH5, PLAY_ZH6, PLAY_ZH7, PLAY_EN1];
 export const PLAY_BY_ID: Record<string, Play> = Object.fromEntries(PLAYS.map((p) => [p.id, p]));
 /** 还没写好的回：目录上显示“制作中” */
 export const PLANNED: { id: string; lang: 'zh' | 'en'; title: string; sub: string }[] = [
-  { id: 'zh2', lang: 'zh', title: '第二回　两次投奔', sub: '揭竿而起；萧何月下追韩信' },
-  { id: 'zh3', lang: 'zh', title: '第三回　鸿门宴', sub: '项庄舞剑，意在沛公' },
-  { id: 'zh4', lang: 'zh', title: '第四回　拜将', sub: '明修栈道，暗度陈仓' },
-  { id: 'zh5', lang: 'zh', title: '第五回　背水一战', sub: '置之死地而后生' },
-  { id: 'zh7', lang: 'zh', title: '尾声　鸟尽弓藏', sub: '狡兔死，良狗烹' },
   { id: 'en2', lang: 'en', title: 'Chapter 2　Where were you?', sub: '好几个人都说自己不在场' },
   { id: 'en3', lang: 'en', title: 'Chapter 3　The Note', sub: '一个用反了的词' },
   { id: 'en4', lang: 'en', title: 'Chapter 4　Case Closed', sub: '真相与颁奖' },
 ];
 // 每一回一个“记录”条目：学生点了哪些字、问了 AI 什么，都记在这里（不是题，不计分）
 const logItem = (id: string): Item => ({ id: `${id}-log`, st: 'log', lv: 1, type: 'log', topic: `${id}-log`, label: '（记录）', intro: '', steps: [], hints: [], explain: '' });
-export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAY_EN1_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
+export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_ZH2_ITEMS, ...PLAY_ZH3_ITEMS, ...PLAY_ZH4_ITEMS, ...PLAY_ZH5_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAY_ZH7_ITEMS, ...PLAY_EN1_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
 import { plainText } from '../gloss';
 export { plainText };
 /** 配音念的文字：___ 不念（前后的标点并成一个）；念起来不顺的句子在 read 里另写 */

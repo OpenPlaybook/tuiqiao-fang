@@ -5,14 +5,14 @@ import type { ShotDef } from './Film';
 
 // ---------------- 共用的背景 ----------------
 /** 淮阴城外的河岸：远山、城墙、河、岸 */
-const bankBg = (id: string, o: { wall?: boolean; far?: boolean; warm?: boolean } = {}) =>
+export const bankBg = (id: string, o: { wall?: boolean; far?: boolean; warm?: boolean } = {}) =>
   sky(id, o.warm ? '#EAD9BE' : '#E3E2DA', PAPER) +
   ridge({ y: 330, amp: 120, seed: 3, a: 0.13, peaks: 2 }) + ridge({ y: 400, amp: 70, seed: 5, a: 0.2, peaks: 3 }) +
   (o.wall !== false ? cityWall(980, 470, 520, 0.9, 0.55) : '') +
   `<path d="M-200,480 Q500,455 1800,470 L1800,1100 L-200,1100 Z" fill="#CFC8B6" opacity=".55"/>` +
   `<path d="M-200,520 Q700,500 1800,515 L1800,700 Q900,690 -200,712 Z" fill="#B9BDB2" opacity=".55"/>` +
   `<path d="M-200,700 Q800,680 1800,708 L1800,1100 L-200,1100 Z" fill="#C9B994"/>` + `<path d="M-200,700 Q800,680 1800,708" stroke="${INK}" stroke-opacity=".35" stroke-width="3" fill="none"/>`;
-const bankFg = (id: string, g: number, seed = 1) => river(seed, g, { y0: 525, y1: 700, speed: 26, n: 70 }) + mist(id, seed + 3, g, { y: 500, h: 50, a: 0.55, n: 6 });
+export const bankFg = (id: string, g: number, seed = 1) => river(seed, g, { y0: 525, y1: 700, speed: 26, n: 70 }) + mist(id, seed + 3, g, { y: 500, h: 50, a: 0.55, n: 6 });
 /** 淮阴街市 */
 const streetBg = (id: string) =>
   sky(id, '#E6DDCB', PAPER) + ridge({ y: 300, amp: 60, seed: 21, a: 0.1 }) +
@@ -22,11 +22,11 @@ const streetBg = (id: string) =>
   `<path d="M1180,470 L1560,470 L1590,500 L1150,500 Z" fill="#7A4A2E"/><rect x="1185" y="500" width="6" height="110" fill="${INK}"/><rect x="1545" y="500" width="6" height="110" fill="${INK}"/><rect x="1200" y="560" width="340" height="40" fill="#6E5A40"/>`;
 const meat = (g: number) => [1240, 1300, 1360, 1420, 1480].map((x, i) => `<g transform="rotate(${f(wav(g, 2.4, i * 0.2) * 3)} ${x} 500)"><line x1="${x}" y1="500" x2="${x}" y2="520" stroke="${INK}"/><path d="M${x - 12},520 q12,-6 24,0 l-4,30 q-8,6 -16,0 z" fill="#A04A3A" stroke="${INK}" stroke-opacity=".5"/></g>`).join('') + `<g transform="rotate(${f(wav(g, 3) * 4)} 1290 470)"><path d="M1290,470 v10 h40 v90 l-20,-10 l-20,10 z" fill="#E9DFCB" stroke="${INK}" stroke-opacity=".5"/>${vtext(1310, 505, '肉', 26, RED, 0.9)}</g>`;
 /** 夜里的书房：窗、月、书案、竹简、读书眼镜 */
-const deskBg = (id: string) =>
+export const deskBg = (id: string) =>
   sky(id, '#2E2C33', '#4A4540') + `<rect x="900" y="80" width="460" height="420" fill="#1F2230"/>` + moon(id, 1130, 230, 56) +
   Array.from({ length: 7 }, (_, i) => `<line x1="${900 + i * 76}" y1="80" x2="${900 + i * 76}" y2="500" stroke="#5A4630" stroke-width="10"/>`).join('') + `<rect x="900" y="80" width="460" height="420" fill="none" stroke="#5A4630" stroke-width="16"/>` +
   `<path d="M-200,620 L1800,620 L1800,1100 L-200,1100 Z" fill="#3B3028"/><path d="M120,640 L1480,640 L1540,720 L60,720 Z" fill="#6A4A30"/><path d="M60,720 L1540,720 L1540,760 L60,760 Z" fill="#4E3622"/>`;
-const slips = (x: number, y: number, n: number, s = 1, chars = '', reveal = 1) => {
+export const slips = (x: number, y: number, n: number, s = 1, chars = '', reveal = 1) => {
   let o = `<g transform="translate(${x},${y}) scale(${s})">`;
   for (let i = 0; i < n; i++) o += `<rect x="${i * 34}" y="0" width="28" height="260" rx="4" fill="#D8C08A" stroke="#9C8150" stroke-width="2"/>`;
   o += `<path d="M-6,60 H${n * 34} M-6,200 H${n * 34}" stroke="#6E5530" stroke-width="3"/>`;
@@ -35,10 +35,10 @@ const slips = (x: number, y: number, n: number, s = 1, chars = '', reveal = 1) =
   [...chars].forEach((ch, k) => { const i = n - 1 - Math.floor(k / per), j = k % per; if (i < 0) return; o += `<text x="${i * 34 + 14}" y="${f(36 + j * 31)}" font-size="24" text-anchor="middle" fill="${INK}" opacity="${f(Math.min(1, Math.max(0, reveal * 1.4 - k / chars.length)))}" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${ch}</text>`; });
   return o + '</g>';
 };
-const glasses = (x: number, y: number, s = 1, g = 0, shine = 0, light = false) => `<g transform="translate(${f(x)},${f(y)}) scale(${s})">${light ? `<circle cx="0" cy="0" r="150" fill="#9FD3F0" opacity="${f(0.25 + 0.1 * Math.sin(g * 2))}" filter="url(#gl)"/>` : ''}<circle cx="-46" cy="0" r="38" fill="#CFE6F2" fill-opacity="${light ? 0.55 : 0.25}" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="7"/><circle cx="46" cy="0" r="38" fill="#CFE6F2" fill-opacity="${light ? 0.55 : 0.25}" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="7"/><path d="M-8,-4 q8,-10 16,0" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="6" fill="none"/><path d="M-84,-6 l-60,-14 M84,-6 l60,-14" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="6"/>${shine > 0 ? `<path d="M${f(-70 + shine * 60)},-30 l20,40" stroke="#fff" stroke-width="10" opacity="${f(Math.sin(shine * Math.PI) * 0.9)}"/><path d="M${f(22 + shine * 60)},-30 l20,40" stroke="#fff" stroke-width="10" opacity="${f(Math.sin(shine * Math.PI) * 0.9)}"/>` : ''}<circle cx="0" cy="0" r="${f(110 + wav(g, 2) * 6)}" fill="#9FD3F0" opacity="${f(0.12 + 0.06 * Math.sin(g * 2))}"/></g>`;
+export const glasses = (x: number, y: number, s = 1, g = 0, shine = 0, light = false) => `<g transform="translate(${f(x)},${f(y)}) scale(${s})">${light ? `<circle cx="0" cy="0" r="150" fill="#9FD3F0" opacity="${f(0.25 + 0.1 * Math.sin(g * 2))}" filter="url(#gl)"/>` : ''}<circle cx="-46" cy="0" r="38" fill="#CFE6F2" fill-opacity="${light ? 0.55 : 0.25}" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="7"/><circle cx="46" cy="0" r="38" fill="#CFE6F2" fill-opacity="${light ? 0.55 : 0.25}" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="7"/><path d="M-8,-4 q8,-10 16,0" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="6" fill="none"/><path d="M-84,-6 l-60,-14 M84,-6 l60,-14" stroke="${light ? '#BFE3F7' : '#2B2722'}" stroke-width="6"/>${shine > 0 ? `<path d="M${f(-70 + shine * 60)},-30 l20,40" stroke="#fff" stroke-width="10" opacity="${f(Math.sin(shine * Math.PI) * 0.9)}"/><path d="M${f(22 + shine * 60)},-30 l20,40" stroke="#fff" stroke-width="10" opacity="${f(Math.sin(shine * Math.PI) * 0.9)}"/>` : ''}<circle cx="0" cy="0" r="${f(110 + wav(g, 2) * 6)}" fill="#9FD3F0" opacity="${f(0.12 + 0.06 * Math.sin(g * 2))}"/></g>`;
 /** 坐着的人身下的石头（x、y 是人落脚的点） */
-const seatRock = (x: number, y: number, s: number) => `<path d="M${f(x - 70 * s)},${f(y + 4)} Q${f(x - 66 * s)},${f(y - 46 * s)} ${f(x - 22 * s)},${f(y - 52 * s)} Q${f(x + 16 * s)},${f(y - 54 * s)} ${f(x + 24 * s)},${f(y - 30 * s)} Q${f(x + 30 * s)},${f(y - 8 * s)} ${f(x + 18 * s)},${f(y + 4)} Z" fill="#7A7064" stroke="${INK}" stroke-opacity=".45" stroke-width="2"/><path d="M${f(x - 50 * s)},${f(y - 30 * s)} q20,-8 36,-6" stroke="${INK}" stroke-opacity=".25" stroke-width="2" fill="none"/>`;
-const crowdRow = (seed: number, x0: number, x1: number, y: number, n: number, s: number, g: number, mode: 'idle' | 'laugh' | 'still' | 'gather', u = 1, face?: (x: number) => 1 | -1, gap?: [number, number]) => {
+export const seatRock = (x: number, y: number, s: number) => `<path d="M${f(x - 70 * s)},${f(y + 4)} Q${f(x - 66 * s)},${f(y - 46 * s)} ${f(x - 22 * s)},${f(y - 52 * s)} Q${f(x + 16 * s)},${f(y - 54 * s)} ${f(x + 24 * s)},${f(y - 30 * s)} Q${f(x + 30 * s)},${f(y - 8 * s)} ${f(x + 18 * s)},${f(y + 4)} Z" fill="#7A7064" stroke="${INK}" stroke-opacity=".45" stroke-width="2"/><path d="M${f(x - 50 * s)},${f(y - 30 * s)} q20,-8 36,-6" stroke="${INK}" stroke-opacity=".25" stroke-width="2" fill="none"/>`;
+export const crowdRow = (seed: number, x0: number, x1: number, y: number, n: number, s: number, g: number, mode: 'idle' | 'laugh' | 'still' | 'gather', u = 1, face?: (x: number) => 1 | -1, gap?: [number, number]) => {
   const r = rng(seed); let o = '';
   const whos = ['crowd1', 'crowd2', 'crowd3', 'crowd4'];
   for (let i = 0; i < n; i++) {

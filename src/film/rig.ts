@@ -29,6 +29,28 @@ export const LOOKS: Record<string, Look> = {
   crowd3: { robe: '#8C7B62', pants: '#4E4436', hair: 'kerchief', hairC: '#CFC6B2', long: true, sleeve: 'tight' },
   crowd4: { robe: '#5D564E', pants: '#35302B', hair: 'messy', sleeve: 'tight', beard: 'stub' },
   rebel: { robe: '#5C5248', pants: '#3A332C', hair: 'kerchief', hairC: '#8C3A2E', sleeve: 'bare' },
+  // ---------- 第二回起：楚汉的人 ----------
+  chensheng: { robe: '#6A4E3A', robe2: '#5A4230', pants: '#3A332C', hair: 'kerchief', hairC: '#A8322A', sleeve: 'tight', beard: 'stub', belt: '#A8322A', tall: 1.04 },
+  qinguan: { robe: '#2E2A2C', robe2: '#221F21', pants: '#1E1B1C', hair: 'cap', sleeve: 'tight', armor: true, sword: true },
+  xiangliang: { robe: '#4A3A3A', robe2: '#3A2C2C', pants: '#221E1E', hair: 'helmet', armor: true, cape: '#6E2A22', sword: true, beard: 'long', tall: 1.06 },
+  hanxinLang: { robe: '#6E7378', robe2: '#5D6267', pants: '#2E2622', hair: 'helmet', armor: true, sleeve: 'tight', sword: true, tall: 1.06 },
+  hanxinHan: { robe: '#3F4A52', robe2: '#2F383E', pants: '#232A2E', hair: 'knot', sleeve: 'tight', sword: true, belt: '#2B2722', tall: 1.06 },
+  ziying: { robe: '#EDE8DC', robe2: '#D9D3C4', pants: '#CFC8B8', hair: 'knot', long: true, sleeve: 'wide', belt: '#BDB5A4' },
+  zhangliang: { robe: '#6B7A6A', robe2: '#5A6859', pants: '#3A3F38', hair: 'scholar', sleeve: 'wide', long: true, belt: '#3A3F38' },
+  fankuai: { robe: '#4A3A30', robe2: '#3A2C24', pants: '#2A221C', hair: 'helmet', armor: true, sword: true, beard: 'long', sleeve: 'tight', tall: 1.1, wide: 1.2 },
+  xiaohe: { robe: '#3E4A5A', robe2: '#323C4A', pants: '#2A303A', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#2A303A' },
+  fanzeng: { robe: '#5A4A6A', robe2: '#4A3C5A', pants: '#33293F', hair: 'scholar', hairC: '#D9D2C4', beard: 'long', sleeve: 'wide', long: true, belt: '#33293F', tall: 0.96 },
+  xiangzhuang: { robe: '#3A3436', robe2: '#2A2527', pants: '#221E1E', hair: 'helmet', armor: true, sword: true, sleeve: 'tight' },
+  xiangbo: { robe: '#4E4038', robe2: '#3E3229', pants: '#2A231E', hair: 'helmet', armor: true, sword: true, beard: 'long', sleeve: 'tight' },
+  tenggong: { robe: '#4E5A4A', robe2: '#3E4A3A', pants: '#2A3028', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#2A3028' },
+  zhaoSoldier: { robe: '#8A7650', robe2: '#76643F', pants: '#4A3E2A', hair: 'helmet', armor: true, sleeve: 'tight' },
+  chenyu: { robe: '#4A5A7A', robe2: '#3C4A66', pants: '#262E3E', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, sword: true, belt: '#262E3E' },
+  lizuoche: { robe: '#5A5A4A', robe2: '#4A4A3C', pants: '#33332A', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#33332A' },
+  zhanger: { robe: '#5A4A3A', robe2: '#3E342A', pants: '#2E2622', hair: 'knot', sleeve: 'tight', armor: true, sword: true, beard: 'long', tall: 1.02 },
+  zhonglimo: { robe: '#3A3436', robe2: '#2A2527', pants: '#221E1E', hair: 'helmet', armor: true, cape: '#5A2A22', sword: true, beard: 'stub', sleeve: 'tight', tall: 1.06 },
+  lvhou: { robe: '#5A1E28', robe2: '#46161F', pants: '#3A1218', hair: 'bun', long: true, sleeve: 'wide', trim: GOLD, belt: GOLD, tall: 0.96 },
+  simaqian: { robe: '#4E5A5E', robe2: '#3E4A4E', pants: '#2A3236', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#2A3236' },
+  kuaitong: { robe: '#4E4A5E', robe2: '#3E3A4E', pants: '#2A2836', hair: 'scholar', beard: 'stub', sleeve: 'wide', long: true, belt: '#2A2836' },
   // ---------- 英文故事：学校里的人 ----------
   you: { robe: '#2F5DA8', robe2: '#26508F', pants: '#2F5DA8', hair: 'short', modern: true, stripe: '#F4F4F0', sleeve: 'tight', shoe: '#F2F0EA', belt: '#2F5DA8' },
   ben: { robe: '#C2552E', robe2: '#A54726', pants: '#3A4E6E', hair: 'tousled', hairC: '#D8B266', modern: true, hood: true, sleeve: 'tight', shoe: '#E9E4DA', belt: '#C2552E', tall: 1.05 },
@@ -235,15 +257,28 @@ export const horse = (o: { x: number; y: number; s?: number; face?: 1 | -1; g?: 
 };
 
 // ---------------- 特写：侧脸（朝右） ----------------
-export interface FaceOpts { x: number; y: number; s?: number; face?: 1 | -1; who: 'hanxin' | 'xiangyu' | 'yuji' | 'piaomu' | 'tuhu' | 'ben' | 'green' | 'liu' | 'you'; g?: number; open?: number; brow?: number; mouth?: number; tear?: number; look?: number; shake?: number; nod?: number; id: string }
+export interface FaceOpts { x: number; y: number; s?: number; face?: 1 | -1; who: 'hanxin' | 'xiangyu' | 'yuji' | 'piaomu' | 'tuhu' | 'ben' | 'green' | 'liu' | 'you' | keyof typeof FACE_X; g?: number; open?: number; brow?: number; mouth?: number; tear?: number; look?: number; shake?: number; nod?: number; id: string }
+/** 第二回起新增的特写脸：衣服颜色、头上戴什么、胡子（不画专门的五官，用同一副脸） */
+const FACE_X = {
+  chensheng: { col: '#6A4E3A', hair: 'kerchief', hc: '#A8322A', beard: 'stub' },
+  liubang: { col: '#7A2A22', hair: 'tallcap', hc: GOLD, beard: 'long', bc: '#2A2420' },
+  zhangliang: { col: '#6B7A6A', hair: 'scholar', hc: '#2B2722', beard: 'thin', bc: '#1E1A18' },
+  fankuai: { col: '#4A3A30', hair: 'helmet', hc: '#3A3330', beard: 'full', bc: '#1E1A18' },
+  xiaohe: { col: '#3E4A5A', hair: 'official', hc: '#1E1A18', beard: 'long', bc: '#4A4440' },
+  fanzeng: { col: '#5A4A6A', hair: 'scholar', hc: '#4A4450', beard: 'long', bc: '#E6E0D4', old: true },
+  hanxinKing: { col: '#6B2E28', hair: 'crown', hc: GOLD, beard: 'thin', bc: '#1E1A18' },
+  lizuoche: { col: '#5A5A4A', hair: 'scholar', hc: '#3A3A30', beard: 'long', bc: '#4A4440' },
+  zhonglimo: { col: '#3A3436', hair: 'helmet', hc: '#3A3330', beard: 'full', bc: '#1E1A18' },
+} as const;
 export const faceCU = (o: FaceOpts) => {
   const s = o.s ?? 1, fc = o.face ?? 1, g = o.g ?? 0, open = o.open ?? 1, brow = o.brow ?? 0, mo = o.mouth ?? 0;
-  const old = o.who === 'piaomu', fem = o.who === 'yuji' || old || o.who === 'green', ruff = o.who === 'tuhu' || o.who === 'liu', hero = o.who === 'xiangyu';
+  const X = (FACE_X as Record<string, { col: string; hair: string; hc: string; beard?: string; bc?: string; old?: boolean }>)[o.who];
+  const old = o.who === 'piaomu', fem = o.who === 'yuji' || old || o.who === 'green', ruff = o.who === 'tuhu' || o.who === 'liu' || o.who === 'chensheng' || o.who === 'fankuai', hero = o.who === 'xiangyu';
   const nose = fem ? 0.82 : 1, jaw = hero || ruff ? 1.1 : fem ? 0.9 : 1;
   const breathe = Math.sin(g * 1.4) * 2;
   let out = '';
   // 衣领、肩
-  const col = { hanxin: '#6E7378', xiangyu: '#3A3436', yuji: '#D8C3B0', piaomu: '#8A7B66', tuhu: '#4A3F36', ben: '#C2552E', green: '#4E7A5A', liu: '#2E3B55', you: '#2F5DA8' }[o.who];
+  const col = ({ hanxin: '#6E7378', xiangyu: '#3A3436', yuji: '#D8C3B0', piaomu: '#8A7B66', tuhu: '#4A3F36', ben: '#C2552E', green: '#4E7A5A', liu: '#2E3B55', you: '#2F5DA8' } as Record<string, string>)[o.who] ?? X?.col ?? '#6E7378';
   out += `<path d="M-300,${f(420 + breathe)} Q-280,236 -60,${f(178 + breathe)} Q20,170 90,${f(182 + breathe)} Q290,226 320,${f(420 + breathe)} Z" fill="${col}" stroke="${INK}" stroke-opacity=".55" stroke-width="3"/>`;
   const modern = o.who === 'ben' || o.who === 'green' || o.who === 'liu' || o.who === 'you';
   if (o.who === 'ben') out += `<path d="M-150,${f(250 + breathe)} Q-120,150 -40,${f(150 + breathe)} Q-90,190 -96,${f(260 + breathe)} Z" fill="#A54726" stroke="${INK}" stroke-opacity=".5" stroke-width="3"/><path d="M40,200 l-6,90 M70,196 l8,92" stroke="#F0E6D8" stroke-width="5" stroke-linecap="round"/>`; // 卫衣的兜帽、抽绳
@@ -258,7 +293,7 @@ export const faceCU = (o: FaceOpts) => {
   // 脸的轮廓（侧面）
   const face = `M40,-140 Q-40,-170 -92,-70 Q-112,10 -76,80 Q-50,124 0,${f(126 * jaw)} Q${f(60 * jaw)},${f(122 * jaw)} ${f(84 * jaw)},${f(100 * jaw)} Q${f(96)},${f(84)} 92,72 Q100,68 94,62 Q100,56 96,50 Q${f(90 + 4 * nose)},${f(44)} ${f(92 + 16 * nose)},${f(24)} Q${f(96 + 12 * nose)},${f(14)} 86,-14 Q84,-30 90,-46 Q86,-100 40,-140 Z`;
   out += `<path d="${face}" fill="url(#${o.id}skin)" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
-  if (old) out += `<path d="M44,-6 q10,14 2,30 M58,-34 q12,-6 22,0 M60,44 q-10,16 2,34 M30,96 q20,6 40,-6" stroke="${INK}" stroke-opacity=".35" stroke-width="2" fill="none"/>`;
+  if (old || X?.old) out += `<path d="M44,-6 q10,14 2,30 M58,-34 q12,-6 22,0 M60,44 q-10,16 2,34 M30,96 q20,6 40,-6" stroke="${INK}" stroke-opacity=".35" stroke-width="2" fill="none"/>`;
   if (o.who === 'hanxin') out += `<path d="M60,92 q-20,10 -44,4" stroke="${INK}" stroke-opacity=".18" stroke-width="2" fill="none"/>`; // 消瘦：面颊凹下去一点
   if (ruff || hero) out += `<path d="M10,110 Q60,116 86,96 Q60,104 20,100" fill="${INK}" opacity=".18"/>`; // 胡茬
   // 耳朵
@@ -286,6 +321,20 @@ export const faceCU = (o: FaceOpts) => {
   if (o.who === 'ben') out += `<path d="M44,-136 Q-30,-178 -98,-84 Q-112,-14 -88,36 Q-76,-20 -46,-46 Q-6,-70 40,-74 Q62,-80 74,-92 Q90,-60 96,-40 Q102,-96 70,-128 Z" fill="#D8B266"/>` + [[-80, -120], [-50, -150], [-14, -164], [24, -160], [56, -142]].map(([x, y], i) => `<path d="M${x},${y} l${-14 + i * 6},-30 l${24 - i * 3},18 Z" fill="#D8B266"/>`).join('') + `<path d="M-40,-120 q30,-20 60,-4 M-60,-90 q30,-14 54,0" stroke="#B08A44" stroke-width="3" fill="none"/>`;
   if (o.who === 'green') out += `<path d="M86,-50 Q92,-150 10,-170 Q-90,-180 -118,-70 Q-130,30 -108,104 L-58,106 Q-82,20 -64,-30 Q-30,-76 50,-82 Q78,-82 86,-50 Z" fill="#6B4A32"/><path d="M84,-56 Q96,-30 88,-6" stroke="#6B4A32" stroke-width="10" fill="none"/><circle cx="58" cy="-22" r="26" fill="#E8F2F6" fill-opacity=".25" stroke="#2B2722" stroke-width="5"/><path d="M32,-26 L-32,-30" stroke="#2B2722" stroke-width="4"/>`;
   if (o.who === 'liu') out += `<path d="M-40,-60 Q-80,-50 -92,10 Q-90,30 -78,40 Q-70,-10 -40,-30 Z" fill="#8E8A84"/><path d="M-118,-70 Q-108,-176 0,-182 Q96,-176 104,-78 Z" fill="#26324A" stroke="${INK}" stroke-width="3"/><path d="M96,-80 Q156,-80 176,-60 Q132,-52 92,-64 Z" fill="#1A2236" stroke="${INK}" stroke-width="2"/><path d="M-116,-74 L102,-80" stroke="#1A2236" stroke-width="9"/><circle cx="10" cy="-132" r="16" fill="${GOLD}" stroke="#7A5A1E" stroke-width="3"/>`;
+  if (X) {
+    // 头发：后脑一片，再按戴的东西加
+    out += `<path d="M44,-136 Q-30,-176 -96,-80 Q-110,-10 -84,40 Q-70,-20 -40,-40 Q-10,-70 30,-80 Q60,-96 70,-112 Z" fill="${X.old ? '#BDB6AA' : '#1E1A18'}"/>`;
+    if (X.hair === 'kerchief') out += `<path d="M-114,-60 Q-104,-172 0,-178 Q78,-174 84,-98 Q40,-112 -20,-104 Q-84,-96 -114,-60 Z" fill="${X.hc}" stroke="${INK}" stroke-opacity=".5" stroke-width="3"/><path d="M-104,-96 q${f(-22 + wav(g, 1.6) * 6)},40 ${f(-26 + wav(g, 1.6) * 8)},110 l16,2 q2,-60 22,-104 z M-96,-92 q${f(-8 + wav(g, 1.8) * 5)},44 ${f(-4 + wav(g, 1.8) * 6)},96 l14,-2 q-4,-50 4,-92 z" fill="${X.hc}" stroke="${INK}" stroke-opacity=".4" stroke-width="2"/>`;
+    if (X.hair === 'crown') out += `<ellipse cx="-22" cy="-160" rx="30" ry="22" fill="#1E1A18"/><path d="M-50,-154 Q-22,-178 6,-154" stroke="${X.hc}" stroke-width="9" fill="none"/><path d="M-72,-166 L30,-172" stroke="${X.hc}" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="-172" r="6" fill="${X.hc}"/>`;
+    if (X.hair === 'tallcap') out += `<path d="M-100,-92 Q-96,-174 -10,-180 Q70,-176 80,-106 Z" fill="#1E1A18"/><path d="M-62,-170 L-54,-238 L34,-242 L46,-172 Z" fill="#1E1A18"/><path d="M-62,-176 L44,-178" stroke="${X.hc}" stroke-width="6"/><path d="M-100,-96 L80,-108" stroke="${X.hc}" stroke-width="4" opacity=".8"/><path d="M-90,-110 Q-110,-20 -70,60" stroke="#1E1A18" stroke-width="3" fill="none"/>`;
+    if (X.hair === 'scholar') out += `<path d="M-104,-88 Q-98,-182 0,-186 Q88,-178 92,-98 Q30,-112 -30,-106 Z" fill="${X.hc}"/><path d="M-96,-120 q-40,${f(30 + wav(g, 2) * 8)} -50,80 M-86,-110 q-30,${f(40 + wav(g, 2.2) * 8)} -26,92" stroke="${X.hc}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
+    if (X.hair === 'official') out += `<path d="M-102,-92 Q-94,-172 8,-178 Q82,-172 94,-100 Z" fill="${X.hc}"/><path d="M-30,-174 L46,-214 L72,-172 Z" fill="${X.hc}"/><path d="M-102,-92 L94,-100" stroke="#5A5048" stroke-width="6"/>`;
+    if (X.hair === 'helmet') out += `<path d="M90,-60 Q96,-150 20,-176 Q-80,-190 -112,-80 Q-124,-10 -100,60 L-70,80 Q-84,0 -60,-50 Q-20,-80 50,-74 Z" fill="${X.hc}" stroke="#8A7E6A" stroke-width="4"/><path d="M96,-62 L-112,-80" stroke="#8A7E6A" stroke-width="8"/><path d="M-10,-182 l0,-26" stroke="#8A7E6A" stroke-width="7"/>`;
+    const bc = X.bc ?? '#1E1A18';
+    if (X.beard === 'long') out += `<path d="M28,96 Q36,${f(160 + wav(g, 3) * 3)} 72,${f(236 + wav(g, 3) * 4)} Q92,160 106,88 Q80,108 28,96 Z" fill="${bc}" stroke="${INK}" stroke-opacity=".3" stroke-width="2"/><path d="M66,48 q16,6 30,-4" stroke="${bc}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+    if (X.beard === 'full') out += `<path d="M-24,70 Q-6,196 72,${f(206 + wav(g, 3) * 3)} Q116,164 106,66 Q84,100 44,104 Q8,104 -24,70 Z" fill="${bc}"/><path d="M62,46 q18,8 34,-4" stroke="${bc}" stroke-width="9" stroke-linecap="round" fill="none"/>`;
+    if (X.beard === 'thin') out += `<path d="M62,108 q8,${f(40 + wav(g, 3) * 2)} 22,64 q8,-36 12,-68 z" fill="${bc}"/><path d="M70,48 q12,4 24,-2" stroke="${bc}" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+  }
   const shake = (o.shake ?? 0) * Math.sin(g * 14) * 6, nod = (o.nod ?? 0) * 8;
   return `<g transform="translate(${f(o.x + shake)},${f(o.y + nod)}) scale(${f(s * fc)},${f(s)})">${out}</g>`;
 };
