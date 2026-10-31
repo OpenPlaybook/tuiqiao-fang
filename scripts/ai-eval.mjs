@@ -19,6 +19,18 @@ const CASES = [
   ['e1-lent', 'x1:d', 'Gone to the music room. Back in 10 mins.', 'perfect'],
   ['e1-lent', 'x1:d', 'Ben, I have gone to the music room to check the drum case. I will be back in ten minutes.', 'perfect'],
   ['e1-lent', 'x1:d', 'Ben I go music room back.', 'major'],
+  // 第二章：Max 的不在场证明
+  ['e2-write', 'w', 'At 2:15, Max was carrying his drum behind the stage.', 'perfect'],
+  ['e2-write', 'w', 'At 2:15 Max carried his drum.', 'minor（没用进行时）'],
+  ['e2-write', 'w', 'Max was eating a mooncake.', 'major（事实不对）'],
+  // 第三章：推理
+  ['e3-write', 'w', 'M must be Mia because the two notes have the same curly M.', 'perfect'],
+  ['e3-write', 'w', 'M is Mia.', 'minor（没有理由）'],
+  ['e3-write', 'w', 'M must be Ms Green because her name is Margaret.', 'major（结论不对）'],
+  // 第四章：结案
+  ['e4-write', 'w', 'Mia borrowed the Golden Panda for a photo, but Ms Green was on the phone and didn’t really listen.', 'perfect'],
+  ['e4-write', 'w', 'Mia stole the panda.', 'major（是借，不是偷）'],
+  ['e4-write', 'w', 'Mia borrow the panda for take photo.', 'minor / major（语法）'],
 ];
 const j = await post('join', { name: '测试' + Date.now() % 10000, sid: '测试学校', avatar: 0 });
 const { pid, token } = j.player;

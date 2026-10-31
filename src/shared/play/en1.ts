@@ -15,7 +15,7 @@ const frag = (q: string, rows: [string, 1 | 2 | 3, string?][], events: Record<st
 const viz = (k: string, p: Record<string, unknown> = {}) => ({ k, p });
 
 export const PLAY_EN1: Play = {
-  id: 'en1', lang: 'en', no: 1, title: 'Chapter 1　Gone!', sub: '金熊猫不见了', color: '#2F5DA8', nextNote: 'Chapter 2　Where were you? 还在写', endAsk: ['侦探故事里的“不在场证明”英语怎么说？', '有人问 Where were you at 2:15? 怎么回答最好？', '“Lent the panda” 为什么不写成 I lent the panda？'],
+  id: 'en1', lang: 'en', no: 1, title: 'Chapter 1　Gone!', sub: '金熊猫不见了', color: '#2F5DA8', next: 'en2', endAsk: ['侦探故事里的“不在场证明”英语怎么说？', '有人问 Where were you at 2:15? 怎么回答最好？', '“Lent the panda” 为什么不写成 I lent the panda？'],
   gloss: {
     prize: { d: 'n. 奖、奖品', py: '/praɪz/', s: { 'its top prize': '它的最高奖' }, more: { t: 'prize 是比赛赢来的奖；只差一个字母的 price 是“价格”。', q: '“The price is too high.” 说的是——', opts: [['价格太高了', true], ['奖太大了', false]] } },
     'Golden Panda': { d: '金熊猫：英语节最高奖的奖杯，是一只金色的熊猫。' },
@@ -117,7 +117,7 @@ export const PLAY_EN1: Play = {
     { shots: [['e.benWow']], who: 'Ben', voice: 'ben', t: 'A drum case! That’s big ⟦enough⟧ for a panda!', tr: '{鼓箱}！装一只熊猫{足够}了！', trHard: 'frame' },
     { shots: [['e.underTable']], t: 'Back in the hall, you look at the empty table again. There is a small yellow ⟦note⟧ ⟦stuck⟧ under it.', tr: '{回到}礼堂，你{又}看了看那张{空}桌子。桌子底下{贴着}一张黄色的小{纸条}。', trHard: 'words', voice: 'en' },
     { shots: [['e.note']], id: 'note', t: 'It says: “Lent the panda. ⟦Back⟧ at 3. — M”', read: 'It says: Lent the panda. Back at three. M.', tr: '纸条上写着：“{!熊猫借出去了}。{三点回来}。——M”', trHard: 'frame', voice: 'en', task: ['e1-lent'], ask: '纸条上的英语为什么这么短？' },
-    { shots: [['e.whisper']], who: 'Ben', voice: 'ben', t: '(whispering) M… Ms Green’s ⟦first name⟧ is Margaret. Did *she* lend it to someone?', read: 'M… Ms Green’s first name is Margaret. Did she lend it to someone?', tr: '（{小声}）M……Green 老师的{名字}叫 Margaret。是她把熊猫{借给}了别人？', trHard: 'words' },
+    { shots: [['e.whisper']], who: 'Ben', voice: 'ben', t: '(whispering) M… Ms Green’s ⟦first name⟧ is Margaret. Did she lend it to someone?', read: 'M… Ms Green’s first name is Margaret. Did she lend it to someone?', tr: '（{小声}）M……Green 老师的{名字}叫 Margaret。是她把熊猫{借给}了别人？', trHard: 'words' },
     { shots: [['e.write']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '侦探笔记的第一行，由你来写：到现在为止，发生了什么？用一句英语写下来。', task: ['e1-clue'] },
     { shots: [['e.greenPhone']], t: 'Ms Green is still talking on the phone. She doesn’t look at you.', tr: 'Green 老师{还在}{打电话}，看都不看你们一眼。', trHard: 'words', voice: 'en' },
     { shots: [['e.clockEnd']], t: 'Who is M? Who is the boy with the drum case? You have twenty minutes.', tr: 'M 是谁？拖鼓箱的男孩又是谁？你们{还有}二十分钟。', trHard: 'frame', voice: 'en' },

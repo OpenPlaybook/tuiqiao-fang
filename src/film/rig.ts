@@ -58,6 +58,7 @@ export const LOOKS: Record<string, Look> = {
   liu: { robe: '#2E3B55', robe2: '#26324A', pants: '#262E40', hair: 'guardcap', modern: true, sleeve: 'tight', beard: 'stub', belt: '#1E1E1E', shoe: '#1E1E1E', wide: 1.1 },
   stuA: { robe: '#2F5DA8', robe2: '#26508F', pants: '#2F5DA8', hair: 'short', modern: true, stripe: '#F4F4F0', sleeve: 'tight', shoe: '#F2F0EA', belt: '#2F5DA8' },
   stuB: { robe: '#2F5DA8', robe2: '#26508F', pants: '#2F5DA8', hair: 'pony', modern: true, stripe: '#F4F4F0', sleeve: 'tight', shoe: '#F2F0EA', belt: '#2F5DA8', tall: 0.97 },
+  mia: { robe: '#2F5DA8', robe2: '#26508F', pants: '#2F5DA8', skirt: '#2F4A7A', hair: 'pony', hairC: '#2A1E18', modern: true, stripe: '#F4F4F0', sleeve: 'tight', shoe: '#F2F0EA', belt: '#2F5DA8', tall: 0.9 },
   drummer: { robe: '#5E6066', robe2: '#4E5056', pants: '#2E3036', hair: 'short', modern: true, hood: true, sleeve: 'tight', shoe: '#E9E4DA', belt: '#5E6066' },
 };
 
@@ -94,7 +95,7 @@ const add = (p: number[], d: number[], l: number) => [p[0] + d[0] * l, p[1] + d[
 const pt = (p: number[]) => `${f(p[0])},${f(p[1])}`;
 const darker = (c: string, k = 0.78) => { const n = parseInt(c.slice(1), 16); const r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k); return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`; };
 
-export interface PersonOpts { x: number; y: number; s?: number; face?: 1 | -1; who: string; pose: Pose; g?: number; a?: number; hold?: 'rod' | 'bowl' | 'cup' | 'spear' | 'basket' | 'reins' | 'brush' | 'torch' | 'pole' | 'scroll' | 'punt' | 'phone' | 'mooncake' | 'notebook' | 'note'; detail?: boolean; mood?: 'calm' | 'sneer' | 'sad' | 'shock' | 'laugh' }
+export interface PersonOpts { x: number; y: number; s?: number; face?: 1 | -1; who: string; pose: Pose; g?: number; a?: number; hold?: 'rod' | 'bowl' | 'cup' | 'spear' | 'basket' | 'reins' | 'brush' | 'torch' | 'pole' | 'scroll' | 'punt' | 'phone' | 'mooncake' | 'notebook' | 'note' | 'camera' | 'pen' | 'paper'; detail?: boolean; mood?: 'calm' | 'sneer' | 'sad' | 'shock' | 'laugh' }
 /** 画一个人。x、y 是两脚中间落地的点 */
 export const person = (o: PersonOpts) => {
   const L = LOOKS[o.who] ?? LOOKS.crowd1, s = o.s ?? 1, fc = o.face ?? 1, g = o.g ?? 0, p = o.pose;
@@ -176,6 +177,9 @@ export const person = (o: PersonOpts) => {
   if (hold === 'mooncake') out += `<circle cx="${f(wrF[0] + 4)}" cy="${f(wrF[1] - 6)}" r="9" fill="#C98A3E" stroke="#7A4E1E" stroke-width="1.5"/><circle cx="${f(wrF[0] + 4)}" cy="${f(wrF[1] - 6)}" r="5" fill="none" stroke="#7A4E1E" stroke-width="1"/>`;
   if (hold === 'notebook') out += `<rect x="${f(wrF[0] - 4)}" y="${f(wrF[1] - 18)}" width="22" height="28" rx="2" fill="#E4B83E" stroke="${INK}" stroke-width="1.2"/><path d="M${f(wrF[0] - 1)},${f(wrF[1] - 18)} v28" stroke="${INK}" stroke-opacity=".5" stroke-width="2"/>`;
   if (hold === 'note') out += `<rect x="${f(wrF[0] - 2)}" y="${f(wrF[1] - 14)}" width="16" height="16" fill="#F6DC5A" stroke="#B89A2A" stroke-width="1"/>`;
+  if (hold === 'camera') out += `<rect x="${f(wrF[0] - 14)}" y="${f(wrF[1] - 20)}" width="30" height="20" rx="4" fill="#1E2028" stroke="${INK}" stroke-width="1.2"/><circle cx="${f(wrF[0] + 1)}" cy="${f(wrF[1] - 10)}" r="6.5" fill="#3A4A5A" stroke="#9AA8B4" stroke-width="1.5"/><rect x="${f(wrF[0] - 10)}" y="${f(wrF[1] - 24)}" width="8" height="4" fill="#1E2028"/>`;
+  if (hold === 'pen') out += `<line x1="${f(wrF[0] - 2)}" y1="${f(wrF[1] + 2)}" x2="${f(wrF[0] + 10)}" y2="${f(wrF[1] - 18)}" stroke="#2F5DA8" stroke-width="3" stroke-linecap="round"/>`;
+  if (hold === 'paper') out += `<rect x="${f(wrF[0] - 4)}" y="${f(wrF[1] - 26)}" width="26" height="34" fill="#F4F1E8" stroke="${INK}" stroke-width="1"/><path d="M${f(wrF[0])},${f(wrF[1] - 18)} h16 M${f(wrF[0])},${f(wrF[1] - 12)} h16" stroke="#C9A23A" stroke-width="1.5"/>`;
   if (hold === 'scroll') out += `<rect x="${f(wrF[0] - 3)}" y="${f(wrF[1] - 16)}" width="34" height="22" fill="#EFE3C6" stroke="#8A6A3A"/>`;
   out += arm(elF, wrF, robe, true);
   if (L.stripe && L.modern) out += `<path d="M${pt(sh)} L${pt(elF)} L${pt(add(wrF, [elF[0] - wrF[0], elF[1] - wrF[1]], 0.18))}" stroke="${L.stripe}" stroke-width="2.4" fill="none" opacity=".85" stroke-linejoin="round"/>`;
@@ -257,7 +261,7 @@ export const horse = (o: { x: number; y: number; s?: number; face?: 1 | -1; g?: 
 };
 
 // ---------------- 特写：侧脸（朝右） ----------------
-export interface FaceOpts { x: number; y: number; s?: number; face?: 1 | -1; who: 'hanxin' | 'xiangyu' | 'yuji' | 'piaomu' | 'tuhu' | 'ben' | 'green' | 'liu' | 'you' | keyof typeof FACE_X; g?: number; open?: number; brow?: number; mouth?: number; tear?: number; look?: number; shake?: number; nod?: number; id: string }
+export interface FaceOpts { x: number; y: number; s?: number; face?: 1 | -1; who: 'hanxin' | 'xiangyu' | 'yuji' | 'piaomu' | 'tuhu' | 'ben' | 'green' | 'liu' | 'you' | 'mia' | 'max' | keyof typeof FACE_X; g?: number; open?: number; brow?: number; mouth?: number; tear?: number; look?: number; shake?: number; nod?: number; id: string }
 /** 第二回起新增的特写脸：衣服颜色、头上戴什么、胡子（不画专门的五官，用同一副脸） */
 const FACE_X = {
   chensheng: { col: '#6A4E3A', hair: 'kerchief', hc: '#A8322A', beard: 'stub' },
@@ -273,16 +277,18 @@ const FACE_X = {
 export const faceCU = (o: FaceOpts) => {
   const s = o.s ?? 1, fc = o.face ?? 1, g = o.g ?? 0, open = o.open ?? 1, brow = o.brow ?? 0, mo = o.mouth ?? 0;
   const X = (FACE_X as Record<string, { col: string; hair: string; hc: string; beard?: string; bc?: string; old?: boolean }>)[o.who];
-  const old = o.who === 'piaomu', fem = o.who === 'yuji' || old || o.who === 'green', ruff = o.who === 'tuhu' || o.who === 'liu' || o.who === 'chensheng' || o.who === 'fankuai', hero = o.who === 'xiangyu';
+  const old = o.who === 'piaomu', fem = o.who === 'yuji' || old || o.who === 'green' || o.who === 'mia', ruff = o.who === 'tuhu' || o.who === 'liu' || o.who === 'chensheng' || o.who === 'fankuai', hero = o.who === 'xiangyu';
   const nose = fem ? 0.82 : 1, jaw = hero || ruff ? 1.1 : fem ? 0.9 : 1;
   const breathe = Math.sin(g * 1.4) * 2;
   let out = '';
   // 衣领、肩
-  const col = ({ hanxin: '#6E7378', xiangyu: '#3A3436', yuji: '#D8C3B0', piaomu: '#8A7B66', tuhu: '#4A3F36', ben: '#C2552E', green: '#4E7A5A', liu: '#2E3B55', you: '#2F5DA8' } as Record<string, string>)[o.who] ?? X?.col ?? '#6E7378';
+  const col = ({ hanxin: '#6E7378', xiangyu: '#3A3436', yuji: '#D8C3B0', piaomu: '#8A7B66', tuhu: '#4A3F36', ben: '#C2552E', green: '#4E7A5A', liu: '#2E3B55', you: '#2F5DA8', mia: '#2F5DA8', max: '#5E6066' } as Record<string, string>)[o.who] ?? X?.col ?? '#6E7378';
   out += `<path d="M-300,${f(420 + breathe)} Q-280,236 -60,${f(178 + breathe)} Q20,170 90,${f(182 + breathe)} Q290,226 320,${f(420 + breathe)} Z" fill="${col}" stroke="${INK}" stroke-opacity=".55" stroke-width="3"/>`;
-  const modern = o.who === 'ben' || o.who === 'green' || o.who === 'liu' || o.who === 'you';
+  const modern = o.who === 'ben' || o.who === 'green' || o.who === 'liu' || o.who === 'you' || o.who === 'mia' || o.who === 'max';
   if (o.who === 'ben') out += `<path d="M-150,${f(250 + breathe)} Q-120,150 -40,${f(150 + breathe)} Q-90,190 -96,${f(260 + breathe)} Z" fill="#A54726" stroke="${INK}" stroke-opacity=".5" stroke-width="3"/><path d="M40,200 l-6,90 M70,196 l8,92" stroke="#F0E6D8" stroke-width="5" stroke-linecap="round"/>`; // 卫衣的兜帽、抽绳
-  if (o.who === 'you') out += `<path d="M10,182 L58,252 L98,184" stroke="#F4F4F0" stroke-width="10" fill="none"/><path d="M58,252 L58,420" stroke="#F4F4F0" stroke-width="4"/>`; // 校服的白领、拉链
+  if (o.who === 'you' || o.who === 'mia') out += `<path d="M10,182 L58,252 L98,184" stroke="#F4F4F0" stroke-width="10" fill="none"/><path d="M58,252 L58,420" stroke="#F4F4F0" stroke-width="4"/>`; // 校服的白领、拉链
+  if (o.who === 'mia') out += `<path d="M-20,186 Q30,300 60,${f(330 + breathe)}" stroke="#1E2028" stroke-width="6" fill="none"/>`; // 相机背带
+  if (o.who === 'max') out += `<path d="M-150,${f(250 + breathe)} Q-120,150 -40,${f(150 + breathe)} Q-90,190 -96,${f(260 + breathe)} Z" fill="#4E5056" stroke="${INK}" stroke-opacity=".5" stroke-width="3"/><path d="M40,200 l-6,90 M70,196 l8,92" stroke="#E9E4DA" stroke-width="5" stroke-linecap="round"/>`; // 卫衣的兜帽
   if (o.who === 'green') out += `<path d="M14,182 L56,236 L96,184 L84,178 L56,214 L28,176 Z" fill="#F4F1E8" stroke="${INK}" stroke-opacity=".4" stroke-width="2"/><path d="M-20,190 Q40,330 60,${f(330 + breathe)} M150,200 Q90,320 70,${f(330 + breathe)}" stroke="#C23B2E" stroke-width="5" fill="none"/>`; // 衬衫领、工作牌的挂绳
   if (o.who === 'liu') out += `<path d="M-200,${f(250 + breathe)} l90,-40 l10,24 l-90,40 z M150,${f(214 + breathe)} l90,30 l-8,26 l-90,-30 z" fill="#1A2236"/><path d="M20,182 L58,240 L96,184" stroke="#DDE3EC" stroke-width="5" fill="none"/>`; // 制服的肩章、领子
   if (modern) { /* 现代的领口已画 */ } else if (hero) out += `<path d="M-160,${f(320 + breathe)} Q-110,220 -20,200 M-140,300 Q-80,240 0,232 M100,300 Q120,250 170,320" stroke="#8A7E6A" stroke-width="5" fill="none"/>`;
@@ -317,6 +323,8 @@ export const faceCU = (o: FaceOpts) => {
   if (o.who === 'yuji') out += `<path d="M44,-136 Q-30,-176 -96,-80 Q-110,-10 -90,40 Q-74,-30 -40,-50 Q0,-74 40,-84 Q70,-92 76,-108 Z" fill="#1E1A18"/><ellipse cx="-50" cy="-150" rx="48" ry="34" fill="#1E1A18"/><path d="M-110,-170 L10,-150" stroke="${GOLD}" stroke-width="5"/><circle cx="12" cy="-150" r="8" fill="${RED}"/><path d="M-30,40 l0,${f(30 + wav(g, 2) * 4)}" stroke="${GOLD}" stroke-width="2"/><circle cx="-30" cy="${f(74 + wav(g, 2) * 4)}" r="6" fill="#7FB3A3"/>`;
   if (old) out += `<path d="M86,-50 Q90,-150 10,-170 Q-90,-180 -118,-70 Q-128,20 -100,90 Q-80,40 -70,-20 Q-40,-70 40,-80 Q76,-80 86,-50 Z" fill="#D9D2C4" stroke="${INK}" stroke-opacity=".5" stroke-width="2.5"/><path d="M-100,60 q-30,30 -30,70 q20,-20 40,-40" fill="#D9D2C4" stroke="${INK}" stroke-opacity=".4" stroke-width="2"/><path d="M60,-84 q20,10 26,30" stroke="#9A9288" stroke-width="3" fill="none"/>`;
   if (ruff) out += `<path d="M60,-110 Q-30,-180 -100,-80 Q-112,-10 -90,40 Q-80,-10 -60,-40 l20,4 l-6,-16 l24,6 l-4,-18 l26,10 l2,-16 l20,10 Z" fill="#1E1A18"/><path d="M-100,-60 L80,-84" stroke="#8A3A2A" stroke-width="10"/>`;
+  if (o.who === 'mia') out += `<path d="M-92,-96 Q-170,-60 -150,${f(90 + wav(g, 2) * 6)} Q-120,10 -86,-40 Z" fill="#2A1E18"/><circle cx="-96" cy="-92" r="10" fill="#C23B2E"/><path d="M44,-136 Q-30,-178 -98,-84 Q-112,-14 -88,36 Q-76,-20 -46,-46 Q-6,-70 40,-74 Q62,-80 72,-96 Q86,-60 92,-44 Q98,-90 70,-124 Z" fill="#2A1E18"/><path d="M60,-120 q20,20 22,60" stroke="#2A1E18" stroke-width="10" fill="none"/>`;
+  if (o.who === 'max') out += `<path d="M44,-136 Q-30,-178 -98,-84 Q-112,-14 -88,36 Q-76,-20 -46,-46 Q-6,-70 40,-74 Q62,-80 72,-96 Q86,-60 92,-44 Q98,-90 70,-124 Z" fill="#1E1A18"/>` + [[-70, -130], [-36, -158], [0, -168], [36, -158]].map(([x, y], i) => `<path d="M${x},${y} l${-10 + i * 5},-24 l${20 - i * 2},14 Z" fill="#1E1A18"/>`).join('');
   if (o.who === 'you') out += `<path d="M44,-136 Q-30,-178 -98,-84 Q-112,-14 -88,36 Q-76,-20 -46,-46 Q-6,-70 40,-74 Q62,-80 72,-96 Q86,-60 92,-44 Q98,-90 70,-124 Z" fill="#1E1A18"/>`;
   if (o.who === 'ben') out += `<path d="M44,-136 Q-30,-178 -98,-84 Q-112,-14 -88,36 Q-76,-20 -46,-46 Q-6,-70 40,-74 Q62,-80 74,-92 Q90,-60 96,-40 Q102,-96 70,-128 Z" fill="#D8B266"/>` + [[-80, -120], [-50, -150], [-14, -164], [24, -160], [56, -142]].map(([x, y], i) => `<path d="M${x},${y} l${-14 + i * 6},-30 l${24 - i * 3},18 Z" fill="#D8B266"/>`).join('') + `<path d="M-40,-120 q30,-20 60,-4 M-60,-90 q30,-14 54,0" stroke="#B08A44" stroke-width="3" fill="none"/>`;
   if (o.who === 'green') out += `<path d="M86,-50 Q92,-150 10,-170 Q-90,-180 -118,-70 Q-130,30 -108,104 L-58,106 Q-82,20 -64,-30 Q-30,-76 50,-82 Q78,-82 86,-50 Z" fill="#6B4A32"/><path d="M84,-56 Q96,-30 88,-6" stroke="#6B4A32" stroke-width="10" fill="none"/><circle cx="58" cy="-22" r="26" fill="#E8F2F6" fill-opacity=".25" stroke="#2B2722" stroke-width="5"/><path d="M32,-26 L-32,-30" stroke="#2B2722" stroke-width="4"/>`;

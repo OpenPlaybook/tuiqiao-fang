@@ -114,7 +114,7 @@ export interface Line {
 /** endAsk：看完这一回，结束页上可以直接问 AI 眼镜的几个问题（看完了也能接着探索） */
 export interface Play { id: string; lang?: 'zh' | 'en'; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string; endAsk?: string[] }
 /** 中文：旁白（女）、男声、AI 眼镜；英文：旁白、Ben、Green 老师、刘师傅 */
-export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu';
+export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu' | 'max' | 'mia';
 
 
 // ---------------- 竹简故事（旧版） ----------------

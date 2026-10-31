@@ -178,13 +178,13 @@ const chairRow = (x0: number, n: number, y: number, s: number, dx = 190) => Arra
 /** AI 眼镜（发着光，在扫字） */
 const aiGlasses = (x: number, y: number, s: number, g: number) => `<g transform="translate(${f(x)},${f(y)}) scale(${s})"><circle r="210" fill="#9FD3F0" opacity="${f(0.22 + 0.08 * Math.sin(g * 2))}"/><circle cx="-80" r="62" fill="#CFE6F2" fill-opacity=".55" stroke="#2B2722" stroke-width="10"/><circle cx="80" r="62" fill="#CFE6F2" fill-opacity=".55" stroke="#2B2722" stroke-width="10"/><path d="M-18,-6 q18,-16 36,0" stroke="#2B2722" stroke-width="9" fill="none"/><path d="M-142,-8 l-80,-20 M142,-8 l80,-20" stroke="#2B2722" stroke-width="9"/>${[-1, 1].map((sg) => Array.from({ length: 4 }, (_, i) => `<line x1="${sg * 80 - 34}" y1="${-30 + i * 18}" x2="${f(sg * 80 - 34 + 68 * clamp(((g * 0.8 + i * 0.25) % 1) * 1.4))}" y2="${-30 + i * 18}" stroke="#2F5DA8" stroke-width="5" stroke-linecap="round" opacity=".8"/>`).join('')).join('')}</g>`;
 
-export { aiGlasses, audience, chairRow, clock, clueBoard, corridorBg, deskPerson, door, gateBg, hallBg, hallLights, notebookPage, phoneScreen, stickyNote, table, trophy, worldMap, backstageBg };
+export { aiGlasses, audience, chairRow, clock, clueBoard, corridorBg, deskPerson, door, gateBg, hallBg, hallLights, notebookPage, phoneScreen, stickyNote, table, trophy, worldMap, backstageBg, HAND, SANS };
 
 /** 坐在椅子上的人（椅子按人的大小画） */
-const seated = (who: string, x: number, y: number, s: number, g: number, o: { pose?: ReturnType<typeof P.sit>; face?: 1 | -1; hold?: 'phone' | 'mooncake' | 'notebook'; mood?: 'calm' | 'shock' | 'laugh' | 'sad' } = {}) =>
+export const seated = (who: string, x: number, y: number, s: number, g: number, o: { pose?: ReturnType<typeof P.sit>; face?: 1 | -1; hold?: 'phone' | 'mooncake' | 'notebook'; mood?: 'calm' | 'shock' | 'laugh' | 'sad' } = {}) =>
   `<g transform="translate(${x},0) scale(${o.face ?? 1},1) translate(${-x},0)">${chairRow(x, 1, y, s * 0.74)}</g>` + person({ x, y, s, who, pose: o.pose ?? P.sitRest(), g, face: o.face ?? 1, hold: o.hold, detail: s >= 1.6, mood: o.mood });
 /** 礼堂里侧面看：墙、窗、舞台那边的红幕、后排坐着的同学（虚） */
-const sideHall = (id: string, g: number, stageRight = true) =>
+export const sideHall = (id: string, g: number, stageRight = true) =>
   sky(id, '#DCCAA8', '#CDB892') + Array.from({ length: 4 }, (_, i) => `<rect x="${-80 + i * 420}" y="90" width="250" height="200" fill="#C9DCE2" stroke="#B7A27C" stroke-width="10"/>`).join('') +
   (stageRight ? `<path d="M1500,-200 Q1460,300 1490,620 L1800,620 L1800,-200 Z" fill="#9E2E2A"/>` : '') + `<rect x="-200" y="600" width="2000" height="500" fill="#B78C5C"/>` +
   `<g opacity=".4" filter="url(#${id}s)">${[0, 1, 2, 3, 4, 5].map((i) => person({ x: 60 + i * 260, y: 600, s: 0.9, who: i % 2 ? 'stuB' : 'stuA', pose: P.sitRest(), g })).join('')}</g>`;
@@ -194,10 +194,10 @@ const reachHand = (x: number, y: number) => `<g transform="translate(${f(x)},${f
   [[-26, -70, -4], [-8, -76, 0], [10, -76, 2], [28, -68, 6]].map(([fx, fy, r]) => `<rect x="${fx - 9}" y="${fy - 70}" width="18" height="74" rx="9" fill="${SKIN}" stroke="${INK}" stroke-width="3.5" transform="rotate(${r} ${fx} ${fy})"/>`).join('') +
   `<rect x="-62" y="-40" width="18" height="62" rx="9" fill="${SKIN}" stroke="${INK}" stroke-width="3.5" transform="rotate(-40 -44 10)"/></g>`;
 /** 回忆的画面：发黄、四周压暗 */
-const flashback = (id: string) => `<rect x="-200" y="-200" width="2000" height="1300" fill="#C9A86A" opacity=".22" style="mix-blend-mode:multiply"/><rect x="-200" y="-200" width="2000" height="1300" fill="url(#${id}v)" opacity=".9"/>`;
-const timeTag = (x: number, y: number, t: string) => `<g transform="translate(${x},${y})"><rect x="-90" y="-44" width="180" height="62" rx="12" fill="#1E1A18" opacity=".75"/><text x="0" y="2" font-size="40" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>${t}</text></g>`;
-const talk = (g: number, k = 1) => (Math.sin(g * 11) * 0.5 + 0.5) * 0.6 * k; // 说话时嘴一张一合
-const screenPanda = (id: string, x: number, y: number, s: number, g: number) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-210" y="-150" width="420" height="300" fill="#1C2440"/><rect x="-200" y="-140" width="400" height="280" fill="#2E3E6E"/>${glow(id, 0, -20, 160, g, 0, 0.5)}${trophy(id, 0, 70, 0.75, g)}<text x="0" y="124" font-size="22" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>TOP PRIZE · THE GOLDEN PANDA</text></g>`;
+export const flashback = (id: string) => `<rect x="-200" y="-200" width="2000" height="1300" fill="#C9A86A" opacity=".22" style="mix-blend-mode:multiply"/><rect x="-200" y="-200" width="2000" height="1300" fill="url(#${id}v)" opacity=".9"/>`;
+export const timeTag = (x: number, y: number, t: string) => `<g transform="translate(${x},${y})"><rect x="-90" y="-44" width="180" height="62" rx="12" fill="#1E1A18" opacity=".75"/><text x="0" y="2" font-size="40" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>${t}</text></g>`;
+export const talk = (g: number, k = 1) => (Math.sin(g * 11) * 0.5 + 0.5) * 0.6 * k; // 说话时嘴一张一合
+export const screenPanda = (id: string, x: number, y: number, s: number, g: number) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-210" y="-150" width="420" height="300" fill="#1C2440"/><rect x="-200" y="-140" width="400" height="280" fill="#2E3E6E"/>${glow(id, 0, -20, 160, g, 0, 0.5)}${trophy(id, 0, 70, 0.75, g)}<text x="0" y="124" font-size="22" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>TOP PRIZE · THE GOLDEN PANDA</text></g>`;
 
 export const SHOTS_E1: Record<string, ShotDef> = {
   // ---------- 0 星期五下午，礼堂坐满了人 ----------
