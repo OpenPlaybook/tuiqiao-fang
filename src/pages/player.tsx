@@ -66,7 +66,8 @@ export default function PlayerPage({ id }: { id: string }) {
   const [idx, setIdx] = useState(startAt);
   const [far, setFar] = useState(Math.max(startAt, lastDone)); // 台本里显示到哪一句
   useEffect(() => setFar((f) => Math.max(f, idx)), [idx]);
-  const [phase, setPhase] = useState<'cover' | 'play' | 'pause' | 'task' | 'end'>(at ? 'pause' : 'cover');
+  // 从别的回跳回来（或者跳到某一句）：那一句有题，就直接把题摆出来（做过的显示答案），不用再点
+  const [phase, setPhase] = useState<'cover' | 'play' | 'pause' | 'task' | 'end'>(at ? (lines[startAt]?.task && items[startAt] && startAt <= maxIdx ? 'task' : 'pause') : 'cover');
   const [muted, setMuted] = useState(() => { try { return localStorage.getItem('tq-mute') === '1'; } catch { return false; } });
   const [elapsed, setElapsed] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
@@ -124,7 +125,7 @@ export default function PlayerPage({ id }: { id: string }) {
   useEffect(() => { setHint(null); }, [idx, phase]);
   // 必做的拓展：题做完以后自动弹出
   useEffect(() => {
-    if (phase !== 'task' || !item || !done(idx) || extOpen) return;
+    if (phase !== 'task' || !item || !done(idx) || extOpen || ret) return; // 从别的回跳过来只是看一眼：不自动弹拓展，免得挡住“回到……”
     const r = p.recs[item.id], need = requiredExts(item, r).find((e) => extsOf(r)[e.id] === undefined);
     if (need) { const tm = setTimeout(() => setExtOpen({ it: item, ext: need }), 1200); return () => clearTimeout(tm); }
   }, [phase, idx, p, extOpen]);
