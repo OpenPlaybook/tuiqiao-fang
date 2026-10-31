@@ -15,6 +15,12 @@ if (js.length !== 1) throw new Error('应该只有一个 JS 文件，实际有 '
 // 用函数做替换：JS 里的 $& $' 之类不能被当成替换模式
 const inline = `<script type="module">${js[0].replace(/<\/script/gi, '<\\/script')}</script>\n</body>`;
 html = html.replace('</body>', () => inline);
+// 配音：内嵌成 data URL（演示版没有服务器）
+const VD = 'public/voice';
+const idx = JSON.parse(fs.readFileSync(path.join(VD, 'index.json'), 'utf8'));
+const voice = Object.fromEntries(Object.keys(idx).map((f) => [f, 'data:audio/mpeg;base64,' + fs.readFileSync(path.join(VD, f)).toString('base64')]));
+const vscript = `<script>window.__VOICE_IDX__=${JSON.stringify(idx)};window.__VOICE__=${JSON.stringify(voice)};</script>`;
+html = html.replace('<div id="root"></div>', () => '<div id="root"></div>' + vscript);
 // 图标
 const ico = fs.readFileSync('public/favicon.svg', 'utf8');
 html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${encodeURIComponent(ico)}">`);

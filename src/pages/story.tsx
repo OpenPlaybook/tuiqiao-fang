@@ -30,7 +30,7 @@ export function StoryMap() {
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-6">
       <div className="mb-5 flex items-end gap-4"><div className="kai text-4xl">两个故事</div><div className="pb-1 text-ink2">跟着故事往下走，题就在故事里。哪里不明白，就点开让“老师”多讲一点。</div></div>
-      {DEMO && <div className="mb-5 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-3 text-amber-900">这是演示版：不用登录，也不保存记录（刷新页面就从头开始）。现在能玩的是中文第一回和英文第一章。课堂版里 AI 会现场举例、给学生写的句子评分；演示版里的 AI 例子是事先生成好的，写句子不评分。</div>}
+      {DEMO && <div className="mb-5 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-3 text-amber-900">这是演示版：不用登录，也不保存记录（刷新页面就从头开始）。现在能看的是中文第一回、第六回（会播放，有配音）和英文第一章。课堂版里 AI 会回答学生的提问、给写的句子评分；演示版里这些不连 AI。</div>}
       <div className="grid gap-6 lg:grid-cols-2">
         {lines.map((L) => (
           <div key={L.id} className="card overflow-hidden p-0">

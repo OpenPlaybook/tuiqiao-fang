@@ -19,7 +19,9 @@ const EST = (t: string) => Math.max(2.2, Array.from(t.replace(/[⟦⟧⟪⟫*]/g
 
 // ---------------- 配音：voice/index.json 记着每个文件的时长 ----------------
 let voiceIdx: Promise<Record<string, number>> | null = null;
-const getVoiceIdx = () => (voiceIdx ??= fetch('voice/index.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+// 演示版（单个 HTML）把配音内嵌成 window.__VOICE__（文件名 → data URL）和 window.__VOICE_IDX__（时长）
+const W = window as unknown as { __VOICE__?: Record<string, string>; __VOICE_IDX__?: Record<string, number> };
+const getVoiceIdx = () => (voiceIdx ??= W.__VOICE_IDX__ ? Promise.resolve(W.__VOICE_IDX__) : fetch('voice/index.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
 
 const useHashQuery = () => {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
@@ -77,7 +79,7 @@ export default function PlayerPage({ id }: { id: string }) {
     setElapsed(0);
     if (!muted && dur[file]) {
       const a = (audio.current ??= new Audio());
-      a.src = `voice/${file}`; a.currentTime = 0;
+      a.src = W.__VOICE__?.[file] ?? `voice/${file}`; a.currentTime = 0;
       a.onended = () => { timer.current = window.setTimeout(endLine, (l.pause ?? 0.35) * 1000); };
       a.play().catch(() => { timer.current = window.setTimeout(endLine, d * 1000); });
     } else timer.current = window.setTimeout(endLine, d * 1000);
