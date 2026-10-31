@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Volume2, VolumeX, WifiOff, X } from 'lucide-react';
 import { useGame, onFly, onToast, logout } from '../game/store';
 import { soundOn, setSound, sfx } from '../game/sound';
-import { starsOf } from '../shared/adapt';
+import { sideOf, starsOf } from '../shared/adapt';
 import { renderArt } from '../art/ink';
 import type { Art as ArtSpec } from '../shared/types';
 import { DEMO } from '../game/demo';
@@ -67,6 +67,13 @@ export const Avatar = ({ i, size = 40 }: { i: number; size?: number }) => (
 
 // ---------------- 星星计数器、飞星星 ----------------
 let counterEl: HTMLElement | null = null;
+/** 支线“探索”分：问 AI 自己想出后一半、看字的别的用法 */
+const SideCounter = () => {
+  const p = useGame((s) => s.player);
+  const n = p ? sideOf(p) : 0;
+  if (!n) return null;
+  return <motion.div key={n} initial={{ scale: 1.3 }} animate={{ scale: 1 }} title="探索分：问 AI 时自己想出了答案、去看了字的别的用法" className="flex items-center gap-1 rounded-full border-2 border-sky-200 bg-white/90 px-3 py-1 chunky"><span className="text-lg">🧭</span><span className="text-xl font-black tabular-nums text-sky-700">{n}</span></motion.div>;
+};
 const StarCounter = () => {
   const p = useGame((s) => s.player);
   const n = p ? starsOf(p) : 0;
@@ -140,6 +147,7 @@ export const TopBar = () => {
         <div className="ml-auto flex items-center gap-2.5">
           {!online && <span className="flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-700" title="进度先存在这台电脑上，连上后自动同步"><WifiOff size={16} />离线中</span>}
           <StarCounter />
+          <SideCounter />
           <button onClick={() => { setSound(!snd); setSnd(!snd); }} className="rounded-full border-2 border-[#E6DCC6] bg-white/90 p-2 text-ink2" title={snd ? '关闭声音' : '打开声音'}>{snd ? <Volume2 size={20} /> : <VolumeX size={20} />}</button>
           {DEMO ? <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-800" title="不用登录、不保存记录；刷新页面就从头开始">演示版</span> : <>
           <a href="#/me" className="flex items-center gap-2 pl-1"><Avatar i={p.avatar} size={40} /><div className="leading-tight"><div className="font-black">{p.name}</div><div className="text-xs text-ink2">{p.sid}</div></div></a>

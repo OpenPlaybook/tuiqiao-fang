@@ -9,7 +9,11 @@ const mod = { exports: {} }; new Function('module', 'exports', r.outputFiles[0].
 const { PLAYS, readText, voiceFile, VOICES } = mod.exports;
 const RATE = { n: '+14%', ai: '+14%', m: '+6%' };
 const list = [];
-for (const p of PLAYS) for (const l of p.lines) { const v = l.voice ?? 'n'; list.push({ file: voiceFile(l), text: readText(l), voice: VOICES[v], rate: RATE[v] }); }
+for (const p of PLAYS) for (const l of p.lines) {
+  const v = l.voice ?? 'n';
+  list.push({ file: voiceFile(l), text: readText(l), voice: VOICES[v], rate: RATE[v] });
+  if (l.wy) { const w = { t: l.wy, read: l.wyRead, voice: l.voice }; list.push({ file: voiceFile(w), text: readText(w), voice: VOICES[v], rate: RATE[v] }); } // 文言 / 对照模式念原文
+}
 fs.mkdirSync('build', { recursive: true });
 fs.writeFileSync('build/voice-lines.json', JSON.stringify(list, null, 1));
 const PY = `${os.homedir()}/Desktop/高中物化/.venv/bin/python`;

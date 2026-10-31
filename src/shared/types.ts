@@ -17,7 +17,8 @@ export interface ChoiceSub extends SubBase { kind: 'choice'; opts: Opt[]; ok: nu
 /** fixed：按选的改法（选项文字）显示改好的句子，~~删掉的~~、++加上的++ */
 export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: number[]; miss?: Record<number, string>; fix?: ChoiceSub; fixed?: Record<string, string> }
 /** 分类：把卡片放进几个格子 */
-export interface SortSub extends SubBase { kind: 'sort'; bins: string[]; cards: { t: string; bin: number; why: string }[] }
+/** scale：画成一条从贬到褒的色带，格子从左到右排（贬 → 中 → 褒），把词放到色带上的位置 */
+export interface SortSub extends SubBase { kind: 'sort'; bins: string[]; cards: { t: string; bin: number; why: string }[]; scale?: boolean }
 /** 连线：左边每一项配右边一项 */
 export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right: string[]; pairs: number[]; why: string; lh?: string; rh?: string }
 /** 排序：items 按正确顺序写；tags 是排好以后显示的年份等 */
@@ -100,12 +101,15 @@ export interface KNode {
 // ---------------- 播放式故事（画面 + 配音 + 字幕，播到题就停） ----------------
 /** 可点的字（AI 眼镜释义）：文本里写 ⟦词⟧；拼音直接注在字上写 ⟪字⟫。释义在一回的 gloss 表里 */
 /** 可点的字：d 是这个字词本身的意思（点一下就看到）；s 是放在这句话里怎么理解（再点“在这句话里”才展开）——两层都记下来，老师能看出卡在字词还是卡在整句 */
-export interface Gloss { d: string; s?: string; py?: string; ex?: string; back?: Back }
+/** more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分） */
+export interface Gloss { d: string; s?: string; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
 export interface Line {
   id?: string; // 回扣用的句号
   who?: string; // 说话人（旁白不写）
   t: string; // 字幕：⟦词⟧ 可点，⟪字⟫ 注拼音，**加粗**，___ 空
   read?: string; // 配音念的文字（默认是去掉标记的字幕；文言里的多音字在这里换成同音字）
+  wy?: string; // 这句在《史记》里的原文：选“文言”“对照”时显示、配音念它（旁白、引导、题目不写，始终是白话）
+  wyRead?: string; // 原文的配音文字（多音字换成同音字）
   voice?: 'n' | 'm' | 'ai'; // 旁白（女）、男声、AI 眼镜
   scene?: Art; // 换画面
   cam?: [number, number, number, number, number, number]; // 镜头推拉：起点 x%、y%、放大 → 终点 x%、y%、放大

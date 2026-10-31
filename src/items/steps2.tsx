@@ -493,6 +493,31 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
     if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setPut(Object.fromEntries(s.cards.map((c, i) => [i, c.bin]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
     sfx('no'); setBad(wrong);
   };
+  const [sel, setSel] = useState<number | null>(null);
+  if (s.scale) {
+    // 色带：先点一个词，再点它该放的位置；放错的会标红，点它可以拿回来重放
+    const place = (j: number) => { if (solved || sel === null) return; sfx('click'); setPut((p) => ({ ...p, [sel]: j })); setBad((x) => x.filter((y) => y !== sel)); setSel(null); };
+    const grad = 'linear-gradient(90deg, #C0392B, #E9DFCB 50%, #2E8B57)';
+    return (
+      <div>
+        <Q text={s.q} />
+        <div className="h-2.5 rounded-full" style={{ background: grad }} />
+        <div className="mt-1 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${s.bins.length}, minmax(0, 1fr))` }}>
+          {s.bins.map((b, j) => (
+            <div key={j} onClick={() => place(j)} className={`min-h-[64px] rounded-lg border-2 border-dashed px-1.5 py-1 ${sel !== null && !solved ? 'cursor-pointer border-amber-300 bg-amber-50/60' : 'border-[#E6DCC6] bg-white/60'}`}>
+              <div className={`mb-1 text-center text-[13px] font-black ${j === 0 ? 'text-rose-700' : j === s.bins.length - 1 ? 'text-emerald-700' : 'text-ink2'}`}>{b}</div>
+              <div className="flex flex-wrap justify-center gap-1">{order.filter((i) => put[i] === j).map((i) => (
+                <button key={i} onClick={(e) => { e.stopPropagation(); if (!solved) { setSel(i); sfx('click'); } }} title={solved ? s.cards[i].why : '点它可以换个位置'} className={`rounded-full border-2 px-2 py-0.5 text-[14px] font-bold ${bad.includes(i) ? 'border-rose-300 bg-rose-50' : solved ? 'border-emerald-200 bg-white' : sel === i ? 'bg-amber-100' : 'border-[#E6DCC6] bg-white'}`} style={sel === i ? { borderColor: color } : {}}><Rich text={s.cards[i].t} /></button>
+              ))}</div>
+            </div>
+          ))}
+        </div>
+        {!solved && order.some((i) => put[i] === undefined) && <div className="mt-1.5 flex flex-wrap items-center gap-1"><span className="mr-1 text-[13px] text-ink2">{sel !== null ? '放到色带上哪个位置？' : '先点一个词：'}</span>{order.filter((i) => put[i] === undefined).map((i) => <button key={i} onClick={() => { sfx('click'); setSel(sel === i ? null : i); }} className={`rounded-full border-2 px-2.5 py-0.5 text-[14px] font-bold ${sel === i ? 'text-white' : 'border-[#E6DCC6] bg-white'}`} style={sel === i ? { background: color, borderColor: color } : {}}><Rich text={s.cards[i].t} /></button>)}</div>}
+        {solved && <div className="mt-1.5 grid gap-x-3 text-[13px] leading-snug text-emerald-900 sm:grid-cols-2">{s.cards.map((c, i) => <div key={i}>✓ <b><Rich text={c.t} /></b>：<Rich text={c.why} /></div>)}</div>}
+        {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 && <span className="text-sm font-bold text-rose-700">红框的 {bad.length} 个放错了，点它重新放。</span>}</div>}
+      </div>
+    );
+  }
   return (
     <div>
       <Q text={s.q} />

@@ -1,3 +1,4 @@
+import type { AskOut } from '../shared/ai';
 import type { Player, GameConfig } from '../shared/types';
 import type { EnJudge, ZhJudge } from '../shared/ai';
 
@@ -18,7 +19,7 @@ const req = async <T,>(path: string, body?: unknown, headers: Record<string, str
 export interface AiStatus { ready: boolean; mock: boolean; hasKey: boolean; keyTail: string; model: string; models: string[]; quota: number; lastTest: { ok: boolean; msg: string; t: number } | null; active: number; used: number }
 export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { examples: { s: string; note: string }[] } | { a: string } | null; ms: number; ok: boolean; err?: string }
 export interface PlayerSummary {
-  pid: string; name: string; sid: string; avatar: number; stars: number; weighted: number; bonus: number; unsure: number; done: number; avgLv: number; prac?: { n: number; ok: number }; gloss?: number; gloss2?: number; asks?: number;
+  pid: string; name: string; sid: string; avatar: number; stars: number; weighted: number; bonus: number; unsure: number; done: number; avgLv: number; prac?: { n: number; ok: number }; side?: number; gloss?: number; gloss2?: number; asks?: number;
   theta: Record<string, number>; stations: Record<string, { stars: number; done: number }>; vocab?: number; lastSeen: number; current: string; createdAt: number; aiLeft: number;
 }
 export interface ItemStat { id: string; st: string; lv: number; label: string; n: number; done: number; avgStars: number; unsure: number; firstN: number; firstOk: number; wrong: { v: string; n: number }[]; opens?: { v: string; n: number }[] }
@@ -30,7 +31,7 @@ export const api = {
   join: (name: string, sid: string, avatar: number) => req<{ player: Player }>('api/join', { name, sid, avatar }),
   sync: (p: Player) => req<{ ok: true }>('api/sync', { player: p }),
   config: (pid?: string) => req<GameConfig>(`api/config${pid ? `?pid=${encodeURIComponent(pid)}` : ''}`),
-  ask: (b: { pid: string; token: string; play: string; item: string; line: string; q: string }) => req<{ a: string; left: number }>('api/ai/ask', b, {}, 45000),
+  ask: (b: { pid: string; token: string; play: string; item: string; line: string; before: string[]; q: string }) => req<AskOut & { left: number }>('api/ai/ask', b, {}, 45000),
   examples: (b: { pid: string; token: string; node: string; item: string; seen: string[] }) => req<{ examples: { s: string; note: string }[]; left: number }>('api/ai/examples', b, {}, 45000),
   judge: (b: { pid: string; token: string; item: string; step: string; text: string }) => req<{ out: ZhJudge | EnJudge; left: number }>('api/ai/judge', b, {}, 45000),
   teacher: {

@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { STATION_IDS, type GameConfig, type Player, type Rec, type StationId } from '../src/shared/types';
 import { ITEMS, ITEM_BY_ID } from '../src/shared/bank';
-import { STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, pracOf, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
+import { sideOf, STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, pracOf, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
 import { createAi } from './ai';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -99,7 +99,7 @@ const currentOf = (p: Player) => {
 const summary = (p: Player) => ({
   pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
   done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p), prac: pracOf(p),
-  gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
+  side: sideOf(p), gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
   stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
   vocab: p.vocab?.score, lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),

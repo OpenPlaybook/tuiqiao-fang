@@ -16,3 +16,7 @@ export const readText = (l: { t: string; read?: string }) => (l.read ?? plainTex
 export const fnv = (t: string) => { let h = 2166136261; for (const ch of t) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
 export const VOICES = { n: 'zh-CN-XiaoxiaoNeural', m: 'zh-CN-YunxiNeural', ai: 'zh-CN-XiaoyiNeural' } as const;
 export const voiceFile = (l: { t: string; read?: string; voice?: 'n' | 'm' | 'ai' }) => `${l.voice ?? 'n'}-${fnv(readText(l))}.mp3`;
+/** 讲解模式：白话（现代汉语）、文言（有原文的句子用《史记》原文）、对照（原文，下面是白话） */
+export type Mode = 'bh' | 'wy' | 'dz';
+/** 这一句在这个模式下念哪段：有原文、又不是白话模式，就念原文 */
+export const voiceLine = (l: { t: string; read?: string; wy?: string; wyRead?: string; voice?: 'n' | 'm' | 'ai' }, mode: Mode) => (mode !== 'bh' && l.wy ? { t: l.wy, read: l.wyRead, voice: l.voice } : l);

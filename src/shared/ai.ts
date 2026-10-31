@@ -122,15 +122,34 @@ export const cleanEx = (j: { examples?: { s?: unknown; note?: unknown }[] }, wor
     .filter((e) => e.s && (!words?.length || words.some((w) => e.s.toLowerCase().includes(w.toLowerCase()))));
 
 // ---------------- 学生自己提问（AI 读书眼镜） ----------------
+/** 学生问“读书眼镜”：不直接给全部答案——先讲一半，再问一个引导的小问题让学生自己想，选完再讲后一半 */
+export interface AskOut { a1: string; q: string; opts: { t: string; ok: boolean; why: string }[]; a2: string }
 export const ASK_SYSTEM = `你是一副“AI 读书眼镜”，陪初一、初二的学生读《史记》里楚汉相争的故事（韩信、项羽、刘邦）。学生正在看故事里的某一句，问了你一个问题。
-- 用 2—4 句话回答，不超过 120 字，口语化，初中生一听就懂。
-- 结合学生正在看的这一句、这一回的故事来回答；讲字词时，说清意思，再给一个简单的例子。
-- 史实要准确；拿不准就说“我不确定，可以查《史记》或者问老师”；传说要说明是传说。
-- 如果学生在问正在做的题的答案，不要直接说出答案，给一个想的方向。题已经做完的，可以讲。
-- 和学习无关的问题，礼貌地拉回故事。
-只输出回答本身。`;
-export const askUser = (o: { title: string; line: string; task?: string; taskDone?: boolean; q: string }) => [
-  `这一回：${o.title}`, `学生正在看的一句：${o.line}`,
+你像一位会引导的老师：不一口气把答案说完，而是先讲一半，再问学生一个小问题，让他自己想出后一半；学生选完，你再把后一半说完。
+
+只输出一个 JSON 对象：
+{"a1": "先讲的一半", "q": "引导的小问题", "opts": [{"t": "选项", "ok": true, "why": "为什么"}, …], "a2": "学生选完以后再说的后一半"}
+
+要求：
+- a1：1—3 句，不超过 80 字。讲清事实、背景或字面意思，把最关键的推论或结论留下来，不要说破；不要以问句结尾（问题放在 q 里）。
+- q：一句话，不超过 30 字，问的正好是 a1 留下来的那一步（“你觉得……会怎样？”“那这个字在这里是什么意思？”）。
+- opts：2 或 3 个选项，每个不超过 20 字，恰好一个 ok 为 true；错的选项要是学生真可能想到、但说不通的；why 不超过 40 字，错的要说清哪里不对，但不要把对的答案直接说出来。
+- a2：1—2 句，不超过 70 字，把结论说完整；能落回故事原文或学生正在看的这一句，就落回去。
+- 口语化，初中生一听就懂；不用“同学你好”之类的客套。
+- 史实要准确，不编原文、不编出处；拿不准的说“一般认为”或“史书上没写清楚”；传说要说明是传说。具体的数字、换算、年代，只说确定的；拿不准就说个大概（比如“一大笔钱”），别硬算。
+- 如果下面给了“正在做的题的答案（不能说）”，学生又是在问这道题：a1 只给一个想的方向，q 问的是“怎么想”（看哪个字、后面跟着什么），选项也只是方法，a2 只说“回到题里试试”——a1、q、opts、a2 里都不能出现这个答案或和它意思一样的话。题已经做完的，可以讲。
+- 和学习无关的问题：a1 礼貌地把话题拉回故事，q 为空字符串，opts 为空数组，a2 为空字符串。`;
+export const askUser = (o: { title: string; before: string[]; line: string; task?: string; taskDone?: boolean; answer?: string; q: string }) => [
+  `这一回：${o.title}`, o.before.length ? `前面刚播过：${o.before.join(' / ')}` : '', `学生正在看的一句：${o.line}`,
   o.task ? `学生正在做的题：${o.task}（${o.taskDone ? '已经做完了' : '还没做完'}）` : '',
+  o.task && !o.taskDone && o.answer ? `正在做的题的答案（不能说）：${o.answer}` : '',
   `学生的问题：${o.q}`,
 ].filter(Boolean).join('\n');
+/** 检查、收拾 AI 的回答：选项不对就当作没有引导问题 */
+export const cleanAsk = (o: Record<string, unknown>): AskOut => {
+  const str = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n);
+  let opts = Array.isArray(o.opts) ? (o.opts as Record<string, unknown>[]).map((x) => ({ t: str(x.t, 40), ok: x.ok === true, why: str(x.why, 90) })).filter((x) => x.t) : [];
+  if (opts.filter((x) => x.ok).length !== 1 || opts.length < 2) opts = [];
+  const a1 = str(o.a1, 220), a2 = str(o.a2, 200), q = opts.length ? str(o.q, 80) : '';
+  return { a1, q, opts: q ? opts.slice(0, 3) : [], a2: q ? a2 : [a2].filter(Boolean).join('') };
+};

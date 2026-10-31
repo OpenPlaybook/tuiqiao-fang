@@ -84,10 +84,15 @@ export const resultOf = (scores: number[], unsure: number) => {
 export const cleanFirst = (r: Rec | undefined) => !!r && r.status === 'done' && r.perf >= 0.99;
 
 // ---------------- 汇总 ----------------
-export const starsOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.status === 'done' ? r.stars : 0), 0);
+/** 拓展也算主线星星：每做完一个拓展（得分六成以上）加 1 颗 */
+export const extStars = (r: Rec) => Object.values((r.data?.ext as Record<string, number>) ?? {}).filter((x) => x >= 0.6).length;
+const recStars = (r: Rec) => (r.status === 'done' ? r.stars : 0) + extStars(r);
+export const starsOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + recStars(r), 0);
+/** 支线“探索”分：问 AI 时自己想出了后一半（askok）、点字时去看了这个字的别的用法并答对（more，同一个字只算一次） */
+export const sideOf = (p: Player) => Object.values(p.recs).filter((r) => r.id.endsWith('-log')).reduce((s, r) => s + r.log.filter((e) => e.q === 'askok').length + new Set(r.log.filter((e) => e.q === 'more').map((e) => e.v)).size, 0);
 export const bonusOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.bonus || 0), 0);
-export const weightedOf = (p: Player) => Math.round((doneRecs(p).reduce((s, r) => s + r.stars * W[ITEM_BY_ID[r.id].lv], 0) + bonusOf(p)) * 10) / 10;
-export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).reduce((s, r) => s + (r.status === 'done' ? r.stars : 0), 0);
+export const weightedOf = (p: Player) => Math.round((doneRecs(p).reduce((s, r) => s + r.stars * W[ITEM_BY_ID[r.id].lv] + extStars(r), 0) + bonusOf(p)) * 10) / 10;
+export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).reduce((s, r) => s + recStars(r), 0);
 export const unsureOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.unsure || 0), 0);
 export const avgLvOf = (p: Player, tr?: Track) => { const d = doneRecs(p, (r) => !r.prac && (!tr || trackOf(r.st) === tr)); return d.length ? d.reduce((s, r) => s + ITEM_BY_ID[r.id].lv, 0) / d.length : 0; };
 export const pracOf = (p: Player) => { const d = doneRecs(p, (r) => !!r.prac); return { n: d.length, ok: d.filter((r) => r.perf >= 0.99).length }; };

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Player, WriteSub } from '../src/shared/types';
 import { ITEM_BY_ID } from '../src/shared/bank';
-import { AI_QUOTA, ASK_SYSTEM, askUser, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
+import { AI_QUOTA, ASK_SYSTEM, askUser, cleanAsk, type AskOut, EN_SYSTEM, EX_SYSTEM, ZH_SYSTEM, cleanEn, cleanEx, cleanZh, exUser, judgeUser, type EnJudge, type ZhJudge } from '../src/shared/ai';
 import { NODE_BY_ID } from '../src/shared/story';
 import { PLAY_BY_ID, plainText } from '../src/shared/play';
 
@@ -136,6 +136,13 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
   };
 
   // 学生自己提问：结合正在看的那一句回答
+  /** 一道题的答案文字（给 AI 看“不能说”，也用来检查有没有说漏） */
+  const answerOf = (it: (typeof ITEM_BY_ID)[string]) => {
+    const s0 = it.steps[0];
+    if (s0?.kind === 'choice') return s0.opts[s0.ok[0]].t.replace(/[⟦⟧*]/g, '');
+    if (s0?.kind === 'spot' && s0.fix) return s0.fix.opts[s0.fix.ok[0]].t;
+    return '';
+  };
   const handleAsk = async (b: Record<string, unknown>, send: (code: number, body: unknown) => void) => {
     const p = b.pid ? players.get(String(b.pid)) : undefined;
     if (!p || p.token !== b.token) return send(403, '身份不对，请重新登录');
@@ -149,12 +156,20 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
     const t0 = Date.now();
     try {
       const step = it?.steps.find((x) => 'q' in x) as { q?: string } | undefined;
-      const ans = MOCK ? `（模拟）你问的是“${q}”。我结合这一句来说……` : await completeText([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone: it ? p.recs[it.id]?.status === 'done' : undefined, q }) }]);
-      const a = ans.trim().slice(0, 400);
-      if (!a) throw new Error('AI 这次没回答上来，再问一次');
+      const taskDone = it ? p.recs[it.id]?.status === 'done' : undefined;
+      const answer = it ? answerOf(it) : '';
+      const before = (Array.isArray(b.before) ? (b.before as unknown[]) : []).map((x) => plainText(String(x)).slice(0, 120)).slice(-2);
+      let out: AskOut = MOCK
+        ? { a1: `（模拟）你问的是“${q}”。我先讲一半：这件事和你正在看的这一句有关。`, q: '你觉得后一半会是什么？', opts: [{ t: '和这一句里的人有关', ok: true, why: '对。' }, { t: '和这一句没关系', ok: false, why: '再读读这一句。' }], a2: '（模拟）后一半：所以故事接着往下走。' }
+        : cleanAsk(await complete([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) }]));
+      // 题还没做完，回答里却带出了答案：换成只给方向
+      const nz = (t: string) => t.replace(/[\s，。、“”‘’！？…（）()：:；;——-]/g, '');
+      const all = nz([out.a1, out.q, out.a2, ...out.opts.map((o) => o.t + o.why)].join(''));
+      if (it && !taskDone && answer && nz(answer).length >= 2 && all.includes(nz(answer))) out = { a1: `这道题还在做，我先不说答案。给你一个方向：${it.hints[0] ?? '回到原文，一个字一个字地看。'}`, q: '', opts: [], a2: '' };
+      if (!out.a1) throw new Error('AI 这次没回答上来，再问一次');
       used.set(p.pid, (used.get(p.pid) ?? 0) + 1);
-      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: { a }, ms: Date.now() - t0, ok: true });
-      return send(200, { a, left: left(p.pid) });
+      log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: { a: [out.a1, out.q, out.a2].filter(Boolean).join(' / '), ...out }, ms: Date.now() - t0, ok: true });
+      return send(200, { ...out, left: left(p.pid) });
     } catch (e) {
       const msg = String((e as Error).message || e);
       log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: null, ms: Date.now() - t0, ok: false, err: msg });
