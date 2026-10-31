@@ -528,33 +528,34 @@ export const ChoiceChat = ({ it, s, onDone, color, lead, tail, hideQ, wideTail }
   const last = (body: React.ReactNode) => (tail
     ? <Bubble who="ai" wide={wideTail}><div className="text-emerald-800">{body}</div><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-1.5 space-y-1 border-t border-dashed border-[#CFD9E0] pt-1.5">{tail}</motion.div></Bubble>
     : <Bubble who="ai" tone="ok">{body}</Bubble>);
-  const reply = (p: number[], k: number) => {
-    const right = multi ? p.length === s.ok.length && p.every((i) => s.ok.includes(i)) : s.ok.includes(p[0]);
-    if (right) return last(<>{multi ? (s.ok.length > 1 ? '都对了。' : '对。') : <Rich text={s.opts[p[0]].why} />}{multi && p.map((i) => <div key={i} className="text-[15px]">· {plain(s.opts[i].t)}：<Rich text={s.opts[i].why} /></div>)}</>);
-    const bad = p.filter((i) => !s.ok.includes(i)), miss = s.ok.filter((i) => !p.includes(i)).length;
-    return <Bubble who="ai" tone="no">{bad.map((i) => <div key={i}>{bad.length > 1 && <b>{plain(s.opts[i].t)}：</b>}<Rich text={s.opts[i].why} /></div>)}{!bad.length && multi && <div>还少了 {miss} 个。</div>}{k === hist.length - 1 && !solved && <div className="mt-0.5 text-[14px] opacity-75">再想想，换一个。</div>}</Bubble>;
-  };
-  const left = order.filter((i) => !wrong.includes(i));
+  // 选错了不往对话里加消息：选错的那个就地划掉、标红，下面一行小字说为什么（只留最近一次的），题一直看得清
+  const lastP = hist[hist.length - 1];
+  const okBody = (p: number[]) => <>{multi ? (s.ok.length > 1 ? '都对了。' : '对。') : <Rich text={s.opts[p[0]].why} />}{multi && p.map((i) => <div key={i} className="text-[15px]">· {plain(s.opts[i].t)}：<Rich text={s.opts[i].why} /></div>)}</>;
+  const note = !solved && lastP ? (() => {
+    const bad = lastP.filter((i) => !s.ok.includes(i)), miss = s.ok.filter((i) => !lastP.includes(i)).length;
+    return <>{bad.map((i) => <div key={i}><b>{plain(s.opts[i].t)}</b>：<Rich text={s.opts[i].why} /></div>)}{!bad.length && multi && <div>还少了 {miss} 个。</div>}</>;
+  })() : null;
   return (
     <div className="space-y-2">
       {!hideQ && <Bubble who="ai">{lead && <div className="mb-1 space-y-1">{lead}</div>}<ChoiceQ s={s} /></Bubble>}
-      {hist.map((p, k) => (
-        <div key={k} className="space-y-2">
-          <Bubble who="me">{p.map((i) => plain(s.opts[i].t)).join('、')}</Bubble>
-          {reply(p, k)}
-        </div>
-      ))}
-      {gave && last(<>答案是：<b>{s.ok.map((i) => plain(s.opts[i].t)).join('、')}</b>。{s.ok.length === 1 && <Rich text={s.opts[s.ok[0]].why} />}</>)}
       {!solved && (
-        <div className="flex flex-wrap items-center justify-end gap-1.5 pl-10">
-          {left.map((i) => (
-            <button key={i} onClick={() => { sfx('click'); if (multi) setSel((x) => (x.includes(i) ? x.filter((y) => y !== i) : [...x, i])); else send([i]); }}
-              className={`max-w-full rounded-2xl border-2 px-3 py-1 text-left text-[15px] font-bold leading-snug transition ${sel.includes(i) ? 'bg-[#F6E3BF]' : 'border-[#E6DCC6] bg-white hover:border-[#D9B77A] hover:bg-[#FFF8EA]'}`}
-              style={sel.includes(i) ? { borderColor: color } : {}}><Rich text={s.opts[i].t} /></button>
-          ))}
-          {multi && <button disabled={!sel.length} onClick={() => send(sel)} className="rounded-full px-3.5 py-1 text-[14px] font-black text-white disabled:opacity-40" style={{ background: color }}>就这些</button>}
+        <div className="pl-10">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            {order.map((i) => {
+              const bad = wrong.includes(i);
+              return (
+                <button key={i} disabled={bad} title={bad ? plain(s.opts[i].why) : undefined} onClick={() => { sfx('click'); if (multi) setSel((x) => (x.includes(i) ? x.filter((y) => y !== i) : [...x, i])); else send([i]); }}
+                  className={`max-w-full rounded-2xl border-2 px-3 py-1 text-left text-[15px] font-bold leading-snug transition ${bad ? 'border-rose-200 bg-rose-50 text-rose-400 line-through' : sel.includes(i) ? 'bg-[#F6E3BF]' : 'border-[#E6DCC6] bg-white hover:border-[#D9B77A] hover:bg-[#FFF8EA]'}`}
+                  style={sel.includes(i) ? { borderColor: color } : {}}><Rich text={s.opts[i].t} /></button>
+              );
+            })}
+            {multi && <button disabled={!sel.length} onClick={() => send(sel)} className="rounded-full px-3.5 py-1 text-[14px] font-black text-white disabled:opacity-40" style={{ background: color }}>就这些</button>}
+          </div>
+          {note && <motion.div key={hist.length} initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} className="mt-1 text-right text-[14px] leading-snug text-rose-800"><span className="font-black">✗ 不对。</span>{note}<span className="opacity-75">再想想，换一个。</span></motion.div>}
         </div>
       )}
+      {solved && !gave && lastP && <><Bubble who="me">{lastP.map((i) => plain(s.opts[i].t)).join('、')}</Bubble>{last(okBody(lastP))}</>}
+      {gave && last(<>答案是：<b>{s.ok.map((i) => plain(s.opts[i].t)).join('、')}</b>。{s.ok.length === 1 && <Rich text={s.opts[s.ok[0]].why} />}</>)}
     </div>
   );
 };

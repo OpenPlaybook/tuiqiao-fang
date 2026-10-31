@@ -81,3 +81,12 @@ ruby rt { font-size: .62em; color: #5B544B; font-weight: 600; }
 .enw { cursor: pointer; border-radius: 3px; transition: background .12s; }
 .enw:hover { background: rgba(37, 99, 235, .14); }
 .subline .enw:hover { background: rgba(255, 255, 255, .22); }
+
+/* 能点开的地方：鼠标放上去要一眼看得出（遮住的词、中文的空块、右边的小按钮） */
+.enmask { cursor: pointer; border-radius: 4px; padding: 0 2px; border-bottom: 1.5px dashed currentColor; opacity: .85; transition: background .12s, opacity .12s; }
+.enmask:hover { background: rgba(217, 164, 65, .35); opacity: 1; }
+.subline .enmask:hover { background: rgba(255, 216, 102, .35); }
+.zhchunk { cursor: pointer; transition: background .12s, color .12s; }
+.zhchunk:hover { background: #F6D58E; color: #2B2722; }
+.morebtn { cursor: pointer; opacity: .7; transition: background .12s, opacity .12s; }
+.morebtn:hover { opacity: 1; background: rgba(217, 164, 65, .28); }

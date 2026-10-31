@@ -72,6 +72,8 @@ export interface Item {
   ext?: Ext[]; // 拓展（居中弹窗里的小题）
   back?: Back[]; // 回扣：回到前面（可以是别的回）看一看
   ask?: string; // 停在这道题时，“问我”框里的示例问题
+  /** 这道题做完之前先锁住的：words 是点开就等于给了答案的词条（在哪一句里点都只提示“做完题再看”）；lines 是中文翻译会泄露答案的那几句（按句号 id） */
+  lock?: { words?: string[]; lines?: string[] };
 }
 /** 拓展：need 'always' 必做；'wrong' 答错过或点过“不确定”才必做；'opt' 选做。reveal：做完以后揭开这道题选项的解释 */
 export interface Ext { id: string; title: string; need: 'always' | 'wrong' | 'opt'; steps: Sub[]; reveal?: boolean }
@@ -85,8 +87,7 @@ export interface Back { ch: string; line: string; label: string }
  *  s：放在句子里怎么理解（再点“放在这句话里怎么理解”才展开）。按出处分条——键是这个字所在那句话里的一小段原文（原样照抄、把这个字包在里面），
  *     值是这一句里的理解；显示成“那段原文”：解释。点哪一处就找包住那一处的那一条，找不到就不显示第二层。见 src/shared/gloss.ts。
  *  more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分）；back：回扣到别的回的某一句 */
-/** spoil：这个词组正是这句题要想的——题还没做完时，点开先不给释义 */
-export interface Gloss { d: string; s?: Record<string, string>; spoil?: boolean; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
+export interface Gloss { d: string; s?: Record<string, string>; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
 export interface Line {
   id?: string; // 回扣用的句号
   who?: string; // 说话人（旁白不写）
@@ -103,6 +104,9 @@ export interface Line {
   card?: { t: string; kind: 'yuan' | 'poem' | 'ai' | 'note'; by?: string }; // 画面上的卡片：原文、诗、AI 译文
   hide?: boolean; // 停在题上时，这句字幕藏起来（题里已经有这句话，不重复）
   task?: string[]; // 在这一句停下来做的题（几个难度版本）
+  /** 出题句：只是为了出题才有的话（AI 眼镜的错译、错的小结、“___ 填什么”这类问句）。题做完以后再播就跳过，不念也不出字幕。
+   *  true 是本句的题；写一个句号 id，就是跟着那一句的题（比如小结前面那句引子） */
+  prompt?: true | string;
   pause?: number;
   ask?: string; // 播到这里以后，“问我”框里的示例问题（一直用到下一句有 ask 为止）
 }
