@@ -60,6 +60,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const [durMap, setDur] = useState<Record<string, number> | null>(null);
   const dur = durMap ?? {};
   const [retry, setRetry] = useState(0); // 点“重试”：时长表、这一句的配音重新取
+  const [again, setAgain] = useState(0); // 点“重听”或台本里点这一句：这一句从句首再放
   const [idxFail, setIdxFail] = useState(false);
   useEffect(() => { if (durMap) return; let alive = true; voiceIndex().then((d) => alive && setDur(d)).catch(() => alive && setIdxFail(true)); return () => { alive = false; }; }, [retry]);
   // 讲解方式：中文默认“白话”，英文默认“英文字幕”（中间那一档）
@@ -104,6 +105,8 @@ export default function PlayerPage({ id }: { id: string }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const timer = useRef<number | null>(null);
   const t0 = useRef(0);
+  const voiceEnded = useRef(false); // 这一句的配音已经放完，正在句末的小停顿里
+  const resumeAt = useRef<{ k: number; t: number; ended: boolean } | null>(null); // 暂停时停在第 k 句的第 t 秒：再点播放从这里接着放
   const line = lines[idx];
   const item = items[idx];
 
@@ -145,13 +148,18 @@ export default function PlayerPage({ id }: { id: string }) {
       if (!alive) return;
       waiting.current = false; setWait(null);
       const d = lineDur(l);
-      t0.current = performance.now(); setElapsed(0);
-      if (src) {
+      const r = resumeAt.current?.k === idx ? resumeAt.current : null; resumeAt.current = null;
+      const off = r ? Math.min(r.t, d) : 0; // 暂停过：接着放；否则从句首放
+      t0.current = performance.now() - off * 1000; setElapsed(off);
+      voiceEnded.current = !!r?.ended;
+      if (r?.ended) timer.current = window.setTimeout(endLine, 300); // 停在句末的小停顿里：接着往下一句走
+      else if (src) {
         const a = (audio.current ??= new Audio());
-        a.src = src; a.currentTime = 0;
-        a.onended = () => { timer.current = window.setTimeout(endLine, (l.pause ?? 0.35) * 1000); };
-        a.play().catch(() => { timer.current = window.setTimeout(endLine, d * 1000); });
-      } else timer.current = window.setTimeout(endLine, d * 1000);
+        if (a.src !== new URL(src, location.href).href) a.src = src;
+        a.currentTime = off;
+        a.onended = () => { voiceEnded.current = true; timer.current = window.setTimeout(endLine, (l.pause ?? 0.35) * 1000); };
+        a.play().catch(() => { timer.current = window.setTimeout(endLine, (d - off) * 1000); });
+      } else timer.current = window.setTimeout(endLine, (d - off) * 1000);
       iv = window.setInterval(() => setElapsed((performance.now() - t0.current) / 1000), 200); // 进度条 5 次 / 秒就够了
     };
     const hold = (w: 'load' | 'fail') => { waiting.current = true; setElapsed(0); setWait(w); };
@@ -161,7 +169,7 @@ export default function PlayerPage({ id }: { id: string }) {
     else if (voiceReady(file)) start(voiceSrc(file));
     else { hold('load'); loadVoice(file, 0).then((u) => start(u), () => { if (!alive) return; if (subsOnly.current) start(); else hold('fail'); }); }
     return () => { alive = false; clearInterval(iv); stop(); };
-  }, [idx, phase, muted, durMap, mode, retry, skipAt, noVoice, idxFail]);
+  }, [idx, phase, muted, durMap, mode, retry, again, skipAt, noVoice, idxFail]);
   // 预先取：从这一句往后，眼前几句马上取，其余后台慢慢取（换讲解方式就按新的方式重排）
   useEffect(() => {
     if (!durMap || muted || noVoice) return;
@@ -179,10 +187,17 @@ export default function PlayerPage({ id }: { id: string }) {
     if (need) { const tm = setTimeout(() => setExtOpen({ it: item, ext: need }), 1200); return () => clearTimeout(tm); }
   }, [phase, idx, p, extOpen]);
 
-  const seek = (k0: number) => { let k = k0; while (k < n - 1 && promptDone(k)) k++; if (k > maxIdx && k > far) return; stop(); unlock(); sfx('click'); setIdx(k); setPhase('play'); };
+  const seek = (k0: number) => { let k = k0; while (k < n - 1 && promptDone(k)) k++; if (k > maxIdx && k > far) return; stop(); unlock(); sfx('click'); resumeAt.current = null; setIdx(k); setPhase('play'); setAgain((x) => x + 1); };
+  useEffect(() => { resumeAt.current = null; }, [mode, muted]); // 换了讲解方式（配音换了）：从句首放
+  /** 重听这一句：从句首再放一遍（英文没听清时最有用） */
+  const replay = () => { stop(); unlock(); sfx('click'); resumeAt.current = null; setPhase('play'); setAgain((x) => x + 1); };
   const openTask = (k: number) => { if (k > maxIdx || !items[k]) return; stop(); sfx('click'); setIdx(k); setPhase('task'); };
   const playPause = () => {
-    if (phase === 'play') { stop(); setPhase('pause'); return; }
+    if (phase === 'play') {
+      const t = waiting.current ? 0 : (performance.now() - t0.current) / 1000;
+      if (!waiting.current) resumeAt.current = { k: idx, t, ended: voiceEnded.current };
+      stop(); setElapsed(t); setPhase('pause'); return;
+    }
     unlock();
     if (phase === 'end') { setIdx(0); setPhase('play'); return; }
     if (phase === 'task') { if (done(idx) && extOk(idx)) cont(); return; }
@@ -209,7 +224,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const sceneIdx = (() => { for (let k = idx; k >= 0; k--) if (lines[k].scene) return k; return 0; })();
   const scene = lines[sceneIdx].scene;
   const cam = line.cam ?? lines[sceneIdx].cam ?? [50, 50, 1.05, 50, 50, 1.05];
-  const total = starts[n], nowT = starts[idx] + (phase === 'play' ? Math.min(elapsed, lineDur(line)) : phase === 'cover' ? 0 : lineDur(line));
+  const total = starts[n], nowT = starts[idx] + (phase === 'play' || phase === 'pause' ? Math.min(elapsed, lineDur(line)) : phase === 'cover' ? 0 : lineDur(line));
   const atTask = phase === 'task' && !!item;
   const taskLay = atTask ? layoutOf(scoredSteps(item!)[0]) : null;
   const showCard = line.card && phase !== 'cover' && !(atTask && (line.hide || taskLay === 'card'));
@@ -223,13 +238,13 @@ export default function PlayerPage({ id }: { id: string }) {
     <GlossContext.Provider value={{ gloss: play.gloss, onGloss }}><EnCtx.Provider value={{ ...enApi, base: enLevel(mode) }}>
       <div className="flex h-[calc(100dvh-66px)] gap-2 overflow-hidden p-2" onClick={() => setGlossPop(null)}>
         {/* ---------- 播放区：占满左边 ---------- */}
-        <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#1C1916]">
+        <div ref={box} className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#1C1916] ${phase === 'play' || phase === 'pause' ? 'cursor-pointer' : ''}`} onPointerDown={() => { popAtDown.current = !!glossPop; }} onClick={tapScreen}>
           {/* 画面 */}
-          <div className={`absolute overflow-hidden ${phase === 'play' || phase === 'pause' ? 'cursor-pointer' : ''}`} style={{ left: vx, top: vy, width: vw, height: vh }} onPointerDown={() => { popAtDown.current = !!glossPop; }} onClick={tapScreen}>
+          <div className="absolute overflow-hidden" style={{ left: vx, top: vy, width: vw, height: vh }}>
             {/* 点了一下：中间闪一下播放 / 暂停的图标 */}
             <AnimatePresence>{flash && <motion.div key={flash.n} initial={{ opacity: 0.9, scale: 0.8 }} animate={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.6 }} className="pointer-events-none absolute left-1/2 top-1/2 z-30 -ml-9 -mt-9 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-black/45 text-white">{flash.play ? <PlayIcon size={34} /> : <Pause size={34} />}</motion.div>}</AnimatePresence>
             {line.shots
-              ? <Film shots={line.shots} lid={`${id}-${idx}`} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
+              ? <Film shots={line.shots} lid={`${id}-${idx}`} running={phase !== 'pause'} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
               : <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>}
             <AnimatePresence>
               {showCard && (
@@ -293,15 +308,16 @@ export default function PlayerPage({ id }: { id: string }) {
           </div>
           {/* 左上角：目录、回目（有黑边就在黑边里） */}
           <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-white backdrop-blur-sm">
-            <button onClick={() => go('/')} className="text-[13px] font-bold underline opacity-90">目录</button>
+            <button onClick={(e) => { e.stopPropagation(); go('/'); }} className="text-[13px] font-bold underline opacity-90">目录</button>
             <span className={en ? 'font-serif text-[16px] font-bold' : 'kai text-[17px]'}>{play.title}</span>
           </div>
-          {retTo && PLAY_BY_ID[retTo[0]] && <button onClick={() => go(`/c/${retTo[0]}?at=${retTo[1]}`)} className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-black text-[#2B2722] shadow"><CornerUpLeft size={15} />回到{PLAY_BY_ID[retTo[0]].title.split('　')[0]}</button>}
+          {retTo && PLAY_BY_ID[retTo[0]] && <button onClick={(e) => { e.stopPropagation(); go(`/c/${retTo[0]}?at=${retTo[1]}`); }} className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-black text-[#2B2722] shadow"><CornerUpLeft size={15} />回到{PLAY_BY_ID[retTo[0]].title.split('　')[0]}</button>}
           {/* 最下面一摞：答题区（从字幕的位置展开，有黑边就往黑边里长）→ 控制条（播放区最下面） */}
-          <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col">
+          <div onClick={(e) => e.stopPropagation()} className="absolute inset-x-0 bottom-0 z-10 flex cursor-default flex-col">
             <div ref={setBottomEl} />
             <div className="flex items-center gap-2 bg-black/70 px-3 text-white" style={{ height: CTRL }}>
               <button onClick={playPause} disabled={phase === 'task' && !(done(idx) && extOk(idx))} className="rounded-full p-1 hover:bg-white/15 disabled:opacity-40" title={phase === 'play' ? '暂停' : '播放'}>{phase === 'play' ? <Pause size={18} /> : <PlayIcon size={18} />}</button>
+              <button onClick={replay} disabled={phase === 'cover' || phase === 'end'} className="flex items-center gap-0.5 rounded-full px-1.5 py-1 text-[13px] font-bold hover:bg-white/15 disabled:opacity-40" title="这一句从头再放一遍"><RotateCcw size={15} />重听</button>
               <div className="relative h-5 flex-1 cursor-pointer" onClick={barClick}>
                 <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25" />
                 <div className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/35" style={{ width: `${(starts[Math.max(maxIdx, far) + 1] / total) * 100}%` }} />
@@ -609,18 +625,19 @@ function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Ite
   const [wrong, setWrong] = useState<number[]>([]);
   const [got, setGot] = useState<number | null>(null);
   const [err, setErr] = useState('');
+  const [pending, setPending] = useState('');
   const askRef = useRef<(t?: string) => void>(() => {});
   useEffect(() => { if (preset) askRef.current(preset.q); }, [preset?.n]); // 结束页上点了一个问题：直接问
   if (!aiOn) return null;
   const ask = async (text?: string) => {
     const t = (text ?? q).trim(); if (!t || busy) return;
-    setBusy(true); setErr(''); logPlay(play.id, 'ask', t);
+    setBusy(true); setErr(''); setA(null); setWrong([]); setGot(null); setQ(''); setPending(t); logPlay(play.id, 'ask', t); // 发新问题：上一个回答立刻关掉
     try {
       const r: AskOut = DEMO
         ? (await new Promise((res) => setTimeout(res, 500)), { a1: '（演示版没有连接 AI。课堂版里，我会先讲一半，再问你一个小问题，让你自己想出后一半。）', q: '', opts: [], a2: '' })
         : await api.ask({ pid: p.pid, token: p.token, play: play.id, item: item?.id ?? '', line: aiText(line), before, q: t });
-      setA({ ...r, ask: t, open: true }); setWrong([]); setGot(null); setQ('');
-    } catch (e) { setErr(String((e as Error).message || e)); } finally { setBusy(false); }
+      setA({ ...r, ask: t, open: true });
+    } catch (e) { setErr(String((e as Error).message || e)); setQ(t); } finally { setBusy(false); setPending(''); }
   };
   askRef.current = ask;
   const pick = (i: number) => {
@@ -632,6 +649,12 @@ function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Ite
   const showRest = !a?.q || got !== null;
   return (
     <div className="border-t border-[#EFE6D2] px-3 py-2.5">
+      {pending && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="fixed bottom-[104px] right-3 z-[60] w-[min(470px,94vw)] rounded-2xl bg-white px-4 py-3 text-[15px] shadow-2xl ring-2 ring-sky-200">
+          <div className="flex items-start gap-2"><Glasses size={18} className="mt-0.5 shrink-0 text-sky-600" /><div className="flex-1 text-[13px] text-ink2">你问：{pending}</div></div>
+          <div className="mt-1 flex items-center gap-1.5 font-bold text-sky-700"><Loader2 size={15} className="animate-spin" />在想……</div>
+        </motion.div>
+      )}
       {a?.open && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="fixed bottom-[104px] right-3 z-[60] max-h-[72vh] w-[min(470px,94vw)] overflow-auto rounded-2xl bg-white px-4 py-3 text-[15px] leading-relaxed shadow-2xl ring-2 ring-sky-200">
           <div className="mb-1 flex items-start gap-2"><Glasses size={18} className="mt-0.5 shrink-0 text-sky-600" /><div className="flex-1 text-[13px] text-ink2">你问：{a.ask}</div><button onClick={() => setA({ ...a, open: false })} className="rounded-full p-0.5 text-ink2 hover:bg-black/5" aria-label="关上"><X size={16} /></button></div>

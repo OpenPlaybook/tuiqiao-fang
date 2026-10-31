@@ -178,6 +178,16 @@ const EXT_TAKEN: Ext[] = [
       ['Someone has taken it at 2:15.', 'has taken 说的是“现在的结果”，不和 at 2:15、yesterday 这样的过去时间放在一起。'],
     ], { keep: true }),
     T('t2', '', '一会儿你会听到 Green 老师说：Maybe someone took it in the dark!——她说的是“趁黑的那个时候”，所以用 took。'),
+    T('t3', '', '英国人和美国人在这儿习惯不一样：刚发生、结果还在的事，英国人一般用现在完成时（I’ve lost my key! Someone has taken it!），美国人也常说 I lost my key! Someone took it! 两种都是地道的英语。Ben 和 Green 老师是英国人，**这个故事按英式英语来答**。', ['🇬🇧 I’ve lost my key. Someone has taken my bike!', '🇺🇸 I lost my key. Someone took my bike!']),
+    C('t3a', '一个美国同学丢了钥匙，说：“I lost my key!” 他说错了吗？', [
+      ['*没错，美国人常这么说；英国人更常说 I’ve lost my key.', '对。这是英美习惯不同，不是对错。'],
+      ['错了，必须说 I’ve lost my key.', '美国英语里 I lost my key! 很自然。这个故事按英式答，可别人这么说不算错。'],
+    ], { keep: true }),
+    C('t3b', '哪一句不管英式还是美式，都是错的？', [
+      ['*I’ve lost my key yesterday.', '对。带了具体的过去时间（yesterday），英美都只能用一般过去时：I lost my key yesterday.'],
+      ['I lost my key yesterday.', '这句英美都对：说的是昨天发生的事。'],
+      ['I’ve lost my key.', '这句是英式最常见的说法。'],
+    ]),
     So('c', '这些句子，说的是“现在的样子”，还是“过去那时候发生了什么”？', ['现在的样子（结果还在）', '过去那时候发生了什么'], [
       ['Look! Someone has broken the window.', 0, '玻璃现在还碎着。'],
       ['Someone broke the window last week. It’s fixed now.', 1, 'last week 的事，窗户早修好了。'],
@@ -195,9 +205,9 @@ const EXT_TAKEN: Ext[] = [
   ] },
   { id: 'x2', title: 'Has anyone seen…? 怎么回答', need: 'opt', steps: [
     T('t1', '', 'Green 老师问：Has anyone seen the Golden Panda?——“到现在为止，有谁看见过金熊猫吗？”'),
-    C('a', '要回答“我没看见”，最自然的是——', [
+    C('a', '按英式英语，要回答“我没看见”，最自然的是——', [
       ['*No, I haven’t.', '对。问句用 Has / Have，回答也用 have / haven’t。'],
-      ['No, I didn’t.', 'didn’t 回答的是 Did you…? 的问题。'],
+      ['No, I didn’t.', '美国人口语里也有人这么答；可问句用的是 Has / Have，按英式就答 No, I haven’t.'],
     ], { keep: true }),
     C('b', '“Have you ever eaten a mooncake?” 问的是——', [
       ['*你吃过月饼吗（有没有这个经历）', '对。ever：到现在为止，有没有过。'],
@@ -452,7 +462,7 @@ export const PLAY_EN1_ITEMS: Item[] = [
   item({
     id: 'e1-taken', st: 'en1', lv: 1, type: 'tense', topic: 'has taken', label: 'Someone has taken it', intro: '', ask: 'has taken 和 took 有什么不一样？',
     hints: ['has taken 说的是过去的一件事，还是那件事留到现在的结果？'],
-    explain: 'has taken：过去拿走了，结果留到现在——奖杯现在还不在。重点不在“什么时候拿的”，在“现在怎么样了”。',
+    explain: 'has taken：过去拿走了，结果留到现在——奖杯现在还不在。重点不在“什么时候拿的”，在“现在怎么样了”。（这是英式的说法；美国人也常说 Someone took it!）',
     lock: { words: ['has taken'] },
     ext: EXT_TAKEN,
   }, C('a', 'Green 老师说 Someone has taken it! 她的意思是——', [
@@ -464,12 +474,12 @@ export const PLAY_EN1_ITEMS: Item[] = [
   item({
     id: 'e1-taken3', st: 'en1', lv: 3, type: 'tense', topic: 'has taken', label: 'has taken / took', intro: '', ask: 'has taken 和 took 有什么不一样？',
     hints: ['奖杯现在还在不在？她为什么急着要在三点前找到？'],
-    explain: 'has taken：过去拿走了，结果留到现在——奖杯现在还不在，所以要赶在三点前找到。took 只说过去发生了一件事，不管现在。',
+    explain: 'has taken：过去拿走了，结果留到现在——奖杯现在还不在。英国人说这种“刚发生、结果还在”的事，用现在完成时；美国人也常用 took。这个故事说英式英语，按英式答。可只要带了具体的过去时间（at 2:15、yesterday），英美都只能用 took。',
     lock: { words: ['has taken'] },
     ext: EXT_TAKEN,
-  }, C('a', 'Green 老师着急地喊：“Someone ___ the Golden Panda! We must find it before three!” 填哪个最好？', [
-    ['*has taken', '对。拿走了，现在还不在——所以要赶在三点前找到。'],
-    ['took', 'took 只说过去拿了一下，不管现在；她着急的是“现在还不在”。'],
+  }, C('a', 'Green 老师是英国人。她着急地喊：“Someone ___ the Golden Panda! We must find it before three!” 按英式英语，填哪个最地道？', [
+    ['*has taken', '对。拿走了，现在还不在——英国人说这种“刚发生、结果还在”的事，用现在完成时。'],
+    ['took', '美国人这么说也很自然（Someone took it!）；可这个故事说英式英语，英国人在这里用 has taken。'],
     ['takes', '一般现在时说习惯：Someone takes it every day.'],
     ['will take', '那是还没发生。'],
   ], { reveal: 'chosen' })),
@@ -560,7 +570,7 @@ export const PLAY_EN1_ITEMS: Item[] = [
   }, Wr('w', 'Write the first clue in English: what has happened? (one sentence)', {
     lang: 'en', role: 'en',
     task: 'In a detective story, the school trophy “the Golden Panda” has been taken and is still missing. The student writes the first clue in a notebook: one English sentence saying what has happened. The present perfect (has taken / has disappeared) or “is missing” is the most natural choice.',
-    criteria: ['says that the Golden Panda has been taken / is missing', 'uses a fitting tense — the present perfect (has taken / has disappeared) or “is missing / is gone” are best; “was taken” is acceptable', 'one clear sentence, correct spelling'],
+    criteria: ['says that the Golden Panda has been taken / is missing', 'the story uses British English: for a result that is still true now, the present perfect (has taken / has disappeared) or “is missing / is gone” are best; “Someone took the Golden Panda.” is natural American English — treat it as a minor point and say the British version uses has taken; “was taken” is acceptable', 'one clear sentence, correct spelling'],
     examples: ['Someone has taken the Golden Panda.', 'The Golden Panda has disappeared from the table.', 'The Golden Panda is missing.'],
     words: ['Someone', 'has taken', 'the Golden Panda'], frame: 'Someone has ______ the Golden Panda.', ph: 'Someone …',
   })),

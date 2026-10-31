@@ -12,7 +12,7 @@ export const go = (path: string) => { window.location.hash = path; };
 
 const LINES = [
   { lang: 'zh' as const, name: '楚汉', en: '中文主线', desc: '戴上 AI 读书眼镜，走进《史记》：故事一句一句播，播到题就停。看不懂的字，点一点画虚线的地方。', cover: 'b.songs' },
-  { lang: 'en' as const, name: 'The Case of the Golden Panda', en: 'English', desc: '英语节的奖杯不见了。和交换生 Ben 一起破案——用词和时态就是线索。', cover: 'e.panda' },
+  { lang: 'en' as const, name: 'The Case of the Golden Panda', en: 'English', desc: '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。故事里的人说英式英语，题目也按英式答。', cover: 'e.panda' },
 ];
 
 export function StoryMap() {

@@ -34,16 +34,19 @@ export const frameSvg = (key: string, u: number, g = 3) => {
   return `<svg viewBox="${camAt(d, u)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">${defs(id)}${d.bg(id)}${d.fg(u, g, id)}${finish(id)}</svg>`;
 };
 
-export function Film({ shots, prog, lid = '', className = '' }: { shots: ShotSpec[]; prog: () => number; lid?: string; className?: string }) {
+/** running：false 时整个画面定住（暂停）——剧情进度和一直在动的环境（水、火、人的晃动）都停，继续时从停下的地方接着动 */
+export function Film({ shots, prog, lid = '', className = '', running = true }: { shots: ShotSpec[]; prog: () => number; lid?: string; className?: string; running?: boolean }) {
   const cur = useRef<HTMLDivElement>(null), prev = useRef<HTMLDivElement>(null);
   const progRef = useRef(prog); progRef.current = prog;
   const shotsRef = useRef(shots); shotsRef.current = shots;
   const lidRef = useRef(lid); lidRef.current = lid;
+  const runRef = useRef(running); runRef.current = running;
   useEffect(() => {
-    let raf = 0, last = 0, key = '', id = '', svgEl: SVGSVGElement | null = null, fgEl: SVGGElement | null = null, seenLid = '', hold = false;
+    let raf = 0, last = 0, key = '', id = '', svgEl: SVGSVGElement | null = null, fgEl: SVGGElement | null = null, seenLid = '', hold = false, g = 0, lastU = -1;
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
       if (now - last < 33) return; // 30 帧够了
+      if (runRef.current && last) g += Math.min(0.1, (now - last) / 1000); // 暂停时这个“环境时钟”不走
       last = now;
       const sh = shotsRef.current; if (!sh.length) return;
       // 换了一句：如果这一句的第一镜和上一镜是同一个，就停在它的结尾，不要从头再推一遍
@@ -51,7 +54,8 @@ export function Film({ shots, prog, lid = '', className = '' }: { shots: ShotSpe
       const at = shotAt(sh, clamp(progRef.current())), i = at.i, u = hold && i === 0 ? 1 : at.u;
       const k = sh[i][0], d = SHOTS[k];
       if (!d || !cur.current) return;
-      if (k !== key) {
+      const fresh = k !== key;
+      if (fresh) {
         // 换镜头：旧画面拷到上面一层，淡出
         if (key && prev.current && cur.current.firstElementChild) {
           prev.current.innerHTML = cur.current.innerHTML;
@@ -62,7 +66,7 @@ export function Film({ shots, prog, lid = '', className = '' }: { shots: ShotSpe
         cur.current.innerHTML = `<svg viewBox="${camAt(d, u)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">${defs(id)}<g>${d.bg(id)}</g><g data-fg></g>${finish(id)}</svg>`;
         svgEl = cur.current.querySelector('svg'); fgEl = cur.current.querySelector('[data-fg]');
       }
-      if (svgEl && fgEl) { svgEl.setAttribute('viewBox', camAt(d, u)); fgEl.innerHTML = d.fg(u, now / 1000, id); }
+      if (svgEl && fgEl && (runRef.current || u !== lastU || fresh)) { svgEl.setAttribute('viewBox', camAt(d, u)); fgEl.innerHTML = d.fg(u, g, id); lastU = u; } // 暂停着、画面没变，就不重画
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
