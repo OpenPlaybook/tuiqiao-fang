@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -7,7 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 const chrome87 = 87 << 16;
 export default defineConfig({
   base: './',
-  plugins: [react(), tailwindcss()],
+  plugins: [{name:'lesson-sdk',resolveId(id){if(id.startsWith('@/src/'))return path.resolve('sdk',id.slice(2)+'.mjs');}},react(), tailwindcss()],
   server: { proxy: { '/api': 'http://localhost:8083' } },
   css: { transformer: 'lightningcss', lightningcss: { targets: { chrome: chrome87, edge: 88 << 16, firefox: 78 << 16, safari: 14 << 16 } } },
   build: { outDir: 'dist', chunkSizeWarningLimit: 1500, target: ['chrome87', 'edge88', 'firefox78', 'safari14'], cssMinify: 'lightningcss' },

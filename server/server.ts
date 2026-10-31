@@ -1,298 +1,85 @@
-// 推敲坊 · 服务器：只用 Node 自带模块。提供网页、学生进度同步、AI 评委转发、教师后台接口。
-// 数据存在 DATA_DIR（默认 ./data）里的 JSON 文件中，每 5 分钟留一份备份。
-import http from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import crypto from 'node:crypto';
-import zlib from 'node:zlib';
-import { fileURLToPath } from 'node:url';
-import { STATION_IDS, type GameConfig, type Player, type Rec, type StationId } from '../src/shared/types';
-import { ITEMS, ITEM_BY_ID } from '../src/shared/bank';
-import { sideOf, STATIONS, TRACKS, avgLvOf, bonusOf, doneRecs, newPlayer, stationDone, stationStars, starsOf, thetaLv, thetaOf, unsureOf, weightedOf } from '../src/shared/adapt';
-import { createAi } from './ai';
+import {handleAi,handleTeacherAi,aiReady,aiStatus,participantAiLeft} from './ai';
+import {classroomStats} from './stats';
+import { randomUUID,randomBytes,timingSafeEqual } from 'node:crypto';
+import { z } from 'zod';
+import type { EnsembleApiRequest } from '@/src/ensemble';
+import { ToolError } from '../common/store';
+import { readToolBody } from '../common/request';
+import { withClassroom } from './store';
+import { playerSchema,configPatchSchema,defaultAi,type Classroom } from './schema';
+import { newPlayer } from '../src/shared/adapt';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, '..');
-for (const f of ['.env.local', '.env']) {
-  try {
-    for (const line of fs.readFileSync(path.join(ROOT, f), 'utf8').split(/\r?\n/)) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
-      if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
-    }
-  } catch { /* 没有这个文件 */ }
+import type { Player } from '../src/shared/types';
+const joinSchema=z.object({name:z.string().trim().min(1).max(20),sid:z.string().trim().min(1).max(80),avatar:z.number().int().min(0).max(30),roundId:z.string().uuid().optional()}).strict();
+const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
+function checkRound(state:Classroom,round:string){if(state.roundId!==round)throw new ToolError(410,'课堂记录已清空，请重新加入');}
+export function authenticate(state:Classroom,pid:string|null,credential:string|null){
+ const player=pid?state.players[pid]:undefined;
+ if(!player)throw new ToolError(410,'学生记录已删除，请重新加入');
+ const left=Buffer.from(player.token),right=Buffer.from(credential??'');
+ if(left.length!==right.length||!timingSafeEqual(left,right))throw new ToolError(403,'学生身份不匹配，请重新加入');
+ return player;
 }
-const PORT = Number(process.env.PORT || 8083);
-const HOST = process.env.HOST || '0.0.0.0';
-const DATA = path.resolve(process.env.DATA_DIR || path.join(ROOT, 'data'));
-const DIST = path.join(ROOT, 'dist');
-fs.mkdirSync(path.join(DATA, 'backup'), { recursive: true });
-
-const PIN_FILE = path.join(DATA, 'teacher-pin.txt');
-const PIN = (process.env.TEACHER_PIN || (fs.existsSync(PIN_FILE) ? fs.readFileSync(PIN_FILE, 'utf8').trim() : '') || String(crypto.randomInt(100000, 999999))).trim();
-if (!process.env.TEACHER_PIN) fs.writeFileSync(PIN_FILE, PIN + '\n');
-
-const PLAYERS_FILE = path.join(DATA, 'players.json');
-const CONFIG_FILE = path.join(DATA, 'config.json');
-const readJson = <T,>(f: string, d: T): T => { try { return JSON.parse(fs.readFileSync(f, 'utf8')) as T; } catch { return d; } };
-const players = new Map<string, Player>(Object.entries(readJson<Record<string, Player>>(PLAYERS_FILE, {})));
-const allOpen = (v: boolean) => Object.fromEntries(STATION_IDS.map((s) => [s, v])) as Record<StationId, boolean>;
-let config: GameConfig = { open: allOpen(false), attention: false, message: '', ai: true, ...readJson<Partial<GameConfig>>(CONFIG_FILE, {}) };
-const lastSeen = new Map<string, number>();
-const ai = createAi(DATA, players);
-
-const writeAtomic = (f: string, s: string) => { const tmp = f + '.tmp'; fs.writeFileSync(tmp, s); fs.renameSync(tmp, f); };
-let dirty = false;
-const flush = () => { if (!dirty) return; dirty = false; writeAtomic(PLAYERS_FILE, JSON.stringify(Object.fromEntries(players))); };
-setInterval(flush, 2000);
-setInterval(() => {
-  if (players.size === 0) return;
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  fs.writeFileSync(path.join(DATA, 'backup', `players-${stamp}.json`), JSON.stringify(Object.fromEntries(players)));
-}, 5 * 60 * 1000);
-const saveConfig = () => writeAtomic(CONFIG_FILE, JSON.stringify(config, null, 2));
-for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => { dirty = true; flush(); process.exit(0); });
-
-// ---------------- 合并：同一个学生在两处登录时，不丢进度 ----------------
-const better = (a: Rec | undefined, b: Rec): Rec => {
-  if (!a) return b;
-  if ((a.status === 'done') !== (b.status === 'done')) return a.status === 'done' ? a : b;
-  if (a.status === 'done') { // 都做完了：星星、完成时间留先做完的那份；记录（点开的“不明白”等）取更长的，妙笔分取高的
-    const first = (a.t1 ?? 0) <= (b.t1 ?? 0) ? a : b;
-    return { ...first, log: b.log.length >= a.log.length ? b.log : a.log, bonus: Math.max(a.bonus || 0, b.bonus || 0), data: b.data ?? a.data };
-  }
-  return b.log.length >= a.log.length ? b : a;
-};
-const num = (v: unknown, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number(v) || 0));
-const sanitize = (p: Player): Player => {
-  const recs: Record<string, Rec> = {};
-  for (const [id, r] of Object.entries(p.recs || {})) {
-    const it = ITEM_BY_ID[id];
-    if (!it || !r) continue;
-    recs[id] = {
-      id, st: r.prac ? 'p' : it.st, ...(r.prac ? { prac: true } : {}), status: r.status === 'done' ? 'done' : 'doing',
-      stars: num(r.stars, 0, 3), perf: num(r.perf, 0, 1), unsure: num(r.unsure, 0, 20), bonus: num(r.bonus, 0, 9),
-      tries: Object.fromEntries(Object.entries(r.tries || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), num(v, 0, 50)])),
-      log: Array.isArray(r.log) ? r.log.slice(-200).map((e) => ({ q: String(e.q).slice(0, 40), v: String(e.v).slice(0, 600), ok: e.ok === null ? null : !!e.ok, t: Number(e.t) || 0 })) : [],
-      data: r.data && JSON.stringify(r.data).length < 12000 ? r.data : undefined,
-      t0: Number(r.t0) || Date.now(), t1: r.t1 ? Number(r.t1) : undefined,
-    };
-  }
-  return {
-    pid: p.pid, token: p.token, name: String(p.name).slice(0, 20), sid: String(p.sid).slice(0, 20), avatar: Number(p.avatar) || 0,
-    createdAt: Number(p.createdAt) || Date.now(), recs,
-    updatedAt: Date.now(),
-  };
-};
-const merge = (old: Player, inc: Player): Player => {
-  const recs = { ...old.recs };
-  for (const [id, r] of Object.entries(inc.recs)) recs[id] = better(recs[id], r);
-  return { ...inc, token: old.token, pid: old.pid, createdAt: old.createdAt, recs };
-};
-
-// ---------------- 统计 ----------------
-const currentOf = (p: Player) => {
-  let best: { st: StationId; t: number } | null = null;
-  for (const r of Object.values(p.recs)) { const t = r.log.length ? r.log[r.log.length - 1].t : r.t0; if (!best || t > best.t) best = { st: r.st, t }; }
-  return best ? STATIONS.find((s) => s.id === best!.st)?.name ?? '' : '';
-};
-const summary = (p: Player) => ({
-  pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
-  done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p),
-  side: sideOf(p), gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
-  theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
-  stations: Object.fromEntries(STATIONS.map((s) => [s.id, { stars: stationStars(p, s.id), done: stationDone(p, s.id) }])),
-  lastSeen: lastSeen.get(p.pid) ?? p.updatedAt, current: currentOf(p), createdAt: p.createdAt, aiLeft: ai.left(p.pid),
-});
-/** 学生点开的字：每一回、每个字词，多少人点开看了意思、多少人又展开看了“在这句话里”（人数，不是次数） */
-const glossList = (ps: Player[]) => {
-  const m = new Map<string, { play: string; w: string; n1: Set<string>; n2: Set<string> }>();
-  for (const p of ps) for (const r of Object.values(p.recs)) {
-    if (!r.id.endsWith('-log')) continue;
-    const play = r.id.replace('-log', '');
-    for (const e of r.log) {
-      if (e.q !== 'gloss' && e.q !== 'gloss2') continue;
-      const k = play + '|' + e.v, g = m.get(k) ?? { play, w: e.v, n1: new Set(), n2: new Set() };
-      (e.q === 'gloss' ? g.n1 : g.n2).add(p.pid); m.set(k, g);
-    }
-  }
-  return [...m.values()].map((g) => ({ play: g.play, w: g.w, n1: g.n1.size, n2: g.n2.size })).sort((a, b) => a.play.localeCompare(b.play) || b.n1 - a.n1);
-};
-/** 学生的提问（和“清楚了 / 没说清 / 好像不对”的反馈） */
-const askList = (ps: Player[]) => {
-  const out: { name: string; play: string; q: string; a: string; fb: string; t: number }[] = [];
-  const answers = new Map(ai.asks().map((l) => [l.pid + '|' + l.text, l.out && 'a' in l.out ? l.out.a : '']));
-  for (const p of ps) for (const r of Object.values(p.recs)) {
-    if (!r.id.endsWith('-log')) continue;
-    const fbs = r.log.filter((e) => e.q === 'askfb');
-    for (const e of r.log) if (e.q === 'ask') out.push({ name: p.name, play: r.id.replace('-log', ''), q: e.v, a: answers.get(p.pid + '|' + e.v) ?? '', fb: fbs.find((f) => f.v.endsWith('｜' + e.v))?.v.split('｜')[0] ?? '', t: e.t });
-  }
-  return out.sort((a, b) => b.t - a.t).slice(0, 300);
-};
-const teacherState = () => {
-  const ps = [...players.values()];
-  const items = ITEMS.map((it) => {
-    const rs = ps.map((p) => p.recs[it.id]).filter(Boolean) as Rec[];
-    const dn = rs.filter((r) => r.status === 'done');
-    const wrong = new Map<string, number>(), opens = new Map<string, number>();
-    let firstN = 0, firstOk = 0;
-    for (const r of rs) {
-      const seen = new Set<string>();
-      for (const e of r.log) {
-        if (e.q === 'open' || e.q === 'gloss') { opens.set(e.v, (opens.get(e.v) ?? 0) + 1); continue; }
-        if (e.ok === null) continue;
-        if (!seen.has(e.q)) { seen.add(e.q); firstN++; if (e.ok) firstOk++; }
-        if (!e.ok) wrong.set(e.v, (wrong.get(e.v) ?? 0) + 1);
-      }
-    }
-    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
-  }).filter((x) => x.st !== 'log' && (x.n > 0 || STATIONS.some((s) => s.id === x.st)));
-  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), glosses: glossList(ps), now: Date.now(), ai: ai.status() };
-};
-const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-const exportCsv = () => {
-  const head = ['姓名', '学校', '星星', '加权分', '妙笔分', '完成题数', '平均难度', ...TRACKS.map((t) => `能力·${t.name}（1—4）`), '不确定次数', ...STATIONS.map((s) => `${s.name} 星星`)];
-  const rows = [...players.values()].map(summary).sort((a, b) => b.weighted - a.weighted).map((s) => [s.name, s.sid, s.stars, s.weighted, s.bonus, s.done, s.avgLv.toFixed(2), ...TRACKS.map((t) => s.theta[t.id]), s.unsure, ...STATIONS.map((x) => s.stations[x.id].stars)]);
-  return '﻿' + [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
-};
-
-// ---------------- HTTP ----------------
-const MIME: Record<string, string> = { '.mp3': 'audio/mpeg', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
-const send = (res: http.ServerResponse, code: number, body: unknown, type = 'application/json; charset=utf-8', extra: Record<string, string> = {}) => {
-  res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', ...extra });
-  res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
-};
-const readBody = (req: http.IncomingMessage) => new Promise<unknown>((ok, bad) => {
-  let n = 0; const chunks: Buffer[] = [];
-  req.on('data', (c: Buffer) => { n += c.length; if (n > 2_000_000) { bad(new Error('too large')); req.destroy(); } else chunks.push(c); });
-  req.on('end', () => { try { ok(chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}); } catch (e) { bad(e); } });
-  req.on('error', bad);
-});
-/** 静态文件。
- *  缓存：assets/ 里的文件名带内容哈希、voice/*.mp3 的文件名是“音色 + 文字”的哈希——内容变了名字就变，浏览器存一年不用再问；
- *        index.html、voice/index.json、shorts/ 每次都问一下服务器有没有变（ETag，没变就回 304，不重传）。
- *  压缩：网页代码、样式、JSON 用 gzip 发（JS 约 920KB → 300KB），压好的放在内存里，文件改了自动重压。
- *  视频支持 Range（拖动进度条、边下边放）。 */
-const gzCache = new Map<string, { m: number; buf: Buffer }>();
-const ZIP = new Set(['.js', '.css', '.html', '.json', '.svg']);
-const serveStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: string) => {
-  let rel = decodeURIComponent(url.split('?')[0]);
-  const sub = ['/assets/', '/shorts/', '/voice/'].map((d) => rel.lastIndexOf(d)).find((k) => k >= 0);
-  rel = sub !== undefined ? rel.slice(sub) : '/' + path.basename(rel);
-  if (rel === '/' || !path.extname(rel)) rel = '/index.html';
-  const f = path.join(DIST, path.normalize(rel));
-  if (!f.startsWith(DIST) || !fs.existsSync(f)) return send(res, 404, 'not found', 'text/plain');
-  const ext = path.extname(f), type = MIME[ext] ?? 'application/octet-stream';
-  const st = fs.statSync(f), size = st.size;
-  const etag = `"${size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
-  const immutable = rel.startsWith('/assets/') || (rel.startsWith('/voice/') && ext === '.mp3');
-  const cache = immutable ? 'public, max-age=31536000, immutable' : 'no-cache';
-  const head: Record<string, string> = { 'Content-Type': type, 'Cache-Control': cache, ETag: etag, 'Accept-Ranges': 'bytes', ...(ZIP.has(ext) ? { Vary: 'Accept-Encoding' } : {}) };
-  if (req.headers['if-none-match'] === etag) { res.writeHead(304, head); return res.end(); }
-  const range = req.headers.range?.match(/bytes=(\d*)-(\d*)/);
-  if (range && (type === 'video/mp4' || type === 'audio/mpeg')) {
-    const a = range[1] ? Number(range[1]) : 0, b = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
-    if (a > b || a >= size) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); return res.end(); }
-    res.writeHead(206, { ...head, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Content-Length': b - a + 1 });
-    return fs.createReadStream(f, { start: a, end: b }).pipe(res);
-  }
-  if (ZIP.has(ext) && size > 1024 && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))) {
-    let z = gzCache.get(f);
-    if (!z || z.m !== st.mtimeMs) { z = { m: st.mtimeMs, buf: zlib.gzipSync(fs.readFileSync(f), { level: 9 }) }; gzCache.set(f, z); }
-    res.writeHead(200, { ...head, 'Content-Encoding': 'gzip', 'Content-Length': z.buf.length });
-    return res.end(req.method === 'HEAD' ? undefined : z.buf);
-  }
-  res.writeHead(200, { ...head, 'Content-Length': size });
-  if (req.method === 'HEAD') return res.end();
-  fs.createReadStream(f).pipe(res);
-};
-
-const server = http.createServer(async (req, res) => {
-  const url = req.url || '/';
-  const m = url.match(/\/api\/([a-z0-9/.]+)(\?.*)?$/);
-  if (!m) return serveStatic(req, res, url);
-  const route = m[1];
-  const qs = new URLSearchParams(m[2] ?? '');
-  try {
-    if (route === 'config') {
-      const pid = qs.get('pid');
-      if (pid && players.has(pid)) lastSeen.set(pid, Date.now());
-      return send(res, 200, { ...config, aiReady: ai.ready(), aiLeft: pid && players.has(pid) ? ai.left(pid) : undefined });
-    }
-    if (route === 'join' && req.method === 'POST') {
-      const b = (await readBody(req)) as { name?: string; sid?: string; avatar?: number };
-      const name = String(b.name ?? '').trim().slice(0, 20), sid = String(b.sid ?? '').trim().slice(0, 20);
-      if (!name || !sid) return send(res, 400, '请填写姓名和学校');
-      let p = [...players.values()].find((x) => x.name === name && x.sid === sid);
-      if (!p) { p = newPlayer(crypto.randomUUID(), crypto.randomBytes(16).toString('hex'), name, sid, Number(b.avatar) || 0); players.set(p.pid, p); dirty = true; }
-      else if (typeof b.avatar === 'number') { p.avatar = b.avatar; dirty = true; }
-      lastSeen.set(p.pid, Date.now());
-      return send(res, 200, { player: p });
-    }
-    if (route === 'sync' && req.method === 'POST') {
-      const b = (await readBody(req)) as { player?: Player };
-      const inc = b.player;
-      if (!inc || !inc.pid || !inc.token) return send(res, 400, 'bad player');
-      const old = players.get(inc.pid);
-      if (!old) {
-        if (!String(inc.name ?? '').trim() || !String(inc.sid ?? '').trim()) return send(res, 400, 'bad player');
-        if ((Number(inc.createdAt) || 0) < (config.resetAt ?? 0)) return send(res, 410, '老师已经清空了记录，请重新登录');
-        const s = sanitize(inc);
-        players.set(s.pid, { ...s, token: String(inc.token).slice(0, 64) });
-      } else {
-        if (old.token !== inc.token) return send(res, 403, '身份不对，请重新登录');
-        players.set(old.pid, merge(old, sanitize(inc)));
-      }
-      lastSeen.set(inc.pid, Date.now());
-      dirty = true;
-      return send(res, 200, { ok: true, player: players.get(inc.pid) });
-    }
-    if (route === 'ai/ask' && req.method === 'POST') {
-      if (!config.ai) return send(res, 403, '老师暂时关闭了 AI');
-      return void (await ai.handleAsk((await readBody(req)) as Record<string, unknown>, (code, body) => send(res, code, body)));
-    }
-    if (route === 'ai/judge' && req.method === 'POST') {
-      if (!config.ai) return send(res, 403, '老师暂时关闭了 AI 评分');
-      return void (await ai.handleJudge((await readBody(req)) as Record<string, string>, (code, body) => send(res, code, body)));
-    }
-    if (route.startsWith('teacher/')) {
-      const pin = String(req.headers['x-pin'] ?? qs.get('pin') ?? '');
-      if (pin !== PIN) return send(res, 401, '口令不对');
-      const r = route.slice(8);
-      if (r === 'state') return send(res, 200, teacherState());
-      if (r === 'player') { const p = players.get(String(qs.get('pid'))); return p ? send(res, 200, p) : send(res, 404, '没有这个学生'); }
-      if (r.startsWith('ai/')) return void (await ai.teacher(r, req.method === 'POST' ? ((await readBody(req)) as Record<string, unknown>) : {}, (code, body) => send(res, code, body)));
-      if (r === 'config' && req.method === 'POST') {
-        const b = (await readBody(req)) as Partial<GameConfig>;
-        config = { ...config, ...b, open: { ...config.open, ...(b.open ?? {}) } };
-        delete config.aiReady; delete config.aiLeft;
-        saveConfig();
-        return send(res, 200, config);
-      }
-      if (r === 'export.csv') return send(res, 200, exportCsv(), 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('推敲坊-成绩.csv')}` });
-      if (r === 'export.json') return send(res, 200, JSON.stringify(Object.fromEntries(players), null, 1), 'application/json; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('推敲坊-全部记录.json')}` });
-      if (r === 'delete' && req.method === 'POST') { const b = (await readBody(req)) as { pid?: string }; if (b.pid) { players.delete(b.pid); dirty = true; } return send(res, 200, { ok: true }); }
-      if (r === 'reset' && req.method === 'POST') {
-        const b = (await readBody(req)) as { confirm?: string };
-        if (b.confirm !== 'RESET') return send(res, 400, '需要确认');
-        flush();
-        if (fs.existsSync(PLAYERS_FILE)) fs.copyFileSync(PLAYERS_FILE, path.join(DATA, 'backup', `players-before-reset-${Date.now()}.json`));
-        players.clear(); dirty = true; flush(); ai.resetUsage();
-        config.resetAt = Date.now(); saveConfig();
-        return send(res, 200, { ok: true });
-      }
-    }
-    return send(res, 404, 'no such api');
-  } catch (e) {
-    return send(res, 500, String((e as Error).message || e), 'text/plain; charset=utf-8');
-  }
-});
-
-server.listen(PORT, HOST, () => {
-  const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i!.address);
-  console.log('\n  推敲坊 已启动');
-  console.log(`  学生打开：  ${ips.length ? ips.map((ip) => `http://${ip}:${PORT}/`).join('  或  ') : `http://localhost:${PORT}/`}`);
-  console.log('  教师后台：  在上面的地址后加 #/teacher   口令在 data/teacher-pin.txt');
-  console.log(`  数据保存在：${DATA}`);
-  console.log(`  AI：${ai.status().mock ? '模拟模式（AI_MOCK=1）' : ai.ready() ? `已设置 API Key（${ai.status().model}）` : '还没有设置 DeepSeek API Key，到教师后台粘贴'}\n`);
-});
+function requireMethod(request:Request,method:string){if(request.method!==method)throw new ToolError(405,'请求方式不支持');}
+export async function handleTuiqiaoApi(input:EnsembleApiRequest):Promise<Response>{
+ const request=input.request,parts=input.pathSegments.slice(1),route=parts.join('/');
+ const isTeacher=!!input.context.viewer?.userId&&input.context.viewer.userId===input.context.index.authorId;
+ if(parts[0]==='ai')return handleAi(input,route,await readToolBody(request));
+ if(route==='context'){
+  requireMethod(request,'GET');return json({tool:'tuiqiao-fang',isTeacher});
+ }
+ if(parts[0]==='teacher'&&!isTeacher)throw new ToolError(403,'请使用本课件所属老师的账号登录');
+ if(route==='config'){
+  requireMethod(request,'GET');return withClassroom(input.context.opusRootDir,state=>({value:json({config:{...state.config,aiReady:aiReady(),aiLeft:participantAiLeft(state,request)},roundId:state.roundId}),changed:false}));
+ }
+ if(route==='join'){
+  requireMethod(request,'POST');const body=joinSchema.parse(await readToolBody(request));
+  return withClassroom(input.context.opusRootDir,state=>{
+   if(body.roundId)checkRound(state,body.roundId);
+   let player=Object.values(state.players).find(p=>p.name===body.name&&p.sid===body.sid);
+   if(!player){if(Object.keys(state.players).length>=1000)throw new ToolError(429,'当前课件学生人数已达上限');player=newPlayer(randomUUID(),randomBytes(24).toString('hex'),body.name,body.sid,body.avatar,state.roundId);state.players[player.pid]=player;}
+   player.avatar=body.avatar;state.lastSeen[player.pid]=Date.now();return {value:json({player}),changed:true};
+  });
+ }
+ if(route==='player'){
+  requireMethod(request,'GET');const query=new URL(request.url).searchParams;
+  return withClassroom(input.context.opusRootDir,state=>{
+   checkRound(state,query.get('roundId')??'');const player=authenticate(state,query.get('pid'),request.headers.get('x-participant'));
+   const changed=Date.now()-(state.lastSeen[player.pid]??0)>15000;if(changed)state.lastSeen[player.pid]=Date.now();
+   return {value:json({player}),changed};
+  });
+ }
+ if(route==='sync'){
+  requireMethod(request,'POST');const {player}=z.object({player:playerSchema}).strict().parse(await readToolBody(request));
+  return withClassroom(input.context.opusRootDir,state=>{
+   checkRound(state,player.roundId);const old=authenticate(state,player.pid,player.token);
+   if(old.name!==player.name||old.sid!==player.sid)throw new ToolError(400,'学生信息不匹配');
+   if(old.revision!==player.revision)return {value:json({error:'进度已更新，正在合并',player:old},409),changed:false};
+   // Current revision is a full replacement of this student's current facts, never a second award.
+   const next:Player={...player,createdAt:old.createdAt,revision:old.revision+1,updatedAt:Date.now()};
+   state.players[next.pid]=next;state.lastSeen[next.pid]=Date.now();return {value:json({player:next}),changed:true};
+  });
+ }
+ if(route.startsWith('teacher/ai/'))return handleTeacherAi(input,route);
+ if(route==='teacher/player'){requireMethod(request,'GET');const pid=new URL(request.url).searchParams.get('pid')??'';return withClassroom(input.context.opusRootDir,state=>{const p=state.players[pid];if(!p)throw new ToolError(404,'学生不存在');const {token,...data}=p;void token;return {value:json(data),changed:false};});}
+ if(route==='teacher/state'){
+  requireMethod(request,'GET');return withClassroom(input.context.opusRootDir,state=>({value:json({...classroomStats(state).teacherState()}),changed:false}));
+ }
+ if(route==='teacher/config'){
+  requireMethod(request,'POST');const patch=configPatchSchema.parse(await readToolBody(request));
+  return withClassroom(input.context.opusRootDir,state=>{state.config={...state.config,...patch,open:{...state.config.open,...patch.open}};return {value:json(state.config),changed:true};});
+ }
+ if(route==='teacher/delete'){
+  requireMethod(request,'POST');const {pid}=z.object({pid:z.string().uuid()}).strict().parse(await readToolBody(request));
+  return withClassroom(input.context.opusRootDir,state=>{delete state.players[pid];delete state.lastSeen[pid];delete state.ai.usage[pid];delete state.ai.extra[pid];state.ai.logs=state.ai.logs.filter(log=>log.pid!==pid);state.ai.leases=Object.fromEntries(Object.entries(state.ai.leases).filter(([,lease])=>lease.pid!==pid));return {value:json({ok:true}),changed:true};});
+ }
+ if(route==='teacher/reset'){
+  requireMethod(request,'POST');z.object({confirm:z.literal('RESET')}).strict().parse(await readToolBody(request));
+  return withClassroom(input.context.opusRootDir,state=>{state.roundId=randomUUID();state.players={};state.lastSeen={};state.ai=defaultAi();return {value:json({ok:true}),changed:true};});
+ }
+ if(route==='teacher/export.csv'||route==='teacher/export.json'){
+  requireMethod(request,'GET');const csv=route.endsWith('.csv');
+  return withClassroom(input.context.opusRootDir,state=>({changed:false,value:new Response(csv?classroomStats(state).exportCsv():JSON.stringify(Object.fromEntries(Object.entries(state.players).map(([id,p])=>{const {token,...record}=p;void token;return [id,record];})),null,2),{headers:{'Cache-Control':'private, no-store','Content-Type':csv?'text/csv; charset=utf-8':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="tuiqiao-${csv?'scores.csv':'records.json'}"`}})}));
+ }
+ throw new ToolError(404,'接口不存在');
+}

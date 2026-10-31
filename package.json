@@ -6,18 +6,23 @@
   "description": "第六堂课《用 AI 推敲字词》闯关网站：自适应题库 + DeepSeek 评委 + 教师后台",
   "scripts": {
     "dev": "vite",
-    "typecheck": "tsc --noEmit -p .",
-    "build:server": "node scripts/build-server.mjs",
+    "typecheck": "tsc --noEmit",
     "check:gloss": "node scripts/check-gloss.mjs",
-    "build": "npm run check:gloss && npm run typecheck && vite build && npm run build:server",
-    "start": "node dist-server/server.js",
-    "answers": "node dist-server/answers.js"
+    "build": "pnpm check:gloss && pnpm typecheck && node scripts/build-platform.mjs",
+    "start": "node dist-server/server.cjs",
+    "answers": "node dist-server/answers.js",
+    "test": "node tests/run.mjs"
   },
   "dependencies": {
-    "lucide-react": "^1.8.0",
-    "motion": "^13.5.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "lucide-react": "^0.545.0",
+    "motion": "^12.23.24",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12",
+    "esbuild": "^0.25.12",
+    "@tailwindcss/postcss": "^4.1.13",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -25,9 +30,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "esbuild": "^0.28.2",
-    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.2",
     "vite": "^8.3.4"
-  }
+  },
+  "packageManager": "pnpm@10.11.1"
 }

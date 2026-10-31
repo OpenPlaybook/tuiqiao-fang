@@ -3,38 +3,47 @@
 //   · 播到哪一句，先把这一句和后面几句取下来（fetch 成 Blob 放在内存里）；取到了才开始播，播的时候不会卡在半句。
 //   · 这一句还没取到：画面停在这一句开头，显示“配音加载中”，取到了接着播。
 //   · 一回里剩下的句子，空闲时一句一句在后台取（同一时间只取一个，不和眼前要用的抢网速）。
-//   · 取不到（断网、服务器出错）：自动重试两次；还不行就让学生选“重试”或“先看字幕”。
-// 演示版（单个 HTML）把配音内嵌成 window.__VOICE__（文件名 → data URL），直接就是“已取到”。
-// 配音放在别的地方（CDN、对象存储）：打包时设 VITE_MEDIA_BASE=https://…/（以 / 结尾），见 src/media.ts。
+//   · 配音读取与恢复归共享来源；仍可主动重试或先看字幕。
 import { MEDIA } from '../media';
 
-const W = window as unknown as { __VOICE__?: Record<string, string>; __VOICE_IDX__?: Record<string, number> };
 const NEAR = 4; // 眼前要用的：当前这句 + 后面几句
 const MAX = 2; // 同时取几个（后台慢慢取的只占一个）
 
-const sleep = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
-/** fetch 带超时，失败重试（0.6 秒、2 秒后各再试一次） */
-const fetchRetry = async (url: string, timeout = 15000): Promise<Response> => {
-  let err: unknown;
-  for (const wait of [0, 600, 2000]) {
-    if (wait) await sleep(wait);
-    const ac = new AbortController(), tm = setTimeout(() => ac.abort(), timeout);
-    try {
-      const r = await fetch(url, { signal: ac.signal });
-      if (r.ok) return r;
-      err = new Error(`HTTP ${r.status}`);
-      if (r.status === 404) break; // 文件不存在，重试也没用
-    } catch (e) { err = e; } finally { clearTimeout(tm); }
-  }
-  throw err;
+import {flow} from '../game/api';
+import {ReadSession} from '@/src/shared/grain-flow/read-session';
+let lifetime=new AbortController(),owners=0;
+export function beginVoiceSession(){
+ if(lifetime.signal.aborted){lifetime=new AbortController();idxP=null;}
+ owners++;const current=lifetime;
+ // StrictMode replaces effect owners synchronously; release only after that handoff.
+ return()=>{owners--;queueMicrotask(()=>{if(!owners&&current===lifetime)current.abort();});};
+}
+import {defineData,defineSource} from '@/src/shared/grain-flow/schema';
+import {RequestError} from '@/src/shared/http';
+import {apiFetch} from '@/src/account/auth/client';
+import {z} from 'zod';
+const registered=new Map<string,string>();
+const fetchRetry=async(url:string):Promise<Response>=>{
+ let key=registered.get(url);
+ if(!key){
+  key='tuiqiao.voice.file'+registered.size;registered.set(url,key);
+  flow.register({data:[defineData(key,z.string())],sources:[defineSource(key,{load:async({signal})=>{
+   let response:Response;
+   try{response=await apiFetch(url,{signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])},true);}catch{if(signal.aborted)throw signal.reason;throw new RequestError('network','配音连接中断');}
+   if(!response.ok)throw new RequestError('http','配音读取失败',response.status);
+   const bytes=new Uint8Array(await response.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
+   // Shared facts are JSON values; keep bytes encoded instead of merging an ArrayBuffer as an object.
+   return {value:btoa(binary),state:undefined};
+  },provides:{[key]:c=>c.value}})]});
+ }
+ const session=new ReadSession(flow,{signal:lifetime.signal,timeoutMs:15000,timeoutError:new Error('配音读取超时')});
+ try{const value=await session.read<string>(key);return new Response(Uint8Array.from(atob(value),c=>c.charCodeAt(0)),{headers:{'Content-Type':url.endsWith('.json')?'application/json':'audio/mpeg'}});}finally{session.dispose();}
 };
 
 // ---------------- 时长表：voice/index.json（文件名 → 秒） ----------------
 let idxP: Promise<Record<string, number>> | null = null;
 /** 时长表取不到时 reject（下次再调用会重新取） */
-export const voiceIndex = () => (idxP ??= W.__VOICE_IDX__
-  ? Promise.resolve(W.__VOICE_IDX__)
-  : fetchRetry(`${MEDIA}voice/index.json`).then((r) => r.json() as Promise<Record<string, number>>).catch((e) => { idxP = null; throw e; }));
+export const voiceIndex = () => (idxP ??= fetchRetry(`${MEDIA}voice/index.json`).then((r) => r.json() as Promise<Record<string, number>>).catch((e) => { idxP = null; throw e; }));
 
 // ---------------- 配音文件 ----------------
 type Job = { file: string; prio: number; ok: (u: string) => void; bad: (e: unknown) => void };
@@ -60,9 +69,9 @@ const pump = () => {
 };
 
 /** 已经取到了吗（取到了就能马上播） */
-export const voiceReady = (file: string) => !!W.__VOICE__?.[file] || ready.has(file);
+export const voiceReady = (file: string) => ready.has(file);
 /** 播放地址：取到了才有 */
-export const voiceSrc = (file: string) => W.__VOICE__?.[file] ?? ready.get(file);
+export const voiceSrc = (file: string) => ready.get(file);
 
 /** 要这个文件：prio 越小越急（0 = 正要播）。已经在排队的会按新的急迫程度往前挪 */
 export const loadVoice = (file: string, prio = 0): Promise<string> => {
@@ -85,9 +94,9 @@ export const planVoices = (files: string[]) => {
   files.forEach((f, k) => { if (!voiceReady(f)) loadVoice(f, k < NEAR ? k : NEAR + k); });
 };
 
-// ---------------- iPhone / iPad / Mac 上的 Safari：声音要在“点一下”的时候先解锁 ----------------
-// Safari 只允许在用户点击时开始放声音；后面几句是在 await 之后才 play()，所以点击时先用同一个 audio 放一段无声的，把它解锁。
-// 无声的这一段必须真有内容（20 毫秒的静音）：空的 WAV 解不了锁。解锁成功才记下来（每个 audio 各记各的），失败了下次点击再试。
+// ---------------- Safari：在点击手势中解锁当前播放器 ----------------
+// 后面的配音在异步读取后播放；先在点击时成功播放同一个元素，再切换 src。
+// A real 20ms PCM payload is required; an empty WAV cannot unlock audio playback.
 const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
 const unlocked = new WeakSet<HTMLAudioElement>();
 const unlocking = new WeakMap<HTMLAudioElement, Promise<boolean>>();

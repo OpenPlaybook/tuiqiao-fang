@@ -1,0 +1,22 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {build} from 'esbuild';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const postcss=createRequire(require.resolve('@tailwindcss/postcss'))('postcss');
+import tailwind from '@tailwindcss/postcss';
+const root=process.cwd(),sdk=path.join(root,'sdk');
+if(!process.env.RDFZ_LESSON_ID||!process.env.RDFZ_BUILD_ID)throw Error('Lesson and build IDs required');
+const prefix='/lesson-app/'+process.env.RDFZ_LESSON_ID+'/_assets/'+process.env.RDFZ_BUILD_ID+'/';
+const assetLinks=html=>html.replace(/\b(href|src)="([^"]+)"/g,(all,key,url)=>/^(?:[#/]|[a-z]+:)/i.test(url)?all:key+'="'+prefix+url.replace(/^\.\//,'')+'"');
+const bridge={name:'lesson-host-sdk',setup(b){b.onResolve({filter:/^@\/src\//},a=>({path:a.path==='@/src/ensemble/opus-lifecycle'?path.join(sdk,'server.cjs'):path.join(sdk,a.path.slice(2)+'.mjs')}));b.onResolve({filter:/^@openplaybook\/json-store$/},()=>({path:path.join(sdk,'server.cjs')}));}};
+await fs.rm('dist',{recursive:true,force:true});await fs.rm('dist-server',{recursive:true,force:true});await fs.mkdir('dist',{recursive:true});
+ await build({entryPoints:['src/main.tsx'],bundle:true,format:'iife',platform:'browser',target:['chrome109','safari16'],minify:true,outfile:'dist/app.js',define:{'process.env.NODE_ENV':'"production"','import.meta.env.VITE_MEDIA_BASE':JSON.stringify(prefix),'import.meta.env.VITE_DEMO':'""'},plugins:[bridge,{name:'separate-css',setup(b){b.onLoad({filter:/\.css$/},()=>({contents:'',loader:'css'}));}}]});
+ const css=await postcss([tailwind({base:root,optimize:true})]).process(await fs.readFile('src/index.css','utf8'),{from:path.join(root,'src/index.css')});await fs.writeFile('dist/app.css',css.css);
+ let html=(await fs.readFile('index.html','utf8')).replace(/<script type="module" src="\/src\/main.tsx"><\/script>/,'<link rel="stylesheet" href="./app.css"><script defer src="./app.js"></script>');
+ html=assetLinks(html.replace('href="/favicon.svg"','href="./favicon.svg"'));await fs.writeFile('dist/index.html',html);
+ await fs.cp('public','dist',{recursive:true});
+await build({entryPoints:['host.ts'],bundle:true,platform:'node',format:'cjs',target:'node22',outfile:'dist-server/server.cjs',external:['fs-ext'],plugins:[bridge]});
+console.log('Complete Lesson application build created');
+
+await build({entryPoints:['scripts/answers.ts'],outfile:'dist-server/answers.js',bundle:true,platform:'node',format:'esm',target:'node22'});

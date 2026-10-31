@@ -1,41 +1,29 @@
 // 教师后台：学生（星星、加权分、三条线的能力）、题目（错得最多的选项）、好句子、AI、设置。
-import { useEffect, useState } from 'react';
-import { api, type TeacherState } from '../game/api';
+import { useState } from 'react';
+import { api,base, type TeacherState } from '../game/api';
 import { STATIONS, TRACKS, LV_NAME } from '../shared/adapt';
 import { STATION_IDS, type Lv } from '../shared/types';
 import { Avatar, Btn, Modal } from '../components/ui';
 
-const PIN_KEY = 'tq-teacher-pin';
+import {useData} from '@/src/shared/grain-flow/react';
+import {DataReadStateRenderer} from '@/src/shared/grain-flow/data-read-state-renderer';
+import {ToolDownloadButton} from '../../common/download-button';
 const ago = (t: number, now: number) => { const s = Math.round((now - t) / 1000); return s < 60 ? '刚刚' : s < 3600 ? `${Math.round(s / 60)} 分钟前` : `${Math.round(s / 3600)} 小时前`; };
 const lvText = (x: number) => (x ? `${x.toFixed(1)}` : '—');
 
-export default function Teacher() {
-  const [pin, setPin] = useState(() => { try { return localStorage.getItem(PIN_KEY) ?? ''; } catch { return ''; } });
-  const [input, setInput] = useState('');
-  const [st, setSt] = useState<TeacherState | null>(null);
-  const [err, setErr] = useState('');
-  const [tab, setTab] = useState<'players' | 'items' | 'gloss' | 'asks' | 'good' | 'ai' | 'set'>('players');
-  const [big, setBig] = useState<string | null>(null);
-  const [keyIn, setKeyIn] = useState('');
-  const load = async (p = pin) => { try { const s = await api.teacher.state(p); setSt(s); setErr(''); try { localStorage.setItem(PIN_KEY, p); } catch { /* */ } } catch (e) { setErr(String((e as Error).message)); if (String((e as Error).message).includes('口令')) setPin(''); } };
-  useEffect(() => { if (!pin) return; load(); const t = setInterval(() => load(), 4000); return () => clearInterval(t); }, [pin]);
-  if (!pin || !st) return (
-    <div className="flex min-h-full items-center justify-center p-6"><div className="card w-[420px] p-8">
-      <div className="kai text-3xl">推敲坊 · 教师后台</div>
-      <input type="password" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && setPin(input.trim())} placeholder="教师口令（data/teacher-pin.txt）" className="mt-5 w-full rounded-xl border-2 border-[#E6DCC6] px-4 py-2.5 text-lg outline-none" />
-      {err && <div className="mt-2 text-rose-700">{err}</div>}
-      <div className="mt-5"><Btn onClick={() => setPin(input.trim())}>进入</Btn></div>
-    </div></div>
-  );
+export default function Teacher(){const result=useData<TeacherState>('tuiqiao.teacher');return <DataReadStateRenderer result={result} renderData={st=><TeacherBody st={st}/>}/>;}
+function TeacherBody({st}:{st:TeacherState}){
+ const [tab,setTab]=useState<'players'|'items'|'gloss'|'asks'|'good'|'ai'|'set'>('players');
+ const [big,setBig]=useState<string|null>(null);
   const c = st.config;
-  const setCfg = async (b: Partial<typeof c>) => { await api.teacher.setConfig(pin, b); load(); };
+  const setCfg = async (b: Partial<typeof c>) => { await api.teacher.setConfig(b); };
   const online = st.players.filter((p) => st.now - p.lastSeen < 20000).length;
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="kai text-3xl">推敲坊 · 教师后台</div>
         <span className="text-ink2">{st.players.length} 人，在线 {online} 人</span>
-        <div className="ml-auto flex flex-wrap gap-2">
+        <div className="ml-auto flex flex-wrap gap-2"><a href="#/student">查看课程</a>
           <button onClick={() => setCfg({ attention: !c.attention })} className={`rounded-full px-4 py-2 font-black ${c.attention ? 'bg-rose-600 text-white' : 'bg-white chunky'}`}>{c.attention ? '取消“请看大屏幕”' : '请看大屏幕'}</button>
           {(['players', 'items', 'gloss', 'asks', 'good', 'ai', 'set'] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-2 font-black ${tab === t ? 'bg-[#2B2722] text-white' : 'bg-white chunky'}`}>{{ players: '学生', items: '题目', gloss: '点开的字', asks: '学生的提问', good: '好句子', ai: 'AI', set: '开放与设置' }[t]}</button>)}
         </div>
@@ -127,9 +115,7 @@ export default function Teacher() {
 
       {tab === 'ai' && (
         <div className="card mt-4 space-y-3 p-6">
-          <div>状态：{st.ai.mock ? '模拟模式' : st.ai.ready ? `已接好（${st.ai.model}，Key 尾号 ${st.ai.keyTail}）` : '还没有 Key'}；同时在评 {st.ai.active}；已评 {st.ai.used} 次；每人每节课 {st.ai.quota} 次</div>
-          <div className="flex gap-2"><input type="password" value={keyIn} onChange={(e) => setKeyIn(e.target.value)} placeholder="粘贴 DeepSeek API Key" className="w-[420px] rounded-xl border-2 border-[#E6DCC6] px-3 py-2" /><Btn size="sm" onClick={async () => { await api.teacher.aiSettings(pin, { key: keyIn }); setKeyIn(''); load(); }}>保存</Btn><Btn size="sm" color="#2F6E5B" onClick={async () => { await api.teacher.aiTest(pin); load(); }}>测试连接</Btn></div>
-          {st.ai.lastTest && <div className={st.ai.lastTest.ok ? 'text-emerald-700' : 'text-rose-700'}>{st.ai.lastTest.msg}</div>}
+          <div>状态：{st.ai.ready ? st.ai.model : '平台 AI 暂不可用'}；正在处理 {st.ai.active}；已调用 {st.ai.used} 次；每人每节课 {st.ai.quota} 次</div>
           <div className="flex items-center gap-3"><span>AI 评分：</span><button onClick={() => setCfg({ ai: !c.ai })} className={`rounded-full px-4 py-1.5 font-black ${c.ai ? 'bg-emerald-600 text-white' : 'bg-white chunky'}`}>{c.ai ? '开着' : '关着'}</button></div>
         </div>
       )}
@@ -137,9 +123,8 @@ export default function Teacher() {
       {tab === 'set' && (
         <div className="card mt-4 space-y-4 p-6">
           <div className="flex items-center gap-2"><span className="font-black">“请看大屏幕”时显示的话：</span><input defaultValue={c.message} onBlur={(e) => setCfg({ message: e.target.value })} className="w-[460px] rounded-xl border-2 border-[#E6DCC6] px-3 py-2" /></div>
-          <div className="flex gap-3"><a className="rounded-full bg-white px-4 py-2 font-black chunky" href={`api/teacher/export.csv?pin=${encodeURIComponent(pin)}`}>导出成绩（CSV）</a><a className="rounded-full bg-white px-4 py-2 font-black chunky" href={`api/teacher/export.json?pin=${encodeURIComponent(pin)}`}>导出全部记录（JSON）</a></div>
-          <div><button className="rounded-full bg-rose-50 px-4 py-2 font-black text-rose-700" onClick={async () => { if (prompt('清空所有学生记录（会先备份）。输入 RESET 确认：') === 'RESET') { await api.teacher.reset(pin); load(); } }}>清空所有学生记录</button></div>
-          <button className="text-sm underline" onClick={() => { try { localStorage.removeItem(PIN_KEY); } catch { /* */ } setPin(''); }}>退出后台</button>
+          <div className="flex gap-3"><ToolDownloadButton url={base+'teacher/export.csv'} fileName={'tuiqiao.csv'}>导出成绩（CSV）</ToolDownloadButton><ToolDownloadButton url={base+'teacher/export.json'} fileName={'tuiqiao.json'}>导出全部记录（JSON）</ToolDownloadButton></div>
+          <div><button className="rounded-full bg-rose-50 px-4 py-2 font-black text-rose-700" onClick={async () => { if (prompt('清空所有学生记录。输入 RESET 确认：') === 'RESET') { await api.teacher.reset(); } }}>清空所有学生记录</button></div>
         </div>
       )}
       <Modal open={!!big} onClose={() => setBig(null)} width={1100}><div className="px-6 py-10 text-center text-5xl font-bold leading-snug">{big}</div></Modal>

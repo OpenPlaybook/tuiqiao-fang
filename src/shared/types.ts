@@ -121,7 +121,7 @@ export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu' | 'max' 
 export interface Room { no: number; name: string; time: string; scene: Art }
 
 // ---------------- 进度 ----------------
-export interface LogEntry { q: string; v: string; ok: boolean | null; t: number }
+export interface LogEntry { id: string; q: string; v: string; ok: boolean | null; t: number }
 export interface Rec {
   id: string;
   st: StationId;
@@ -138,6 +138,8 @@ export interface Rec {
   t1?: number;
 }
 export interface Player {
+  roundId: string;
+  revision: number;
   pid: string;
   token: string;
   name: string;
