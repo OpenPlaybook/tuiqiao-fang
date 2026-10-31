@@ -164,8 +164,23 @@ export const createAi = (DATA: string, players: Map<string, Player>) => {
         : cleanAsk(await complete([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) }]));
       // 题还没做完，回答里却带出了答案：换成只给方向
       const nz = (t: string) => t.replace(/[\s，。、“”‘’！？…（）()：:；;——-]/g, '');
-      const all = nz([out.a1, out.q, out.a2, ...out.opts.map((o) => o.t + o.why)].join(''));
-      if (it && !taskDone && answer && nz(answer).length >= 2 && all.includes(nz(answer))) out = { a1: `这道题还在做，我先不说答案。给你一个方向：${it.hints[0] ?? '回到原文，一个字一个字地看。'}`, q: '', opts: [], a2: '' };
+      // 字面没说出来，也可能换了个说法：题还没做完时，再让模型判断一次“这段回答是不是把答案告诉学生了”；漏了就重答一次，还漏就只给方向
+      const leaks = async (o: AskOut) => {
+        if (!it || taskDone || !answer) return false;
+        const flat = nz([o.a1, o.q, o.a2, ...o.opts.map((x) => x.t + x.why)].join(''));
+        if (nz(answer).length >= 2 && flat.includes(nz(answer))) return true;
+        if (MOCK) return false;
+        try {
+          const j = JSON.parse(((await callOnce([{ role: 'system', content: '你检查一段给初中生的回答。题目答案是 A。如果这段回答（包括它的选项和后半段）直接说出了 A，或者换个说法说出了 A 的意思，让学生不用想就能答对这道题，输出 {"leak": true}；只是给了思路、或者讲的是别的事，输出 {"leak": false}。只输出 JSON。' }, { role: 'user', content: `题目：${step?.q ?? it.label}\n答案 A：${answer}\n回答：${JSON.stringify(o)}` }], true, 30)).match(/\{[\s\S]*\}/) ?? ['{}'])[0]);
+          return j.leak === true;
+        } catch { return false; }
+      };
+      let leak = await leaks(out);
+      if (leak && !MOCK) {
+        out = cleanAsk(await complete([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: askUser({ title: play.title, before, line: plainText(String(b.line ?? '')), task: it ? `${it.label}：${step?.q ?? ''}` : undefined, taskDone, answer, q }) + `\n注意：上一次的回答把题的答案说出来了。这次不要说出、也不要暗示“${answer}”。学生问的如果和这道题无关，就只回答他问的事。` }]));
+        leak = await leaks(out);
+      }
+      if (leak) out = { a1: `这道题还在做，我先不说答案。给你一个方向：${it.hints[0] ?? '回到原文，一个字一个字地看。'}`, q: '', opts: [], a2: '' };
       if (!out.a1) throw new Error('AI 这次没回答上来，再问一次');
       used.set(p.pid, (used.get(p.pid) ?? 0) + 1);
       log({ t: Date.now(), pid: p.pid, name: p.name, item: String(b.item ?? ''), step: play.id, role: 'ask', text: q, out: { a: [out.a1, out.q, out.a2].filter(Boolean).join(' / '), ...out }, ms: Date.now() - t0, ok: true });
