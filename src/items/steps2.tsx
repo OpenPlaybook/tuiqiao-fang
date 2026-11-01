@@ -126,11 +126,12 @@ const OptArt = ({ a }: { a: NonNullable<ChoiceSub['opts'][number]['art']> }) => 
  *  第一次错只给“——”前面的线索，第二次错再给后面的意思；学生填的是别的句子的答案，就告诉他那个词另有去处。 */
 const fillHint = (s: FillSub, i: number, w: string | undefined, level: number) => {
   const x = s.sents[i], hide = [x.a, ...(x.alt ?? [])].sort((a, b) => b.length - a.length);
-  const mask = (t: string) => hide.reduce((u, h) => u.split(h).join('＿＿'), t);
+  const word = (h: string) => new RegExp(/^[\x00-\x7f’]+$/.test(h) ? `(?<![A-Za-z’'])${h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z’'])` : h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); // 英文按整词：ate 不能把 has eaten 遮成 has e＿＿n
+  const mask = (t: string) => hide.reduce((u, h) => u.replace(word(h), '＿＿'), t);
   const parts = x.why.match(/[^。！？]+[。！？]?/g) ?? [x.why];
   const clue = parts[0].split('——')[0]; // 第一次错只给线索，第二次再给意思
   const first = level < 2 && clue.length >= 6 && clue !== parts[0] ? clue + '。' : mask(parts[0]);
-  const about = w ? parts.slice(1).find((t) => t.includes(w)) : undefined;
+  const about = w ? parts.slice(1).find((t) => word(w).test(t)) : undefined;
   const other = w !== undefined && s.sents.some((y, j) => j !== i && (y.a === w || y.alt?.includes(w)));
   return (first.startsWith('线索：') ? '看句子里的' : '想一想：') + first + (about ? mask(about) : '') + (other && !about ? `“${w}”另有一句更合适。` : '');
 };

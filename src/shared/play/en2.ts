@@ -104,10 +104,10 @@ const EXT_ASK: Ext[] = [
       ['Where were Mia at 2:15?', 'Mia 是一个人，用 was。'],
       ['Where did Mia at 2:15?', 'did 后面要跟动作，“在哪儿”用 was。'],
     ], { keep: true }),
-    fill('b', '把问句补全。', ['were', 'was', 'did'], [
+    fill('b', '把问句补全，有的词用不上。', ['were', 'was', 'did', 'does'], [
       ['Where ___ you and Ben at 2:15?', 'were', '线索：主语是 you and Ben（两个人），后面没有别的动作——用 were。'],
       ['Where ___ the panda at two o’clock?', 'was', '线索：主语是 the panda（一个），后面没有别的动作——用 was。'],
-      ['What time ___ you see the drum case?', 'did', '线索：后面还有动作 see——问过去的动作，用 did，动作用原形。'],
+      ['What time ___ you see the drum case?', 'did', '线索：后面还有动作 see——问过去的动作，用 did，动作用原形。does 是现在时；这里问的是过去，而且主语 you 也不配 does。'],
     ]),
   ] },
   { id: 'x2', title: '侦探的问话', need: 'opt', steps: [
@@ -128,11 +128,11 @@ const EXT_WHEN: Ext[] = [
       ['*When the lights went out, I was printing the certificates.', '对：灭灯是一下子（went out），打印是一直在做的背景（was printing）。'],
       ['When the lights were going out, I printed the certificates.', '反了：灭灯是一下子发生的，打印才是背景。'],
     ], { keep: true }),
-    fill('b', '用对的形式填空。', ['stopped', 'was printing', 'went out', 'was eating'], [
-      ['Ms Green ___ certificates at 2:15.', 'was printing', '线索：at 2:15 这一刻——正在做的事：was printing。'],
+    fill('b', '用对的形式填空，有的词用不上。', ['stopped', 'was printing', 'went out', 'was eating', 'printing', 'were eating'], [
+      ['Ms Green ___ certificates at 2:15.', 'was printing', '线索：at 2:15 这一刻——正在做的事：was printing。只填 printing 不行：前面少了 was。'],
       ['Suddenly the lights ___.', 'went out', '线索：Suddenly——一下子发生的事，一般过去时：went out。'],
       ['When the lights went out, the printer ___.', 'stopped', '线索：灯一灭，打印机就停——一下子的事：stopped。不是 was printing（那是她一直在做的）。'],
-      ['Ben ___ a mooncake when the lights went out.', 'was eating', '线索：when the lights went out——灯灭的那一刻他正在吃：was eating。'],
+      ['Ben ___ a mooncake when the lights went out.', 'was eating', '线索：when the lights went out——灯灭的那一刻他正在吃：was eating。were eating 不行：Ben 是一个人，不用 were。'],
     ]),
   ] },
   { id: 'x2', title: 'at、on、in：说时间', need: 'opt', steps: [
@@ -152,8 +152,8 @@ const EXT_WAS: Ext[] = [
       ['*were', '对：Ms Green and the headmaster 是两个人。'],
       ['was', '主语是两个人。'],
     ], { keep: true }),
-    fill('b', '填 was 或 were。', ['was', 'were'], [
-      ['At 2:15, I ___ eating a mooncake. — Ben', 'was', '线索：主语 I——was。'],
+    fill('b', '填 was 或 were，有的词用不上。', ['was', 'were', 'did'], [
+      ['At 2:15, I ___ eating a mooncake. — Ben', 'was', '线索：主语 I——was。did 后面要跟动词原形（did eat），这里是 eating，不能用 did。'],
       ['You ___ sitting in the front row.', 'were', '线索：主语 you——不管一个人还是几个人，都用 were。'],
       ['Max and his friends ___ packing the drums.', 'were', '线索：Max and his friends——好几个人，用 were。'],
     ]),
@@ -175,8 +175,8 @@ const EXT_WHILE: Ext[] = [
       ['*搬大鼓（was carrying）', '对：搬鼓是一段时间；绊一下是一瞬间。'],
       ['被绊了一下（tripped）', '绊一下是一瞬间的事。'],
     ], { keep: true }),
-    fill('b', '填 when 或 while。', ['when', 'while'], [
-      ['___ I was carrying the drum, I tripped over a cable.', 'while', '线索：后面是 was carrying（一直在做的背景）——while。'],
+    fill('b', '填 when 或 while，有的词用不上。', ['when', 'while', 'during'], [
+      ['___ I was carrying the drum, I tripped over a cable.', 'while', '线索：后面是 was carrying（一直在做的背景）——while。填 when 也不算错，只是 while 更突出“正在搬的那一段时间里”。during 后面只跟名词（during the festival），不跟一句话。', ['when']],
       ['I was printing certificates ___ the lights went out.', 'when', '线索：后面是 went out（一下子发生的事）——when。'],
       ['Mia was taking photos ___ the bell rang.', 'when', '线索：后面是 the bell rang（铃一响，一下子的事）——when。'],
     ]),
@@ -199,10 +199,10 @@ const EXT_MIA: Ext[] = [
       ['Can you borrow me your pen?', '这是 Mia 说错的句子：borrow 后面不能跟“借给谁”。'],
       ['Can I lend your pen?', 'lend 是借出去，Mia 是要借进来。'],
     ], { keep: true }),
-    fill('b', '填 borrow 或 lend（注意形式）。', ['borrow', 'lend', 'lent', 'borrowed'], [
+    fill('b', '填 borrow 或 lend（注意形式），有的词用不上。', ['borrow', 'lend', 'lent', 'borrowed', 'lends'], [
       ['Could you ___ me your notebook? I’ll give it back.', 'lend', '线索：Could you ___ me——你借给我：lend。'],
       ['Ben ___ your notebook in Chapter 1.', 'borrowed', '线索：第一章 Ben 从你那儿借了本子，过去的事——借进来：borrowed。'],
-      ['I ___ Mia my pen yesterday.', 'lent', '线索：我把笔借给 Mia（借出去），yesterday——lent。'],
+      ['I ___ Mia my pen yesterday.', 'lent', '线索：我把笔借给 Mia（借出去），yesterday——lent。lend、lends 都是现在的说法，有 yesterday 要用过去式。'],
       ['Can I ___ your camera for a minute?', 'borrow', '线索：Can I——我借进来：borrow。'],
     ]),
   ] },
@@ -266,9 +266,9 @@ const EXT_SUSPECT: Ext[] = [
       ['我是那个鼓箱的嫌疑人', 'suspect 后面跟着一句话，是动词。'],
     ], { keep: true }),
     Mt('c', '侦探故事里的人和词，连一连。', ['suspect', 'witness', 'detective', 'alibi'], ['嫌疑人', '目击者、证人', '侦探', '不在场证明'], [0, 1, 2, 3], '刘师傅看见了拿鼓箱的男孩：他是 witness；你和 Ben 是 detectives；Max 说自己在搬鼓，是他的 alibi。', { lh: '英语', rh: '中文' }),
-    fill('d', '放进句子。', ['suspect', 'witness', 'alibi', 'detectives'], [
+    fill('d', '放进句子，有的词用不上。', ['suspect', 'witness', 'alibi', 'detectives', 'thief'], [
       ['Mr Liu saw a boy with a drum case. He is a ___.', 'witness', '线索：他“看见了”事情——目击者：witness，不是嫌疑人。'],
-      ['Max was near the stage at 2:15, so he is a ___.', 'suspect', '线索：当时在现场附近——有嫌疑的人：suspect。'],
+      ['Max was near the stage at 2:15, so he is a ___.', 'suspect', '线索：当时在现场附近——有嫌疑的人：suspect。thief 是确定偷了东西的人；只是在现场附近，还不能叫他 thief。'],
       ['Ms Green was printing certificates. That’s her ___.', 'alibi', '线索：她当时在做别的事，能说明不是她——不在场证明：alibi。'],
       ['You and Ben are the two ___ in this story.', 'detectives', '线索：你和 Ben 在查案——侦探：detectives（两个人，复数）。'],
     ]),
@@ -284,11 +284,11 @@ const EXT_LOOK: Ext[] = [
     ], { keep: true }),
     T('t2', '', 'look 后面加不同的小词，意思就变了：**look at**（看着）、**look for**（找）、**look inside**（往里看）、**look after**（照顾）、**look like**（看起来像）。'),
     Mt('b', '连一连。', ['look for', 'look inside', 'look after', 'look like'], ['照顾', '看起来像', '找', '往里面看'], [2, 3, 0, 1], 'look 是“看”，后面的小词定方向：for 找、inside 往里、after 照顾、like 像。', { lh: '英语', rh: '中文' }),
-    fill('c', '放进句子。', ['look for', 'look inside', 'look after', 'looks like'], [
-      ['We must ___ the Golden Panda before three!', 'look for', '线索：熊猫还没找到，三点前要——去找：look for。'],
+    fill('c', '放进句子，有的词用不上。', ['look for', 'look inside', 'look after', 'looks like', 'looking for', 'look like'], [
+      ['We must ___ the Golden Panda before three!', 'look for', '线索：熊猫还没找到，三点前要——去找：look for。looking for 不行：must 后面要用动词原形。'],
       ['“Do you want to ___?” Max opened the drum case.', 'look inside', '线索：Max 打开了鼓箱——往里面看：look inside。'],
       ['Can you ___ my little sister this afternoon?', 'look after', '线索：my little sister——照看：look after。'],
-      ['Look at those dark clouds. It ___ rain.', 'looks like', '线索：看见乌云——看起来像要下雨：looks like。'],
+      ['Look at those dark clouds. It ___ rain.', 'looks like', '线索：看见乌云——看起来像要下雨：looks like。look like 不行：主语 It 是单数，动词要加 s。'],
     ]),
     C('d', '找出用错的一句：', [
       ['*I’m looking my key. Have you seen it?', '对，这句错了：找东西要说 looking for my key。'],
@@ -309,11 +309,11 @@ const EXT_SAY: Ext[] = [
       ['Mia said Ms Green about the photo.', 'say 后面不能直接跟人；要说 said to Ms Green。'],
     ], { keep: true }),
     T('t2', '', 'speak 常跟语言、正式的讲话：Ben speaks English and a little Chinese. talk 是两个人你一句我一句：Ms Green was talking to the headmaster on the phone.'),
-    fill('c', '放进句子。', ['said', 'told', 'speak', 'talking'], [
+    fill('c', '放进句子，有的词用不上。', ['said', 'told', 'speak', 'talking', 'say', 'telling'], [
       ['Ms Green just ___, “Yes, yes.”', 'said', '线索：后面直接是说的话“Yes, yes.”——said。tell 后面要先跟人。'],
       ['Ben ___ us a funny story about London.', 'told', '线索：后面先跟人 us，再跟 a story——讲给我们听：told。'],
-      ['Can you ___ Chinese, Ben?', 'speak', '线索：后面是一种语言 Chinese——会说：speak。'],
-      ['Ms Green was ___ to the headmaster on the phone.', 'talking', '线索：to the headmaster，在电话上你一句我一句——talking to。'],
+      ['Can you ___ Chinese, Ben?', 'speak', '线索：后面是一种语言 Chinese——会说：speak。say 后面跟要说的话，不跟一种语言。'],
+      ['Ms Green was ___ to the headmaster on the phone.', 'talking', '线索：to the headmaster，在电话上你一句我一句——talking to。telling 不行：tell 后面直接跟人（tell him），不加 to。'],
     ]),
     C('d', '找出用错的一句：', [
       ['*Please say me the answer.', '对，这句错了：要说 Please tell me the answer.'],
@@ -339,10 +339,10 @@ const EXT_MEAN: Ext[] = [
       ['don’t mean', '事情刚发生过，用过去式：didn’t mean。'],
     ], { keep: true }),
     T('t3', '', '小心：mean 当形容词，是“刻薄、小气”：Don’t be mean to your little brother.（别对弟弟那么凶。）'),
-    fill('d', '放进句子。', ['mean', 'meant', 'means'], [
+    fill('d', '放进句子，有的词用不上。', ['mean', 'meant', 'means', 'meaning'], [
       ['What does “alibi” ___?', 'mean', '线索：does 后面用动词原形——mean。'],
       ['Sorry, I ___ to say “lend”, not “borrow”.', 'meant', '线索：Sorry，刚才说错了——“我本来想说的是”：meant，过去式。'],
-      ['A green light ___ you can go.', 'means', '线索：主语是 A green light（一个），一般现在时——means。'],
+      ['A green light ___ you can go.', 'means', '线索：主语是 A green light（一个），一般现在时——means。meaning 是名词“意思”，不能当动词；mean 少了 s，也不行。'],
     ]),
   ] },
 ];

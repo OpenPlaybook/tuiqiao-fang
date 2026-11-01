@@ -84,11 +84,11 @@ const EXT_MEANT: Ext[] = [
       ['还是没人知道熊猫去哪儿了', '写对了，大家就知道是借走的，三点会还回来。'],
     ], { keep: true }),
     T('t2', '', '中文“借”一个字管两个方向，英语分成两个词。所以学英语的人最容易把它们用反：“Can you borrow me your pen?” 就是这样来的。'),
-    fill('b', '同样分方向的词，填一填。', ['borrow', 'lend', 'learn', 'teach'], [
+    fill('b', '同样分方向的词，填一填。有的词用不上。', ['borrow', 'lend', 'learn', 'teach', 'lent', 'taught'], [
       ['Mr Liu, can I ___ your umbrella? It’s raining.', 'borrow', '线索：can I——伞从你那儿到我这儿：borrow。'],
-      ['Sure, I can ___ you my umbrella.', 'lend', '线索：I can ___ you——伞从我这儿到你那儿：lend。'],
+      ['Sure, I can ___ you my umbrella.', 'lend', '线索：I can ___ you——伞从我这儿到你那儿：lend。lent 是过去式，can 后面要用原形。'],
       ['Ben wants to ___ Chinese from you.', 'learn', '线索：from you——Ben 从你那儿学：learn。'],
-      ['Can you ___ me how to use chopsticks?', 'teach', '线索：Can you ___ me——你教我：teach。和 borrow / lend 一样，方向相反的一对。'],
+      ['Can you ___ me how to use chopsticks?', 'teach', '线索：Can you ___ me——你教我：teach。和 borrow / lend 一样，方向相反的一对。taught 是过去式，Can you 后面要用原形。'],
     ]),
   ] },
   { id: 'x2', title: '别人用错的时候', need: 'opt', steps: [
@@ -124,8 +124,8 @@ const EXT_MUST: Ext[] = [
       ['M must be Ms Green.', '证据恰恰说明不是她。'],
       ['M might be Ms Green.', '证据已经排除了她。'],
     ], { keep: true }),
-    fill('b', '填 must、might 或 can’t。', ['must', 'might', 'can’t'], [
-      ['Max’s drum case had only a drum in it. The panda ___ be in his case.', 'can’t', '线索：亲眼看过，箱子里只有鼓——不可能在里面：can’t be。'],
+    fill('b', '填 must、might 或 can’t，有的词用不上。', ['must', 'might', 'can’t', 'mustn’t'], [
+      ['Max’s drum case had only a drum in it. The panda ___ be in his case.', 'can’t', '线索：亲眼看过，箱子里只有鼓——不可能在里面：can’t be。must 是“一定是”，mustn’t 是“不许、禁止”（You mustn’t run here.），都不是“不可能”。'],
       ['The same yellow paper, the same M… The note ___ be from Mia.', 'must', '线索：两条证据对上了——很有把握：must be。'],
       ['Mia likes the garden. She ___ be there now — let’s go and see.', 'might', '线索：只是因为她喜欢花园，“let’s go and see”——只有几分可能：might。'],
     ]),
@@ -165,11 +165,11 @@ const EXT_MIX: Ext[] = [
       ['Bring', 'bring 是带到说话人这边来。'],
     ], { keep: true }),
     T('t3', '', '再一对：**lose**（丢了、输了）/ **miss**（错过、想念）。I lost my key.（钥匙丢了）I missed the bus.（没赶上车）'),
-    fill('c', '放进句子。', ['lost', 'missed', 'brought', 'took'], [
+    fill('c', '放进句子，有的词用不上。', ['lost', 'missed', 'brought', 'took', 'missing', 'bring'], [
       ['Hurry up, or we’ll be late! — Too late. We ___ the bus.', 'missed', '线索：Too late——车已经开走了，没赶上：missed。'],
-      ['Oh no, I ___ my phone. Have you seen it?', 'lost', '线索：Have you seen it?——手机找不到了：lost。'],
+      ['Oh no, I ___ my phone. Have you seen it?', 'lost', '线索：Have you seen it?——手机找不到了：lost。missing 不能直接跟在 I 后面，要说 My phone is missing。'],
       ['Ben ___ some mooncakes to our class party.', 'brought', '线索：to our class party——带到我们这边来：brought。'],
-      ['Dad ___ us to the zoo last Sunday.', 'took', '线索：us to the zoo——带我们去别处：took。'],
+      ['Dad ___ us to the zoo last Sunday.', 'took', '线索：us to the zoo——带我们去别处：took。bring 不行：有 last Sunday，要用过去式；而且 bring 是带过来，去动物园是去别处。'],
     ]),
     C('d', '找出用错的一句：', [
       ['*I lost the bus this morning.', '对，这句错了：没赶上车是 missed the bus。'],
@@ -190,11 +190,11 @@ const EXT_PROOF: Ext[] = [
       ['他亲眼看见 Mia 拿走了熊猫', '他没看见，是推出来的。'],
     ], { keep: true }),
     T('t2', '', 'proof 的动词是 **prove**（证明）。第二章问不在场证明时，侦探常问：Can anyone prove it?（有人能证明吗？）'),
-    fill('c', '放进句子。', ['clue', 'evidence', 'proof', 'prove'], [
+    fill('c', '放进句子，有的词用不上。', ['clue', 'evidence', 'proof', 'prove', 'proves'], [
       ['A yellow note under the table is our first ___.', 'clue', '线索：our first ___——第一条提示，还不能说明什么：clue。'],
       ['The two notes look the same. That’s good ___.', 'evidence', '线索：两张纸条一样——支持“M 是 Mia”，可还不是百分之百：evidence。'],
       ['Can you ___ that you were in the garden?', 'prove', '线索：Can you 后面要动词——证明：prove。'],
-      ['A photo with the time on it is ___ that she was there.', 'proof', '线索：带时间的照片——足以证明她当时在场：proof。说 evidence 也对，只是没那么肯定。', ['evidence']],
+      ['A photo with the time on it is ___ that she was there.', 'proof', '线索：带时间的照片——足以证明她当时在场：proof。说 evidence 也对，只是没那么肯定。prove、proves 是动词，is 后面要跟名词。', ['evidence']],
     ]),
     C('d', '哪一句对？', [
       ['*There is not enough evidence.', '对：evidence 不可数，不加 s，也不说 an evidence。'],
@@ -241,8 +241,8 @@ const EXT_FIND: Ext[] = [
       ['We found who wrote the note.', '找到一个人用 find；弄清楚“是谁”这件事，用 find out。'],
     ], { keep: true }),
     T('t2', '', '刚找到、东西就在眼前，英国人会喊：**We’ve found it!**——第一章的 has taken 又来了：过去的事，现在的结果（东西现在就在这儿）。'),
-    fill('c', '放进句子。', ['looking for', 'found', 'find out', 'have found'], [
-      ['What are you ___? — My notebook.', 'looking for', '线索：are you ___——正在找，还没找到：looking for。'],
+    fill('c', '放进句子，有的词用不上。', ['looking for', 'found', 'find out', 'have found', 'looking'], [
+      ['What are you ___? — My notebook.', 'looking for', '线索：are you ___——正在找，还没找到：looking for。只填 looking 不行：“找”要说 look for，for 不能丢。'],
       ['I ___ my notebook under the bed yesterday.', 'found', '线索：under the bed yesterday——找到了，过去的事：found。'],
       ['Let’s ___ what really happened at 2:15.', 'find out', '线索：what really happened——查明一件事的真相：find out。'],
       ['Look! We ___ the Golden Panda!', 'have found', '线索：Look!——刚找到，熊猫就在眼前：have found。'],
@@ -386,8 +386,8 @@ export const PLAY_EN3_ITEMS: Item[] = [
       ['*Don’t forget to take your umbrella!', '对：从家里带走，用 take。'],
       ['Don’t forget to bring your umbrella!', '妈妈在家，伞是从她这儿带走的，用 take。'],
     ], { keep: true }),
-    fill('c', '放进句子。', ['took', 'brought', 'take'], [
-      ['Mia ___ the panda to the garden to take photos.', 'took', '线索：从礼堂带到花园（离开原来的地方）——took。'],
+    fill('c', '放进句子，有的词用不上。', ['took', 'brought', 'take', 'taken'], [
+      ['Mia ___ the panda to the garden to take photos.', 'took', '线索：从礼堂带到花园（离开原来的地方）——took。take 是原形，taken 要跟在 has / have 后面，都不能单独说过去发生的事。'],
       ['Grandma opened the door and smiled: “You ___ me flowers! Thank you!”', 'brought', '线索：奶奶在门口说“You ___ me flowers”——带到说话的人这里来：brought。'],
       ['Please ___ this note to Ms Green in the office.', 'take', '线索：从这里送到办公室（别处）去——take。'],
     ]),

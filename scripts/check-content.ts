@@ -30,6 +30,12 @@ const checkStep = (s: Sub, where: string) => {
         if (!s.bank.includes(x.a)) err(`${w}：答案“${x.a}”不在词库里`);
         for (const y of x.alt ?? []) if (!s.bank.includes(y) || y === x.a) err(`${w}：也可以填的“${y}”不在词库里，或和答案重复`);
       }
+      { // 填空要有干扰项（词比用到的词多），干扰词要在讲解里点名说为什么不行（用户 2026-11-01）
+        const used = new Set(s.sents.flatMap((x) => [x.a, ...(x.alt ?? [])]));
+        const extra = s.bank.filter((b) => !used.has(b));
+        if (!extra.length) err(`${w}：填空没有干扰项（词库里的词都是答案）`);
+        for (const b of extra) if (!s.sents.some((x) => x.why.includes(b))) err(`${w}：干扰词“${b}”在讲解里没有点名说为什么不行`);
+      }
       break;
     case 'sort':
       if (s.cards.some((c) => c.bin < 0 || c.bin >= s.bins.length)) err(`${w}：卡片的格子序号越界`);

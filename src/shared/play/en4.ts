@@ -79,9 +79,9 @@ const EXT_STEAL: Ext[] = [
       ['*不能：她根本没听清 Mia 在问什么，不知道有人借——她只能说 Someone has taken it.', '对：borrow 要对方知道、同意。Green 老师当时在打电话，随口说了“好”。'],
       ['能：她说过“好”', '她是没听清就说了“好”，并不知道借给了谁。'],
     ], { keep: true }),
-    fill('b', '填 steal、borrow 或 take（注意形式）。', ['stole', 'borrowed', 'took'], [
-      ['The thief ___ a phone from the shop and ran away.', 'stole', '线索：The thief，拿了就跑——没经过同意：stole。'],
-      ['I ___ a book from the library. I’ll give it back on Monday.', 'borrowed', '线索：I’ll give it back——经过同意、要还：borrowed。'],
+    fill('b', '填 steal、borrow 或 take（注意形式），有的词用不上。', ['stole', 'borrowed', 'took', 'steal', 'lent'], [
+      ['The thief ___ a phone from the shop and ran away.', 'stole', '线索：The thief，拿了就跑——没经过同意：stole。steal 是原形；ran away 说明是过去的事，要用过去式。'],
+      ['I ___ a book from the library. I’ll give it back on Monday.', 'borrowed', '线索：I’ll give it back——经过同意、要还：borrowed。lent 是借出去；from the library 是从图书馆借进来。'],
       ['Mia ___ the panda to the garden.', 'took', '线索：只说她把熊猫拿到了哪儿，不管同不同意——took。'],
     ]),
   ] },
@@ -98,11 +98,11 @@ const EXT_TEN: Ext[] = [
     Mt('b', '连一连。', ['2:15', '2:20', '2:30', '2:40'], ['quarter past two', 'twenty past two', 'half past two', 'twenty to three'], [0, 1, 2, 3], '前半小时 past，后半小时 to；15 分是 quarter，30 分是 half。', { lh: 'Time', rh: 'British way' }),
   ] },
   { id: 'x2', title: '这个故事的时间表', need: 'opt', steps: [
-    fill('a', '用英式说法填。', ['ten past two', 'quarter past two', 'twenty past two', 'twenty to three'], [
-      ['Mia asked Ms Green at ___.', 'ten past two', '线索：Mia 是 2:10 去问的——过了两点十分：ten past two。'],
+    fill('a', '用英式说法填，有的词用不上。', ['ten past two', 'quarter past two', 'twenty past two', 'twenty to three', 'ten to two', 'twenty to two'], [
+      ['Mia asked Ms Green at ___.', 'ten past two', '线索：Mia 是 2:10 去问的——过了两点十分：ten past two。ten to two 是差十分两点，也就是 1:50。'],
       ['The lights went out at ___.', 'quarter past two', '线索：灯是 2:15 灭的——一刻钟就是 quarter：quarter past two。'],
       ['Mr Liu saw Max at ___.', 'twenty past two', '线索：刘师傅 2:20 看见了 Max——twenty past two。'],
-      ['Ms Green found the panda was gone at ___.', 'twenty to three', '线索：2:40，离三点还差二十分——twenty to three。'],
+      ['Ms Green found the panda was gone at ___.', 'twenty to three', '线索：2:40，离三点还差二十分——twenty to three。twenty to two 是差二十分两点，也就是 1:40。'],
     ]),
   ] },
 ];
@@ -124,8 +124,8 @@ const EXT_TOO: Ext[] = [
       ['*熊猫太重了，一只手拿不动', '对：too … to，太……而不能……'],
       ['熊猫很重，可一只手也能拿', 'too … to 是“不能”。'],
     ], { keep: true }),
-    fill('b', '用 too … to 或 enough to 填。', ['too', 'enough'], [
-      ['Ben was ___ excited to sit still.', 'too', '线索：excited to sit still——激动得坐不住：too … to。'],
+    fill('b', '用 too … to 或 enough to 填，有的词用不上。', ['too', 'enough', 'to'], [
+      ['Ben was ___ excited to sit still.', 'too', '线索：excited to sit still——激动得坐不住：too … to。to 不是“太”，不能放在 excited 前面。'],
       ['The drum case was big ___ to hold a panda.', 'enough', '线索：big ___ to hold a panda——够大，装得下：形容词 + enough。'],
       ['Mia was ___ shy to say sorry at first.', 'too', '线索：太害羞，一开始没好意思道歉——too … to：太……而没能……。'],
     ]),
@@ -144,11 +144,11 @@ const EXT_BEST: Ext[] = [
       ['the better story', '两个比较才用 better。'],
       ['the goodest story', 'good 不能加 -est，要用 best。'],
     ], { keep: true }),
-    fill('b', '填对的形式。', ['better', 'best', 'worse', 'most'], [
-      ['Your story is ___ than mine.', 'better', '线索：than——两个比：better than。'],
+    fill('b', '填对的形式，有的词用不上。', ['better', 'best', 'worse', 'most', 'more'], [
+      ['Your story is ___ than mine.', 'better', '线索：than——两个比：better than。more 后面还要跟一个长形容词（more exciting），不能单独放在这里。'],
       ['It’s the ___ story in the festival.', 'best', '线索：the ___ in the festival——一群里最好：the best。'],
       ['My cold is ___ today than yesterday.', 'worse', '线索：than yesterday，感冒加重了——bad 的比较级 worse。'],
-      ['It’s the ___ exciting day of the year.', 'most', '线索：exciting 是长词——最……用 the most。'],
+      ['It’s the ___ exciting day of the year.', 'most', '线索：exciting 是长词——最……用 the most。more 是两个比的“更……”；一年里所有日子放在一起比，是“最”。'],
     ]),
   ] },
 ];
@@ -161,10 +161,10 @@ const EXT_EVER: Ext[] = [
       ['*到现在为止遇到的老师里，她最和善', '对：the + 最高级 + I’ve ever + 过去分词。'],
       ['她以后会成为最和善的老师', 'I’ve ever 说的是到现在为止，不是以后。'],
     ], { keep: true }),
-    fill('b', '把句子补全。', ['eaten', 'read', 'seen', 'met'], [
-      ['This is the best mooncake I’ve ever ___! — Ben', 'eaten', '线索：mooncake，I’ve 后面用过去分词——eat → eaten。'],
+    fill('b', '把句子补全，有的词用不上。', ['eaten', 'read', 'seen', 'met', 'ate', 'saw'], [
+      ['This is the best mooncake I’ve ever ___! — Ben', 'eaten', '线索：mooncake，I’ve 后面用过去分词——eat → eaten。ate 是过去式，不能跟在 I’ve 后面。'],
       ['It’s the most exciting story I’ve ever ___.', 'read', '线索：story——读过：read 的过去分词还是 read，读 /red/。'],
-      ['It’s the biggest drum I’ve ever ___.', 'seen', '线索：drum——见过：see → seen。'],
+      ['It’s the biggest drum I’ve ever ___.', 'seen', '线索：drum——见过：see → seen。saw 是过去式，不能跟在 I’ve 后面。'],
       ['Ben is the funniest person I’ve ever ___.', 'met', '线索：person——遇见过：meet → met。'],
     ]),
   ] },
@@ -194,10 +194,10 @@ const EXT_CLEARLY: Ext[] = [
     ], { keep: true }),
     Mt('b', '形容词和它的 -ly 连起来。', ['clear', 'quick', 'careful', 'happy'], ['happily', 'clearly', 'carefully', 'quickly'], [1, 3, 2, 0], '一般直接加 -ly；y 结尾的，把 y 变成 i 再加 -ly：happy → happily。', { lh: '形容词', rh: '-ly' }),
     T('t2', '', '有一个不守规矩的：good（好的）→ **well**（好地）。She speaks English **well**.（不说 goodly）'),
-    fill('c', '放进句子。', ['clearly', 'carefully', 'well', 'quickly'], [
+    fill('c', '放进句子，有的词用不上。', ['clearly', 'carefully', 'well', 'quickly', 'careful'], [
       ['Please speak ___. I can’t understand you.', 'clearly', '线索：I can’t understand you——要说得清楚：clearly。'],
-      ['Mia ran ___ to the garden.', 'quickly', '线索：ran——跑得快：quickly。'],
-      ['Read the question ___ before you answer.', 'carefully', '线索：before you answer——答题前要仔细读：carefully。'],
+      ['Mia heard a scream and ran ___ to the garden.', 'quickly', '线索：heard a scream——听见尖叫，赶紧跑过去：quickly。'],
+      ['Read the question ___ before you answer.', 'carefully', '线索：before you answer——答题前要仔细读：carefully。careful 是形容词（Be careful!），说“怎么读”要用副词。'],
       ['You did really ___ today, detective!', 'well', '线索：夸人做得好——good 的副词是 well，不说 goodly。'],
     ]),
     C('d', '找出用错的一句：', [
@@ -215,8 +215,8 @@ const EXT_FAULT: Ext[] = [
       ['她自己也弄丢了东西', 'fault 说的是该怪谁，不是丢东西。'],
     ], { keep: true }),
     T('t2', '', '“错”还有两个词：**mistake**（做错的事、错误：make a mistake）；**wrong**（不对的：the wrong word）。fault 说的是“该怪谁”，mistake 说的是“错在哪儿”。'),
-    fill('b', '放进句子。', ['fault', 'mistake', 'wrong'], [
-      ['Mia made a ___: she wrote “Lent” instead of “Borrowed”.', 'mistake', '线索：made a ___——犯错：make a mistake，说的是错在哪儿。'],
+    fill('b', '放进句子，有的词用不上。', ['fault', 'mistake', 'wrong', 'wrongly'], [
+      ['Mia made a ___: she wrote “Lent” instead of “Borrowed”.', 'mistake', '线索：made a ___——犯错：make a mistake，说的是错在哪儿。wrong 是“错的”，wrongly 是“错误地”（spell a word wrongly），都不能跟在 a 后面当“一个错误”。'],
       ['“Lent” was the ___ word.', 'wrong', '线索：the ___ word——不对的：wrong，形容词放在名词前。'],
       ['Don’t be sad, Mia. It wasn’t only your ___.', 'fault', '线索：your ___——该怪谁：fault。'],
     ]),
@@ -239,9 +239,9 @@ const EXT_INTIME: Ext[] = [
       ['You found it just in time!', 'just in time 是正好赶上，三点零五分已经晚了。'],
     ], { keep: true }),
     T('t2', '', '**on time**：准时，按规定的时间（The bus came on time.）。in time 盯着“来不来得及”，on time 盯着“准不准”。'),
-    fill('b', '填 in time 或 on time。', ['in time', 'on time'], [
+    fill('b', '填 in time 或 on time，有的词用不上。', ['in time', 'on time', 'in the time'], [
       ['The train always leaves ___. Don’t be late!', 'on time', '线索：always leaves，Don’t be late——按时刻表准点：on time。'],
-      ['We got to the cinema just ___ to see the start.', 'in time', '线索：just ___ to see the start——正好赶上：in time。'],
+      ['We got to the cinema just ___ to see the start.', 'in time', '线索：just ___ to see the start——正好赶上：in time。in the time 不行：“及时、赶上”的 in time 中间不加 the。'],
       ['The doctor came ___ to save him.', 'in time', '线索：to save him——再晚就来不及了：in time。'],
       ['Please hand in your homework ___.', 'on time', '线索：交作业有规定的时间——按时：on time。说 in time（赶在截止前）也对。', ['in time']],
     ]),
@@ -269,9 +269,9 @@ const EXT_REVIEW: Ext[] = [
       ['*Someone has taken it!', '对：她说的是眼前的样子：熊猫现在不在了。'],
       ['Someone was taking it!', 'was taking 是“那时正在拿”；她进来的时候，并没有人正在拿。'],
     ], { keep: true }),
-    fill('c', '放进句子。', ['was eating', 'tripped', 'has taken', 'must be'], [
-      ['When the lights went out, Ben ___ a mooncake.', 'was eating', '线索：灯灭的那一刻，他正在吃——was eating。'],
-      ['While Max was carrying his drum, he ___ over a cable.', 'tripped', '线索：搬鼓是背景，绊一下是一下子的事——一般过去时 tripped。'],
+    fill('c', '放进句子，有的词用不上。', ['was eating', 'tripped', 'has taken', 'must be', 'eating', 'trips'], [
+      ['When the lights went out, Ben ___ a mooncake.', 'was eating', '线索：灯灭的那一刻，他正在吃——was eating。只填 eating 不行：前面少了 was。'],
+      ['While Max was carrying his drum, he ___ over a cable.', 'tripped', '线索：搬鼓是背景，绊一下是一下子的事——一般过去时 tripped。trips 是现在时，可这件事发生在过去（was carrying）。'],
       ['The table is empty! Someone ___ the Golden Panda!', 'has taken', '线索：The table is empty!——眼前的样子：has taken。'],
       ['The same yellow paper, the same curly M… It ___ Mia!', 'must be', '线索：两条证据对上了——很有把握：must be。'],
     ]),
@@ -286,12 +286,12 @@ const EXT_REVIEW: Ext[] = [
       ['borrow', 0, '借进来。'], ['bring', 0, '带到这边来。'], ['find', 0, '找到，到手了。'],
       ['lend', 1, '借出去。'], ['take（带走）', 1, '带到别处去。'], ['lose', 1, '丢了。'],
     ]),
-    fill('b', '放进句子。', ['noticed', 'evidence', 'nervous', 'told', 'lent'], [
+    fill('b', '放进句子，有的词用不上。', ['noticed', 'evidence', 'nervous', 'told', 'lent', 'said', 'borrowed'], [
       ['Before the prize, my hands were cold. I was very ___.', 'nervous', '线索：等着颁奖，手心发凉——担心表现不好：nervous。'],
       ['Mr Liu didn’t see anyone, but later he ___ a boy with a drum case.', 'noticed', '线索：本来没特意看，后来察觉到了——noticed。'],
       ['The two yellow notes were our best ___.', 'evidence', '线索：两张纸条——支持推理的证据：evidence。'],
-      ['Ms Green never ___ the panda to anyone.', 'lent', '线索：to anyone——借出去：lend 的过去式 lent。'],
-      ['Mia ___ us the whole story at last.', 'told', '线索：后面先跟人 us——讲给我们听：told。'],
+      ['Ms Green never ___ the panda to anyone.', 'lent', '线索：to anyone——借出去：lend 的过去式 lent。borrowed 是借进来，后面不能跟 to anyone。'],
+      ['Mia ___ us the whole story at last.', 'told', '线索：后面先跟人 us——讲给我们听：told。said 后面不能直接跟人，不说 said us。'],
     ]),
     C('c', '最后一个问题：Mia 写的纸条，如果写对了，应该是——', [
       ['*Borrowed the panda. Back at 3. — M', '对：她是借进来的，borrowed。'],
@@ -462,10 +462,10 @@ export const PLAY_EN4_ITEMS: Item[] = [
       ['*worried and scared（又急又怕）', '对：金熊猫不见了。'],
       ['embarrassed（不好意思）', '她是急坏了、吓坏了。'],
     ], { keep: true }),
-    fill('c', '放进句子。', ['embarrassed', 'nervous', 'scared'], [
+    fill('c', '放进句子，有的词用不上。', ['embarrassed', 'nervous', 'scared', 'scare'], [
       ['I called my teacher “Mum” by mistake. Everyone laughed. I was so ___!', 'embarrassed', '线索：当众叫错、Everyone laughed——不好意思：embarrassed。'],
       ['I have a big test tomorrow. I’m a bit ___.', 'nervous', '线索：a big test tomorrow——担心考不好：nervous。'],
-      ['My little sister is ___ of the dark.', 'scared', '线索：of the dark——怕黑：scared of。'],
+      ['My little sister is ___ of the dark.', 'scared', '线索：of the dark——怕黑：scared of。scare 是动词“吓唬”（Don’t scare me!），is 后面要用形容词。'],
     ]),
   ),
   item({
@@ -483,10 +483,10 @@ export const PLAY_EN4_ITEMS: Item[] = [
       ['Two men stole a bank.', '银行不能被“偷走”：用 rob。'],
     ], { keep: true }),
     T('t2', '', '做这些事的人：**thief**（小偷，复数 thieves），**robber**（抢劫的人）。Mia 急着说自己不是 thief：她是借的，还打算还。'),
-    fill('c', '放进句子。', ['thief', 'robber', 'stole', 'robbed'], [
+    fill('c', '放进句子，有的词用不上。', ['thief', 'robber', 'stole', 'robbed', 'rob'], [
       ['A ___ took my wallet on the bus, and I didn’t feel a thing.', 'thief', '线索：I didn’t feel a thing——悄悄偷的人：thief。'],
       ['The ___ ran into the shop and shouted, “Give me the money!”', 'robber', '线索：冲进去喊“Give me the money!”——明着抢的人：robber。'],
-      ['Somebody ___ the money from the shop at night.', 'stole', '线索：后面是东西 the money——steal + 东西：stole。'],
+      ['Somebody ___ the money from the shop at night.', 'stole', '线索：后面是东西 the money——steal + 东西：stole。rob / robbed 后面跟被抢的人或地方，不跟东西。'],
       ['Somebody ___ the shop at night.', 'robbed', '线索：后面是地方 the shop——rob + 地方：robbed。'],
     ]),
   ),

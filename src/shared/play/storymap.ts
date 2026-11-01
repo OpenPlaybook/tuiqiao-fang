@@ -17,10 +17,10 @@ export interface MapNode { id: string; title: string; sub: string; row: number; 
 export const ROWS: string[] = ['秦末', '', '前 209 年', '前 209—前 207', '前 206 年', '前 206 年', '前 206 年', '前 206 年', '前 205—前 203', '前 203 年', '前 202 年', '前 202 年', '前 201—前 195', '前 193 年'];
 export const NODES: MapNode[] = [
   { id: 'lb1', title: '泗水亭长', sub: '大丈夫当如此也', row: 0, lanes: ['lb'], mins: 6 },
-  { id: 'xy1', title: '学万人敌', sub: '彼可取而代也', row: 0, lanes: ['xy'], mins: 6 },
-  { id: 'xh1', title: '沛县主吏', sub: '何独以五', row: 0, lanes: ['xh'], mins: 6 },
+  { id: 'xy1', title: '学万人敌', sub: '彼可取而代也', row: 0, lanes: ['xy'], mins: 7 },
+  { id: 'xh1', title: '沛县主吏', sub: '何独以五', row: 0, lanes: ['xh'], mins: 7 },
   { id: 'zl1', title: '博浪沙', sub: '误中副车', row: 0, lanes: ['zl'], mins: 6 },
-  { id: 'zh1', title: '淮阴少年', sub: '漂母分饭，胯下之辱', row: 0, lanes: ['hx'], mins: 6 },
+  { id: 'zh1', title: '淮阴少年', sub: '漂母分饭，胯下之辱', row: 0, lanes: ['hx'], mins: 7 },
   { id: 'zl2', title: '圯上纳履', sub: '孺子可教矣', row: 1, lanes: ['zl'], mins: 7 },
   { id: 'dz', title: '大泽乡', sub: '王侯将相宁有种乎', row: 2, lanes: ['lb', 'xy', 'xh', 'zl', 'hx'], star: true, mins: 16 },
   { id: 'lb2', title: '沛公', sub: '天下苦秦久矣', row: 3, lanes: ['lb', 'xh'], mins: 7 },
@@ -35,7 +35,7 @@ export const NODES: MapNode[] = [
   { id: 'zh4', title: '拜将', sub: '萧何追韩信，国士无双', row: 7, lanes: ['lb', 'xh', 'hx'], star: true, mins: 16 },
   { id: 'lb4', title: '彭城之败', sub: '推堕孝惠、鲁元车下', row: 8, lanes: ['lb'], mins: 5 },
   { id: 'xy4', title: '彭城大捷', sub: '三万破五十六万', row: 8, lanes: ['xy'], mins: 5 },
-  { id: 'xh3', title: '镇守关中', sub: '转漕给军，不乏', row: 8, lanes: ['xh'], mins: 7 },
+  { id: 'xh3', title: '镇守关中', sub: '转漕给军，不乏', row: 8, lanes: ['xh'], mins: 8 },
   { id: 'zl5', title: '借箸代筹', sub: '竖儒，几败而公事', row: 8, lanes: ['zl'], mins: 7 },
   { id: 'zh5', title: '背水一战', sub: '置之死地而后生', row: 8, lanes: ['hx'], mins: 9 },
   { id: 'lb5', title: '分我一杯羹', sub: '吾翁即若翁', row: 9, lanes: ['lb', 'xy'], mins: 7 },
