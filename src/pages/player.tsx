@@ -291,7 +291,7 @@ export default function PlayerPage({ id }: { id: string }) {
               <div className="absolute right-3 z-20 flex max-w-[46%] flex-col items-end gap-1.5" style={{ top: retTo && vy < 40 ? 44 : 12 }}>
                 {sideNow.map(({ it, k }) => (
                   <motion.button key={it.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} onClick={(e) => { e.stopPropagation(); openSide(it, k); }} title="可做可不做；做了也得星星" className="flex items-center gap-1.5 rounded-full bg-[#FFF8EA]/95 px-3 py-1 text-left text-[14px] font-black text-[#2B2722] shadow-lg ring-1 ring-[#E3C48F] hover:bg-white">
-                    <span className="shrink-0 text-[12px] text-[#9A5B2E]">⭐ 支线任务</span><span className="kai text-[16px] font-normal">{it.label}</span>
+                    <span className="shrink-0 text-[12px] text-[#9A5B2E]">☆ 支线任务</span><span className="kai text-[16px] font-normal">{it.label}</span>
                   </motion.button>
                 ))}
               </div>
@@ -335,7 +335,7 @@ export default function PlayerPage({ id }: { id: string }) {
                 )}
                 {allSides.length > 0 && (() => { const left = allSides.filter(({ it }) => !sideDone(it)); return (
                   <div className="max-w-[86%] text-center">
-                    <div className="text-[14px] opacity-90">⭐ 支线任务：做了 {allSides.length - left.length} / {allSides.length}{left.length ? '。还可以做：' : '，全做完了！'}</div>
+                    <div className="text-[14px] opacity-90">{left.length < allSides.length ? '★' : '☆'} 支线任务：做了 {allSides.length - left.length} / {allSides.length}{left.length ? '。还可以做：' : '，全做完了！'}</div>
                     {left.length > 0 && <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">{left.map(({ it, k }) => <button key={it.id} onClick={() => openSide(it, k)} className="kai rounded-full bg-[#FFF6E6] px-3 py-0.5 text-[16px] text-[#5A3A18] hover:bg-white">{it.label}</button>)}</div>}
                   </div>
                 ); })()}
@@ -632,7 +632,7 @@ function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onT
               {sides[k].map((s) => { const sr = p.recs[s.id], sd = sr?.status === 'done'; return (
                 <Fragment key={s.id}>
                   <button onClick={() => onSide(s, k)} className="flex items-center gap-1 font-black hover:underline" title="支线任务：可做可不做，做了也得星星">
-                    {sd ? <Stars n={sr!.stars} size={13} /> : <span className="rounded-full bg-[#F3E2C4] px-1.5 text-[11px] text-[#7A4A1E]">⭐ 支线</span>}{s.label}
+                    {sd ? <Stars n={sr!.stars} size={13} /> : <span className="rounded-full bg-[#F3E2C4] px-1.5 text-[11px] text-[#7A4A1E]">☆ 支线</span>}{s.label}
                   </button>
                   {sd && (s.ext ?? []).map((e) => { const d = extsOf(sr)[e.id] !== undefined; return <button key={e.id} onClick={() => onExt(s, e)} className={`font-bold hover:underline ${d ? 'text-emerald-700' : 'text-[#9A5B2E]'}`}>· {e.title}{d ? ' ✓' : ''}</button>; })}
                 </Fragment>
@@ -818,7 +818,7 @@ function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it
         <GlossContext.Provider value={{ gloss, onGloss }}>
           <SaveCtx.Provider value={pre}>
             {/* 标题栏不跟着滚：一直看得到在做哪一段、第几问 */}
-            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2">{side ? <span className="rounded-full bg-[#F3E2C4] px-2 py-0.5 text-[13px] font-black text-[#7A4A1E]">⭐ 支线任务</span> : <Glasses size={20} className="text-sky-600" />}<span className="text-lg font-black">{ext.title}</span>
+            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2">{side ? <span className="rounded-full bg-[#F3E2C4] px-2 py-0.5 text-[13px] font-black text-[#7A4A1E]">{rec?.status === 'done' ? '★' : '☆'} 支线任务</span> : <Glasses size={20} className="text-sky-600" />}<span className="text-lg font-black">{ext.title}</span>
               {qs.length > 1 && <span className="flex gap-1">{qs.map((_, k) => <span key={k} className={`h-1.5 w-4 rounded-full ${k < cur ? 'bg-emerald-500' : k === cur ? '' : 'bg-[#E6DCC6]'}`} style={k === cur && !finished ? { background: color } : {}} />)}</span>}
               {canClose && <button onClick={onClose} className="ml-auto rounded-full p-1.5 text-ink2 hover:bg-black/5" aria-label="关闭"><X size={20} /></button>}</div>
             {/* 和读书眼镜的对话：它在左边讲、问，我的回答在右边 */}

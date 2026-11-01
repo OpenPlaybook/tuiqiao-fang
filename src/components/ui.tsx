@@ -62,7 +62,7 @@ export const Btn = ({ children, onClick, color = '#2B2722', shadow, className = 
 };
 
 export const StarIcon = ({ size = 24, on = true }: { size?: number; on?: boolean }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill={on ? '#E0A526' : '#E7DFCF'} stroke={on ? '#B9801A' : '#CFC4AE'} strokeWidth="1.2" strokeLinejoin="round" /></svg>
+  <svg width={size} height={size} viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill={on ? '#E0A526' : 'none'} stroke={on ? '#B9801A' : '#CFC4AE'} strokeWidth="1.2" strokeLinejoin="round" /></svg>
 );
 export const Stars = ({ n, max = 3, size = 22 }: { n: number; max?: number; size?: number }) => <span className="inline-flex gap-0.5">{Array.from({ length: max }, (_, i) => <StarIcon key={i} size={size} on={i < n} />)}</span>;
 
@@ -88,7 +88,7 @@ const StarCounter = () => {
   useEffect(() => { if (n > prev.current) setBump((b) => b + 1); prev.current = n; }, [n]);
   return (
     <motion.div ref={(el) => { counterEl = el; }} key={bump} initial={{ scale: bump ? 1.3 : 1 }} animate={{ scale: 1 }} className="flex items-center gap-1.5 rounded-full border-2 border-amber-200 bg-white/90 px-3 py-1 chunky">
-      <StarIcon size={24} /><span className="text-2xl font-black tabular-nums text-amber-700">{n}</span>
+      <StarIcon size={24} on={n > 0} /><span className="text-2xl font-black tabular-nums text-amber-700">{n}</span>
     </motion.div>
   );
 };
