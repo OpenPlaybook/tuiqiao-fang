@@ -11,7 +11,7 @@ const err = (m: string) => { bad++; console.log('✗ ' + m); };
 const warn = (m: string) => console.log('· ' + m);
 for (const play of PLAYS) {
   const used = new Set<string>(); // 用上了的“字|那段原文”
-  const items = new Set(play.lines.flatMap((l) => l.task ?? []));
+  const items = new Set(play.lines.flatMap((l) => [...(l.task ?? []), ...(l.side ?? [])]));
   const visit = (text: string, where: string, story: boolean) => {
     // ⟨1|…⟩ 里面的是另一段文字（Rich 单独排）
     for (const m of text.matchAll(/⟨\d+\|([^⟩]*)⟩/g)) visit(m[1], where, story);

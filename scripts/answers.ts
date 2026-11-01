@@ -26,6 +26,11 @@ const out: string[] = ['# 第六堂课 关卡内容与答案', '', '由网站内
 for (const P of PLAYS) {
   out.push(`## ${P.title}　${P.sub}`, '');
   P.lines.forEach((l, k) => {
+    for (const id of l.side ?? []) {
+      const it = ITEM_BY_ID[id]; if (!it) continue;
+      out.push(`### 支线任务（第 ${k + 1} 句）：${it.label}　${LV_NAME[it.lv]}　\`${it.id}\``, '', ...it.steps.map(sub), '', `讲解：${plain(it.explain)}`, '');
+      for (const e of it.ext ?? []) out.push(`**拓展：${e.title}**（选做）`, '', ...e.steps.map(sub), '');
+    }
     if (!l.task) return;
     out.push(`### 第 ${k + 1} 句：${plain(l.t)}`, '');
     for (const id of l.task) {

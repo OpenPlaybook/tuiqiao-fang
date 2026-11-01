@@ -1,5 +1,5 @@
 // 自适应：能力估计、选题的难度版本、星星与加权分。学生端和服务器共用，结果只取决于玩家记录。
-import type { Item, Lv, Player, Rec, StationId, Track } from './types';
+import type { Item, Line, Lv, Player, Rec, StationId, Track } from './types';
 import { ITEMS, ITEM_BY_ID } from './bank';
 import { PLAYS, PLAY_BY_ID } from './play';
 import { NODES, NODE_BY_ID, laneHas, lanesOf } from './play/storymap';
@@ -71,8 +71,18 @@ export const sideOf = (p: Player) => Object.values(p.recs).filter((r) => r.id.en
 export const bonusOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.bonus || 0), 0);
 export const weightedOf = (p: Player) => Math.round((doneRecs(p).reduce((s, r) => s + r.stars * W[ITEM_BY_ID[r.id].lv] + extStars(r), 0) + bonusOf(p)) * 10) / 10;
 export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).reduce((s, r) => s + recStars(r), 0);
-/** 一站最多能得几颗星：每道题 3 颗，再加这道题的每个拓展 1 颗（选做的也算——全做完才是满星） */
-export const maxStarsOf = (id: string) => (PLAY_BY_ID[id]?.lines ?? []).reduce((a, l) => { const it = l.task?.length ? ITEM_BY_ID[l.task[0]] : null; return a + (it ? 3 + (it.ext?.length ?? 0) : 0); }, 0);
+/** 只为出支线题才有的句子（出题的问句、AI 眼镜的错译、小结）：播放时跳过，这句话放进支线任务的弹窗里 */
+export const sideOnly = (lines: Line[], k: number) => {
+  const l = lines[k];
+  if (!l?.prompt || l.task?.length) return false;
+  const t = l.prompt === true ? l : lines.find((x) => x.id === l.prompt);
+  return !!t && !t.task?.length && !!t.side?.length;
+};
+/** 一站的支线任务（挂在各句上的可选题） */
+export const sideItemsOf = (id: string): Item[] => (PLAY_BY_ID[id]?.lines ?? []).flatMap((l) => (l.side ?? []).map((x) => ITEM_BY_ID[x]).filter(Boolean));
+/** 一站最多能得几颗星：每道题 3 颗，再加这道题的每个拓展 1 颗（选做的也算——全做完才是满星）；支线任务也算 */
+export const maxStarsOf = (id: string) => (PLAY_BY_ID[id]?.lines ?? []).reduce((a, l) => { const it = l.task?.length ? ITEM_BY_ID[l.task[0]] : null; return a + (it ? 3 + (it.ext?.length ?? 0) : 0); }, 0)
+  + sideItemsOf(id).reduce((a, it) => a + 3 + (it.ext?.length ?? 0), 0);
 /** 一站的探索分：问 AI 时自己想出了后一半、点字去看了别的用法并答对（同一个字只算一次） */
 export const stationSide = (p: Player, id: string) => { const r = p.recs[`${id}-log`]; return r ? r.log.filter((e) => e.q === 'askok').length + new Set(r.log.filter((e) => e.q === 'more').map((e) => e.v)).size : 0; };
 export const unsureOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.unsure || 0), 0);
@@ -89,7 +99,7 @@ export const requiredExts = (it: Item, r: { perf?: number; unsure?: number; stat
   const struggled = (r.perf ?? 1) < 0.99 || (r.unsure ?? 0) > 0;
   return (it.ext ?? []).filter((e) => e.need === 'always' || (e.need === 'wrong' && struggled));
 };
-/** 这一站做完了：每一句的题（按难度挑出的那一道）都做完，必做的拓展也做完——和播放页“做完才能往下”是同一个标准 */
+/** 这一站做完了：每一句的题（按难度挑出的那一道）都做完，必做的拓展也做完——和播放页“做完才能往下”是同一个标准（支线任务不算） */
 export const playComplete = (p: Player | null | undefined, id: string) => {
   const play = PLAY_BY_ID[id];
   if (!p || !play) return false;

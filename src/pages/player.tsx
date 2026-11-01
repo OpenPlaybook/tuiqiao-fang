@@ -1,7 +1,7 @@
 // 播放式故事：画面（水墨 + 镜头推拉）+ 配音 + 字幕，一句一句往下播；播到题就停，题在画面里做。
 // 画面尽量大：字幕、进度条都在画面里；右边窄栏是“台本”（播过的每一句，可点的字随时能点；做过的题、拓展入口挂在题下面），最下面可以问 AI。
 // 做过的题点进度条上的标记、或者台本里的题，就能回来看自己的答案；拓展在居中弹窗里，按“讲—例—练”往下走。
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -9,7 +9,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import { CornerUpLeft, Glasses, Loader2, Pause, Play as PlayIcon, RotateCcw, Send, Volume2, VolumeX, X } from 'lucide-react';
 import type { Back, Ext, Gloss, Item, Line, MisSub, Play } from '../shared/types';
 import { MODES, MODE_TIP, PLAY_BY_ID, enLevel, modeKey, plainText, voiceFile, voiceLine, wordVoice, type Mode } from '../shared/play';
-import { extsOf, requiredExts, resultOf, scoredSteps, taskItem } from '../shared/adapt';
+import { extsOf, requiredExts, resultOf, scoredSteps, sideOnly, taskItem } from '../shared/adapt';
+import { ITEM_BY_ID } from '../shared/bank';
 import { Art, Btn, GlossContext, Rich, Stars, centerOf, shuffleIdx } from '../components/ui';
 import { type GlossAt, enSpans, sentAtPos, sentOf } from '../shared/gloss';
 import { finishItem, fly, getState as useGameState, logPlay, markUnsure, setData, setExtDone, startItem, toast, useGame } from '../game/store';
@@ -69,7 +70,12 @@ export default function PlayerPage({ id }: { id: string }) {
   const lineDur = (l: Line) => { const v = voiceLine(l, mode); return (dur[voiceFile(v)] ?? EST(v.read ?? v.t)) + (l.pause ?? 0.35); };
   // 出题句（AI 眼镜的错译、“___ 填什么”这类问句）：题做完以后再播就跳过，进度条上也不占时间
   const promptDone = (k: number) => { const l = lines[k]; if (!l?.prompt) return false; const tk = l.prompt === true ? k : lines.findIndex((x) => x.id === l.prompt); return tk >= 0 && !!items[tk] && done(tk) && extOk(tk); };
-  const starts: number[] = []; { let t = 0; lines.forEach((l, k) => { starts.push(t); t += promptDone(k) ? 0 : lineDur(l); }); starts.push(t); }
+  // 只为出支线题才有的句子（问句、AI 眼镜的错译、小结）：播放时也跳过，这句话放进支线任务的弹窗里
+  const skip = (k: number) => promptDone(k) || sideOnly(lines, k);
+  const starts: number[] = []; { let t = 0; lines.forEach((l, k) => { starts.push(t); t += skip(k) ? 0 : lineDur(l); }); starts.push(t); }
+  // 支线任务：挂在句子上的可选题，不拦着故事往下走
+  const sides = lines.map((l) => (l.side ?? []).map((x) => ITEM_BY_ID[x]).filter(Boolean));
+  const sideDone = (it: Item) => p.recs[it.id]?.status === 'done';
 
   // 接着看：从最后做完的那道题后面一句开始（拓展没做完就停在那道题上）
   const lastDone = lines.reduce((a, l, k) => (l.task && items[k] && p.recs[items[k]!.id]?.status === 'done' ? k : a), -1);
@@ -84,7 +90,7 @@ export default function PlayerPage({ id }: { id: string }) {
   const [elapsed, setElapsed] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
   const [glossPop, setGlossPop] = useState<{ w: string; g: Gloss; sent: [string, string] | null; x: number; y: number; lv: 1 | 2; more?: boolean; wrong?: number[]; got?: boolean; locked?: boolean; sentence?: string } | null>(null);
-  const [extOpen, setExtOpen] = useState<{ it: Item; ext: Ext } | null>(null);
+  const [extOpen, setExtOpen] = useState<{ it: Item; ext: Ext; side?: number } | null>(null); // side：这是挂在第几句上的支线任务（整道题在弹窗里做）
   const [askPreset, setAskPreset] = useState<{ q: string; n: number } | null>(null); // 结束页上点的问题，交给右边的“问 AI”
   // 英文：每一句点开到哪儿（字幕和右边共用）；换字幕档位就从新的那一档重新开始
   const [enS, setEnS] = useState<Record<number, EnSt>>({});
@@ -141,7 +147,7 @@ export default function PlayerPage({ id }: { id: string }) {
   useEffect(() => {
     waiting.current = false; setWait(null);
     if (phase !== 'play') return;
-    if (promptDone(idx)) { const tm = window.setTimeout(endLine, 0); return () => clearTimeout(tm); } // 做完了的出题句：直接跳过
+    if (skip(idx)) { const tm = window.setTimeout(endLine, 0); return () => clearTimeout(tm); } // 做完了的出题句、只为支线题才有的句子：直接跳过
     let alive = true, iv = 0;
     const l = lines[idx], file = voiceFile(voiceLine(l, mode));
     const start = (src?: string) => {
@@ -190,7 +196,7 @@ export default function PlayerPage({ id }: { id: string }) {
     if (need) { const tm = setTimeout(() => setExtOpen({ it: item, ext: need }), 1200); return () => clearTimeout(tm); }
   }, [phase, idx, p, extOpen]);
 
-  const seek = async (k0: number) => { let k = k0; while (k < n - 1 && promptDone(k)) k++; if (k > maxIdx && k > far) return; stop(); await unlock(); sfx('click'); resumeAt.current = null; setIdx(k); setPhase('play'); setAgain((x) => x + 1); };
+  const seek = async (k0: number) => { let k = k0; while (k < n - 1 && skip(k)) k++; if (k > maxIdx && k > far) return; stop(); await unlock(); sfx('click'); resumeAt.current = null; setIdx(k); setPhase('play'); setAgain((x) => x + 1); };
   useEffect(() => { resumeAt.current = null; }, [mode, muted]); // 换了讲解方式（配音换了）：从句首放
   /** 重听这一句：从句首再放一遍（英文没听清时最有用） */
   const replay = async () => { stop(); await unlock(); sfx('click'); resumeAt.current = null; setPhase('play'); setAgain((x) => x + 1); };
@@ -206,6 +212,19 @@ export default function PlayerPage({ id }: { id: string }) {
     if (phase === 'task') { if (done(idx) && extOk(idx)) cont(); return; }
     setPhase('play');
   };
+  /** 打开一个支线任务：正在播就先停下来（关上以后点播放接着看） */
+  const openSide = (it: Item, k: number) => {
+    if (phase === 'play') void playPause();
+    sfx('click'); setExtOpen({ it, ext: { id: 'side', title: it.label, need: 'opt', steps: it.steps }, side: k });
+  };
+  // 画面右上角：刚播过的几句里挂着的支线任务（没做的），点一下就做
+  const sideNow = (() => {
+    if (phase !== 'play' && phase !== 'pause') return [];
+    const out: { it: Item; k: number }[] = [];
+    for (let k = idx, seen = 0; k >= 0 && seen < 3; k--) { if (!skip(k)) seen++; for (const it of sides[k]) if (!sideDone(it)) out.push({ it, k }); }
+    return out.slice(0, 3);
+  })();
+  const allSides = sides.flatMap((xs, k) => xs.map((it) => ({ it, k })));
   const cont = async () => { await unlock(); if (idx >= n - 1) { setPhase('end'); return; } setIdx((k) => k + 1); setPhase('play'); };
   // 点画面中间：播放 / 暂停（像看视频一样）。做题、封面、看完的时候不管；点字的小窗开着时，这一下只是关小窗
   const [flash, setFlash] = useState<{ play: boolean; n: number } | null>(null);
@@ -264,6 +283,15 @@ export default function PlayerPage({ id }: { id: string }) {
                 <button onClick={() => setHint(null)} className="-mr-1 -mt-1 self-start rounded-full p-0.5 text-ink2 hover:bg-black/5"><X size={14} /></button>
               </motion.div>
             )}
+            {sideNow.length > 0 && (
+              <div className="absolute right-3 z-20 flex max-w-[46%] flex-col items-end gap-1.5" style={{ top: retTo && vy < 40 ? 44 : 12 }}>
+                {sideNow.map(({ it, k }) => (
+                  <motion.button key={it.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} onClick={(e) => { e.stopPropagation(); openSide(it, k); }} title="可做可不做；做了也得星星" className="flex items-center gap-1.5 rounded-full bg-[#FFF8EA]/95 px-3 py-1 text-left text-[14px] font-black text-[#2B2722] shadow-lg ring-1 ring-[#E3C48F] hover:bg-white">
+                    <span className="shrink-0 text-[12px] text-[#9A5B2E]">🧭 支线任务</span><span className="kai text-[16px] font-normal">{it.label}</span>
+                  </motion.button>
+                ))}
+              </div>
+            )}
             {/* 字幕：在画面里，躲开下面的控制条 */}
             {showSub && !stem && (
               <div className="subline absolute inset-x-0 bg-gradient-to-t from-black/70 to-black/0 px-6 pb-1.5 pt-6 text-center font-bold leading-relaxed text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]" style={{ fontSize: subSize, bottom: Math.max(0, CTRL - vy) }}>
@@ -301,6 +329,12 @@ export default function PlayerPage({ id }: { id: string }) {
                     <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">{play.endAsk!.map((q) => <button key={q} onClick={() => { sfx('click'); setAskPreset((x) => ({ q, n: (x?.n ?? 0) + 1 })); }} className="rounded-full bg-sky-50 px-3 py-1 text-[14px] font-bold text-sky-900 hover:bg-white">🔎 {q}</button>)}</div>
                   </div>
                 )}
+                {allSides.length > 0 && (() => { const left = allSides.filter(({ it }) => !sideDone(it)); return (
+                  <div className="max-w-[86%] text-center">
+                    <div className="text-[14px] opacity-90">🧭 支线任务：做了 {allSides.length - left.length} / {allSides.length}{left.length ? '。还可以做：' : '，全做完了！'}</div>
+                    {left.length > 0 && <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">{left.map(({ it, k }) => <button key={it.id} onClick={() => openSide(it, k)} className="kai rounded-full bg-[#FFF6E6] px-3 py-0.5 text-[16px] text-[#5A3A18] hover:bg-white">{it.label}</button>)}</div>}
+                  </div>
+                ); })()}
                 <NextStops play={play} />
                 <div className="mt-1 flex items-center gap-3">
                   {en && play.next && PLAY_BY_ID[play.next] ? <Btn color={play.color} onClick={() => go(`/c/${play.next}`)}>下一章 ›</Btn> : <Btn color={play.color} onClick={() => go('/')}>回到{en ? '目录' : '故事线图'}</Btn>}
@@ -347,7 +381,7 @@ export default function PlayerPage({ id }: { id: string }) {
         </div>
 
         {/* ---------- 台本（AI 眼镜） ---------- */}
-        <Script play={play} mode={mode} items={items} far={Math.min(far, n - 1)} idx={idx} phase={phase} maxIdx={maxIdx} onSeek={seek} onTask={openTask} onExt={(it, ext) => setExtOpen({ it, ext })} onBack={jump} askHint={askHint} line={line} item={atTask ? item : null} askPreset={askPreset} lineLock={lineLock} />
+        <Script play={play} mode={mode} items={items} sides={sides} far={Math.min(far, n - 1)} idx={idx} phase={phase} maxIdx={maxIdx} onSeek={seek} onTask={openTask} onSide={openSide} onExt={(it, ext) => setExtOpen({ it, ext })} onBack={jump} askHint={askHint} line={line} item={atTask ? item : null} askPreset={askPreset} lineLock={lineLock} />
       </div>
 
       {glossPop && (() => {
@@ -380,7 +414,7 @@ export default function PlayerPage({ id }: { id: string }) {
           </div>
         );
       })()}
-      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={onGloss} />}</AnimatePresence>
+      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} side={extOpen.side !== undefined ? { line: lines[extOpen.side], prev: lines[extOpen.side - 1] } : undefined} onExt={(e) => setExtOpen({ it: extOpen.it, ext: e })} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={onGloss} />}</AnimatePresence>
     </EnCtx.Provider></GlossContext.Provider>
   );
 }
@@ -568,7 +602,7 @@ function EnMore({ l, k }: { l: Line; k: number; lock?: boolean }) {
 }
 
 // ---------------- 右边：看过的内容（可点的字带虚线，随时能点；谁说的一眼看得出；不套框，省地方）----------------
-function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, onExt, onBack, askHint, line, item, askPreset, lineLock }: { play: Play; mode: Mode; items: (Item | null)[]; far: number; idx: number; phase: string; maxIdx: number; onSeek: (k: number) => void; onTask: (k: number) => void; onExt: (it: Item, e: Ext) => void; onBack: (b: Back) => void; askHint: string; line: Line; item: Item | null; askPreset: { q: string; n: number } | null; lineLock: (k: number) => boolean }) {
+function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onTask, onSide, onExt, onBack, askHint, line, item, askPreset, lineLock }: { play: Play; mode: Mode; items: (Item | null)[]; sides: Item[][]; far: number; idx: number; phase: string; maxIdx: number; onSeek: (k: number) => void; onTask: (k: number) => void; onSide: (it: Item, k: number) => void; onExt: (it: Item, e: Ext) => void; onBack: (b: Back) => void; askHint: string; line: Line; item: Item | null; askPreset: { q: string; n: number } | null; lineLock: (k: number) => boolean }) {
   const p = useGame((s) => s.player)!;
   const cur = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -585,6 +619,20 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
           const showTask = it && (k < far || isDone || (k === idx && phase === 'task'));
           const yuan = l.card && (l.card.kind === 'yuan' || l.card.kind === 'poem');
           const on = k === idx;
+          // 支线任务：挂在句子下面；只为出支线题才有的句子不显示原话（放在弹窗里），只留入口
+          const sideRow = sides[k].length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 pb-1 pl-6 text-[13px]">
+              {sides[k].map((s) => { const sr = p.recs[s.id], sd = sr?.status === 'done'; return (
+                <Fragment key={s.id}>
+                  <button onClick={() => onSide(s, k)} className="flex items-center gap-1 font-black hover:underline" title="支线任务：可做可不做，做了也得星星">
+                    {sd ? <Stars n={sr!.stars} size={13} /> : <span className="rounded-full bg-[#F3E2C4] px-1.5 text-[11px] text-[#7A4A1E]">🧭 支线</span>}{s.label}
+                  </button>
+                  {sd && (s.ext ?? []).map((e) => { const d = extsOf(sr)[e.id] !== undefined; return <button key={e.id} onClick={() => onExt(s, e)} className={`font-bold hover:underline ${d ? 'text-emerald-700' : 'text-[#9A5B2E]'}`}>· {e.title}{d ? ' ✓' : ''}</button>; })}
+                </Fragment>
+              ); })}
+            </div>
+          );
+          if (sideOnly(play.lines, k)) return sideRow ? <div key={k}>{sideRow}</div> : null;
           return (
             <div key={k} ref={on ? cur : undefined} className={on ? 'bg-amber-50 shadow-[inset_3px_0_0_#E0A030]' : ''}>
               <div onClick={() => onSeek(k)} className={`cursor-pointer px-3 py-1 leading-relaxed hover:bg-[#F6EFDF] ${l.voice === 'ai' ? 'text-sky-900' : 'text-[#2F2A24]'} ${yuan ? 'kai text-[17px]' : 'text-[15px]'}`}>
@@ -604,6 +652,7 @@ function Script({ play, mode, items, far, idx, phase, maxIdx, onSeek, onTask, on
                   {isDone && (it.back ?? []).map((b) => <button key={b.label} onClick={() => onBack(b)} className="flex items-center gap-0.5 text-left font-bold text-sky-700 hover:underline"><CornerUpLeft size={12} className="shrink-0" />{b.label}</button>)}
                 </div>
               )}
+              {sideRow}
             </div>
           );
         })}
@@ -698,11 +747,12 @@ function NextStops({ play }: { play: Play }) {
 }
 
 // ---------------- 拓展（居中弹窗）：像老师上课一样一步一问——讲一小段，紧跟着问一句；答对了才往下讲。做过的直接显示答案 ----------------
-function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: Ext; color: string; onClose: () => void; gloss: Record<string, Gloss>; onGloss: (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => void }) {
+// 支线任务也在这个弹窗里做（side）：上面是它挂着的那句话，下面一步一问；做完给星星、讲解，它的拓展从这里接着点
+function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it: Item; ext: Ext; side?: { line: Line; prev?: Line }; onExt: (e: Ext) => void; color: string; onClose: () => void; gloss: Record<string, Gloss>; onGloss: (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => void }) {
   const rec = useGame((s) => s.player?.recs[it.id]);
-  const required = requiredExts(it, rec).some((e) => e.id === ext.id);
-  const already = extsOf(rec)[ext.id] !== undefined;
-  const pre = ext.id + ':';
+  const required = !side && requiredExts(it, rec).some((e) => e.id === ext.id);
+  const already = side ? rec?.status === 'done' : extsOf(rec)[ext.id] !== undefined;
+  const pre = side ? '' : ext.id + ':';
   const qs = ext.steps.map((s, i) => (s.kind === 'teach' ? -1 : i)).filter((i) => i >= 0); // 要答的那几问
   const [cur, setCur] = useState(() => {
     if (already) return qs.length;
@@ -711,7 +761,7 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
   const [scores] = useState<Record<number, number>>(() => Object.fromEntries(qs.map((i) => [i, ansOf(it)[pre + ext.steps[i].key]?.sc]).filter((x) => x[1] !== undefined)));
   const finished = cur >= qs.length;
   const upto = finished ? ext.steps.length - 1 : qs[cur]; // 显示到第几步
-  useEffect(() => { if (!qs.length && !already) setExtDone(it, ext.id, 1); }, []);
+  useEffect(() => { if (side) startItem(it); else if (!qs.length && !already) setExtDone(it, ext.id, 1); }, []);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
   const firstShown = useRef(cur);
@@ -732,7 +782,7 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
     const pc: Piece = { i, lead: carry, tail: [], hideQ: !!lastChoice };
     carry = []; pieces.push(pc); lastChoice = s.kind === 'choice' ? pc : null;
   }
-  const endMsg = ext.reveal ? '这一段讲完了。刚才那道题每个选项为什么对、为什么不对，现在都能看了。' : '这一段讲完了。';
+  const endMsg = side ? <Rich text={it.explain} /> : ext.reveal ? '这一段讲完了。刚才那道题每个选项为什么对、为什么不对，现在都能看了。' : '这一段讲完了。';
   let trailing: ReactNode[] | null = null;
   if (finished) { const rest = [...carry, <div key="end">{endMsg}</div>]; if (lastChoice) lastChoice.tail.push(...rest); else trailing = rest; }
   // 新的话接在上一个气泡后面：先让上一个气泡的底露出来，再滚到新的一问
@@ -747,8 +797,11 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
     scores[i] = x;
     setTimeout(() => {
       if (cur + 1 < qs.length) { setCur(cur + 1); return; }
-      const vs = Object.values(scores);
-      setExtDone(it, ext.id, vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 1); setCur(qs.length); sfx('star');
+      if (side) {
+        const sc = qs.map((k) => scores[k] ?? 0), { stars, perf } = resultOf(sc, rec?.unsure ?? 0);
+        finishItem(it, stars, perf); setData(it, { scores: sc }); const c = centerOf(endRef.current); fly(c.x, c.y, stars);
+      } else { const vs = Object.values(scores); setExtDone(it, ext.id, vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 1); }
+      setCur(qs.length); sfx('star');
     }, 900);
   };
   const canClose = !required || finished;
@@ -758,11 +811,16 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
         <GlossContext.Provider value={{ gloss, onGloss }}>
           <SaveCtx.Provider value={pre}>
             {/* 标题栏不跟着滚：一直看得到在做哪一段、第几问 */}
-            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2"><Glasses size={20} className="text-sky-600" /><span className="text-lg font-black">{ext.title}</span>
+            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2">{side ? <span className="rounded-full bg-[#F3E2C4] px-2 py-0.5 text-[13px] font-black text-[#7A4A1E]">🧭 支线任务</span> : <Glasses size={20} className="text-sky-600" />}<span className="text-lg font-black">{ext.title}</span>
               {qs.length > 1 && <span className="flex gap-1">{qs.map((_, k) => <span key={k} className={`h-1.5 w-4 rounded-full ${k < cur ? 'bg-emerald-500' : k === cur ? '' : 'bg-[#E6DCC6]'}`} style={k === cur && !finished ? { background: color } : {}} />)}</span>}
               {canClose && <button onClick={onClose} className="ml-auto rounded-full p-1.5 text-ink2 hover:bg-black/5" aria-label="关闭"><X size={20} /></button>}</div>
             {/* 和读书眼镜的对话：它在左边讲、问，我的回答在右边 */}
             <div ref={boxRef} className="min-h-0 flex-1 overflow-auto px-5 pb-4 pt-3"><div className="space-y-2.5">
+              {side && (() => {
+                // 挂着的那句话：AI 眼镜的错译、小结这类句子本身就在题里，只给它前面那句原文
+                const l = side.line, c = l.hide ? side.prev?.card : l.card, t = c?.t ?? (l.hide ? '' : l.t);
+                return t ? <div className="rounded-xl bg-[#F7EFD9] px-4 py-2">{(c?.by ?? l.who) && <div className="text-xs font-black text-[#8A6A2F]"><Rich text={c?.by ?? l.who!} /></div>}<div className="kai text-[19px] leading-relaxed"><Rich text={t} /></div></div> : null;
+              })()}
               {pieces.map(({ i, lead, tail, hideQ, wide }) => { const s = ext.steps[i]; return (
                 <motion.div key={s.key} ref={(el) => { refs.current[i] = el; }} initial={i > (qs[firstShown.current] ?? -1) ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
                   {s.kind === 'choice' ? <ChoiceChat it={it} s={s} color={color} onDone={(x) => answered(i, x)} lead={lead.length ? lead : undefined} tail={tail.length ? tail : undefined} hideQ={hideQ} wideTail={wide} />
@@ -773,7 +831,9 @@ function ExtModal({ it, ext, color, onClose, gloss, onGloss }: { it: Item; ext: 
               <div ref={endRef} />
             </div>
             {!finished && !required && <div className="mt-2 text-right"><button onClick={onClose} className="text-sm font-bold text-ink2 underline">先不做了，回到故事</button></div>}</div>
-            {finished && <div className="shrink-0 border-t border-[#EFE6D2] px-5 py-2.5 text-right"><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
+            {finished && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[#EFE6D2] px-5 py-2.5">
+              {side && rec?.status === 'done' && <><Stars n={rec.stars} size={18} />{(it.ext ?? []).map((e) => <ExtChip key={e.id} e={e} done={extsOf(rec)[e.id] !== undefined} onClick={() => onExt(e)} />)}</>}
+              <span className="ml-auto" /><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
           </SaveCtx.Provider>
         </GlossContext.Provider>
       </motion.div>
