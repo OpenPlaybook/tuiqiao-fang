@@ -55,7 +55,7 @@ export const SHOTS1: Record<string, ShotDef> = {
   // ---------- 0 读书眼镜翻开《史记》 ----------
   'a.slips': {
     bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '淮阴侯韩信者淮阴人也始为布衣时贫无行不得推择为吏'),
-    fg: (u, g) => { const k = seg(u, 0, 0.55), shine = seg(u, 0.55, 0.9); return glow('x', 800, 470, 300, g, 0, 0.3) + glasses(800, lerp(-120, 300, k), 1.25, g, shine); },
+    fg: (u, g) => glow('x', 800, 470, 300, g, 0, 0.3),
     cam: [[800, 480, 1300], [800, 470, 1100]],
   },
   'a.inkfly': {

@@ -1,13 +1,13 @@
 // 目录：中文是一张故事线图（刘邦、项羽、萧何、张良、韩信五条线，★ 是汇合的节点），英文是一个侦探故事的四章。
-// 故事线图不按顺序锁：哪个节点都能点，只走一个人的线也行。每个节点标出大约几分钟。
+// 按进度往下走：每条线的第一站一开始就能看，读完一站，这条线的下一站才打开（★ 汇合的站：哪条线读到这里都行）；老师可以放开成“任意看”。每个节点标出大约几分钟。
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Lock, Star } from 'lucide-react';
 import { PLAYS, PLAY_BY_ID } from '../shared/play';
 import { LANES, NODES, ROWS, laneHas, type Lane, type MapNode } from '../shared/play/storymap';
-import { stationDone, stationStars } from '../shared/adapt';
+import { maxStarsOf, needFirst, playComplete, stationSide, stationStars } from '../shared/adapt';
 import { frameSvg } from '../film/Film';
-import { isOpen, useGame } from '../game/store';
+import { isOpen, lockReason, useGame } from '../game/store';
 import { sfx } from '../game/sound';
 import { DEMO } from '../game/demo';
 
@@ -27,9 +27,26 @@ export function StoryMap() {
             <div className={t === 'zh' ? 'kai text-3xl' : 'font-serif text-2xl font-black'}>{a}</div><div className="text-sm font-bold">{b}</div>
           </button>
         ))}
-        <div className="pb-1 text-ink2">{tab === 'zh' ? '戴上 AI 读书眼镜走进《史记》。选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。不必按顺序，哪里感兴趣就点哪里。' : '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。'}</div>
+        <div className="pb-1 text-ink2">{tab === 'zh' ? '戴上 AI 读书眼镜走进《史记》。选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。读完一站，下一站才打开。' : '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。'}</div>
       </div>
+      <Tally tab={tab} />
       {tab === 'zh' ? <ZhMap /> : <EnList />}
+    </div>
+  );
+}
+
+// ---------------- 星星、探索分：这一边一共得了多少、满分多少 ----------------
+function Tally({ tab }: { tab: 'zh' | 'en' }) {
+  const p = useGame((s) => s.player)!;
+  const ids = PLAYS.filter((c) => (tab === 'en') === (c.lang === 'en')).map((c) => c.id);
+  const got = ids.reduce((a, id) => a + stationStars(p, id), 0), max = ids.reduce((a, id) => a + maxStarsOf(id), 0);
+  const side = ids.reduce((a, id) => a + stationSide(p, id), 0), done = ids.filter((id) => playComplete(p, id)).length;
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl bg-white/80 px-4 py-2.5">
+      <div className="flex items-center gap-1.5"><Star size={22} className="fill-amber-400 text-amber-500" /><span className="text-2xl font-black text-amber-700">{got}</span><span className="text-ink2">/ {max} 颗星</span></div>
+      <div className="h-2.5 min-w-[120px] flex-1 overflow-hidden rounded-full bg-[#EFE6D2]"><div className="h-full rounded-full bg-amber-400" style={{ width: `${max ? (got / max) * 100 : 0}%` }} /></div>
+      <div className="flex items-center gap-1"><span className="text-xl">🧭</span><span className="text-xl font-black text-sky-700">{side}</span><span className="text-ink2">探索分</span></div>
+      <div className="text-ink2">读完 <b className="text-ink">{done}</b> / {ids.length} {tab === 'en' ? '章' : '站'}</div>
     </div>
   );
 }
@@ -70,17 +87,16 @@ function ZhMap() {
           const col = n.star ? 0 : LANES.findIndex((l) => l.id === n.lanes[0]);
           const left = n.star ? '82px' : `calc(72px + 10px + ((100% - 72px - 50px) / 5 + 10px) * ${col})`;
           const width = n.star ? 'calc(100% - 82px)' : 'calc((100% - 72px - 50px) / 5)';
-          return <NodeCard key={n.id} n={n} style={{ position: 'absolute', top: top[n.row], height: rowH[n.row], left, width }} dim={dim(n)} open={isOpen(st, n.id)} done={PLAY_BY_ID[n.id] ? stationDone(p, n.id) : 0} stars={PLAY_BY_ID[n.id] ? stationStars(p, n.id) : 0} />;
+          return <NodeCard key={n.id} n={n} style={{ position: 'absolute', top: top[n.row], height: rowH[n.row], left, width }} dim={dim(n)} open={isOpen(st, n.id)} lock={lockReason(st, n.id)} stars={PLAY_BY_ID[n.id] ? stationStars(p, n.id) : 0} max={maxStarsOf(n.id)} side={PLAY_BY_ID[n.id] ? stationSide(p, n.id) : 0} full={playComplete(p, n.id)} />;
         })}
       </div>
     </div>
   );
 }
 
-function NodeCard({ n, style, dim, open, done, stars }: { n: MapNode; style: React.CSSProperties; dim: boolean; open: boolean; done: number; stars: number }) {
+function NodeCard({ n, style, dim, open, lock, stars, max, side, full }: { n: MapNode; style: React.CSSProperties; dim: boolean; open: boolean; lock: 'teacher' | 'progress' | null; stars: number; max: number; side: number; full: boolean }) {
   const play = PLAY_BY_ID[n.id];
   const lane = LANES.find((l) => l.id === n.lanes[0])!;
-  const tasks = play ? play.lines.filter((l) => l.task).length : 0;
   const ok = !!play && open;
   const color = n.star ? '#7A5A1E' : lane.color;
   return (
@@ -92,10 +108,10 @@ function NodeCard({ n, style, dim, open, done, stars }: { n: MapNode; style: Rea
           <span className="kai truncate text-[19px]" style={{ color: play ? color : '#9A8F80' }}>{n.title}</span>
           {n.star && <span className="ml-1 flex gap-1">{n.lanes.map((l) => { const L = LANES.find((x) => x.id === l)!; return <span key={l} className="rounded-full px-1.5 text-[11px] font-bold text-white" style={{ background: L.color }}>{L.name}</span>; })}</span>}
         </div>
-        <div className="truncate text-[12px] text-ink2">{n.sub}</div>
+        <div className="truncate text-[12px] text-ink2">{lock === 'progress' ? `先读完：${needFirst(n.id).map((x) => `《${PLAY_BY_ID[x]?.title ?? x}》`).join('或')}` : n.sub}</div>
       </div>
       <div className="shrink-0 text-right text-[12px] leading-tight text-ink2">
-        {!play ? '制作中' : !open ? <span className="flex items-center gap-0.5"><Lock size={12} />未开放</span> : <><div>约 {n.mins} 分</div>{tasks > 0 && <div className="font-bold">{done}/{tasks}{stars > 0 && <span className="text-amber-700"> ★{stars}</span>}</div>}</>}
+        {!play ? '制作中' : !open ? <span className="flex items-center gap-0.5"><Lock size={12} />{lock === 'progress' ? '还没到' : '等老师开放'}</span> : <><div>{full && <span className="font-black text-emerald-600">✓ </span>}约 {n.mins} 分</div><div className="font-bold"><span className="text-amber-700">★{stars}</span><span className="text-ink2">/{max}</span>{side > 0 && <span className="text-sky-700"> 🧭{side}</span>}</div></>}
       </div>
     </motion.button>
   );
@@ -114,12 +130,12 @@ function EnList() {
       </div>
       <div className="grid gap-2 p-5 md:grid-cols-2">
         {PLAYS.filter((x) => x.lang === 'en').map((c) => {
-          const open = isOpen(st, c.id), n = c.lines.filter((l) => l.task).length, dn = stationDone(p, c.id);
+          const open = isOpen(st, c.id), full = playComplete(p, c.id), side = stationSide(p, c.id);
           return (
             <motion.button key={c.id} whileHover={open ? { y: -2 } : {}} disabled={!open} onClick={() => { sfx('click'); go(`/c/${c.id}`); }}
               className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left ${open ? 'bg-white hover:shadow' : 'bg-[#F1EBDD] opacity-70'}`} style={{ borderColor: open ? c.color + '66' : '#E6DCC6' }}>
               <div className="flex-1"><div className="font-serif text-lg font-black" style={{ color: c.color }}>{c.title}</div><div className="text-sm text-ink2">{c.sub}</div></div>
-              {open ? <div className="text-right"><div className="text-sm font-bold text-ink2">{dn} / {n}</div><div className="text-sm font-black text-amber-700">★ {stationStars(p, c.id)}</div></div> : <span className="flex items-center gap-1 text-sm font-bold text-ink2"><Lock size={16} />等老师开放</span>}
+              {open ? <div className="text-right"><div className="text-sm font-bold text-ink2">{full && <span className="text-emerald-600">✓ 读完了 </span>}</div><div className="text-sm font-black"><span className="text-amber-700">★ {stationStars(p, c.id)}</span><span className="text-ink2"> / {maxStarsOf(c.id)}</span>{side > 0 && <span className="text-sky-700"> 🧭 {side}</span>}</div></div> : <span className="flex items-center gap-1 text-sm font-bold text-ink2"><Lock size={16} />{lockReason(st, c.id) === 'progress' ? '先看完上一章' : '等老师开放'}</span>}
             </motion.button>
           );
         })}

@@ -2,6 +2,7 @@
 import type { Item, Lv, Player, Rec, StationId, Track } from './types';
 import { ITEMS, ITEM_BY_ID } from './bank';
 import { PLAYS, PLAY_BY_ID } from './play';
+import { NODES, NODE_BY_ID, laneHas, lanesOf } from './play/storymap';
 
 export interface StationMeta { id: StationId; name: string; sub: string; n: number; track: Track; emoji: string; color: string; part: string }
 /** 一回里的题（每道题是几个难度版本） */
@@ -70,8 +71,51 @@ export const sideOf = (p: Player) => Object.values(p.recs).filter((r) => r.id.en
 export const bonusOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.bonus || 0), 0);
 export const weightedOf = (p: Player) => Math.round((doneRecs(p).reduce((s, r) => s + r.stars * W[ITEM_BY_ID[r.id].lv] + extStars(r), 0) + bonusOf(p)) * 10) / 10;
 export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).reduce((s, r) => s + recStars(r), 0);
+/** 一站最多能得几颗星：每道题 3 颗，再加这道题的每个拓展 1 颗（选做的也算——全做完才是满星） */
+export const maxStarsOf = (id: string) => (PLAY_BY_ID[id]?.lines ?? []).reduce((a, l) => { const it = l.task?.length ? ITEM_BY_ID[l.task[0]] : null; return a + (it ? 3 + (it.ext?.length ?? 0) : 0); }, 0);
+/** 一站的探索分：问 AI 时自己想出了后一半、点字去看了别的用法并答对（同一个字只算一次） */
+export const stationSide = (p: Player, id: string) => { const r = p.recs[`${id}-log`]; return r ? r.log.filter((e) => e.q === 'askok').length + new Set(r.log.filter((e) => e.q === 'more').map((e) => e.v)).size : 0; };
 export const unsureOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.unsure || 0), 0);
 export const avgLvOf = (p: Player, tr?: Track) => { const d = doneRecs(p, (r) => !r.prac && (!tr || trackOf(r.st) === tr)); return d.length ? d.reduce((s, r) => s + ITEM_BY_ID[r.id].lv, 0) / d.length : 0; };
 export const maxStars = () => STATIONS.reduce((s, x) => s + 3 * x.n, 0);
 export const newPlayer = (pid: string, token: string, name: string, sid: string, avatar: number, roundId: string): Player => ({ pid, token, roundId, revision: 0, name, sid, avatar, createdAt: Date.now(), recs: {}, updatedAt: Date.now() });
 export { ITEMS };
+
+// ---------------- 按进度解锁 ----------------
+export const extsOf = (r: { data?: Record<string, unknown> } | undefined) => (r?.data?.ext as Record<string, number>) ?? {};
+/** 这道题哪些拓展必做：always 都要；wrong 要看这道题有没有答错过、点过“不确定” */
+export const requiredExts = (it: Item, r: { perf?: number; unsure?: number; status?: string } | undefined) => {
+  if (!r || r.status !== 'done') return [];
+  const struggled = (r.perf ?? 1) < 0.99 || (r.unsure ?? 0) > 0;
+  return (it.ext ?? []).filter((e) => e.need === 'always' || (e.need === 'wrong' && struggled));
+};
+/** 这一站做完了：每一句的题（按难度挑出的那一道）都做完，必做的拓展也做完——和播放页“做完才能往下”是同一个标准 */
+export const playComplete = (p: Player | null | undefined, id: string) => {
+  const play = PLAY_BY_ID[id];
+  if (!p || !play) return false;
+  const tr = (play.lang ?? 'zh') as Track;
+  return play.lines.every((l) => {
+    const it = l.task ? taskItem(p, l.task, tr) : null;
+    if (!it) return true;
+    const r = p.recs[it.id];
+    return r?.status === 'done' && requiredExts(it, r).every((e) => extsOf(r)[e.id] !== undefined);
+  });
+};
+/** 这一站在某条线上的前一站 */
+export const prevOnLane = (id: string, lane: string) => {
+  const n = NODE_BY_ID[id];
+  return n ? NODES.filter((x) => x.row < n.row && laneHas(x, lane as never)).sort((a, b) => b.row - a.row)[0] : undefined;
+};
+/** 按自己的进度，这一站能不能看：每条线的第一站一开始就能看；后面的站要先读完这条线上的前一站（★ 汇合的站：哪条线的前一站读完都行）。英文一章一章往下 */
+export const progressOpen = (p: Player | null | undefined, id: string) => {
+  const en = /^en(\d)$/.exec(id);
+  if (en) return Number(en[1]) <= 1 || playComplete(p, `en${Number(en[1]) - 1}`);
+  if (!NODE_BY_ID[id]) return true;
+  return lanesOf(id).some((lane) => { const prev = prevOnLane(id, lane); return !prev || playComplete(p, prev.id); });
+};
+/** 要先读完哪几站（给锁着的站写提示用） */
+export const needFirst = (id: string): string[] => {
+  const en = /^en(\d)$/.exec(id);
+  if (en) return Number(en[1]) > 1 ? [`en${Number(en[1]) - 1}`] : [];
+  return [...new Set(lanesOf(id).map((lane) => prevOnLane(id, lane)?.id).filter((x): x is string => !!x))];
+};

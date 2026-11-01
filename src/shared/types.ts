@@ -158,5 +158,5 @@ export interface GameConfig {
   aiReady?: boolean;
   aiLeft?: number;
 }
-/** 老师按两条大线开放：中文（楚汉五条线）、英文（Golden Panda）。后面是旧的按回开放的键：已经存下的设置里还有它们，要能通过校验 */
-export const STATION_IDS: StationId[] = ['zh', 'en', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];
+/** 老师按两条大线开放：中文（楚汉五条线）、英文（Golden Panda）；all：任意看（不按进度，哪一站都能点开）。后面是旧的按回开放的键：已经存下的设置里还有它们，要能通过校验 */
+export const STATION_IDS: StationId[] = ['zh', 'en', 'all', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];

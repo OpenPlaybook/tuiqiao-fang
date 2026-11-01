@@ -32,6 +32,8 @@ function TeacherBody({st}:{st:TeacherState}){
         <span className="font-black">开放关卡：</span>
         {([['zh', '📜 楚汉（五条故事线）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8']] as const).map(([k, t, col]) => <button key={k} onClick={() => setCfg({ open: { ...c.open, [k]: !c.open[k] } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open[k] ? 'text-white' : 'bg-white text-ink2'}`} style={c.open[k] ? { background: col, borderColor: col } : { borderColor: '#E6DCC6' }}>{t}</button>)}
         <button onClick={() => setCfg({ open: { ...c.open, zh: true, en: true } })} className="text-sm underline">全部开放</button>
+        <span className="mx-1 h-5 w-px bg-[#E6DCC6]" />
+        <button onClick={() => setCfg({ open: { ...c.open, all: !c.open.all } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open.all ? 'border-[#2B2722] bg-[#2B2722] text-white' : 'border-[#E6DCC6] bg-white text-ink2'}`}>{c.open.all ? '🔓 任意看：哪一站都能点开' : '🔒 按进度：读完一站，下一站才打开'}</button>
       </div>
 
       {tab === 'players' && (

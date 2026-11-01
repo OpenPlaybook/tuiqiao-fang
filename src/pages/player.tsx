@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { CornerUpLeft, Glasses, Loader2, Pause, Play as PlayIcon, RotateCcw, Send, Volume2, VolumeX, X } from 'lucide-react';
 import type { Back, Ext, Gloss, Item, Line, MisSub, Play } from '../shared/types';
 import { MODES, MODE_TIP, PLAY_BY_ID, enLevel, modeKey, plainText, voiceFile, voiceLine, wordVoice, type Mode } from '../shared/play';
-import { resultOf, scoredSteps, taskItem } from '../shared/adapt';
+import { extsOf, requiredExts, resultOf, scoredSteps, taskItem } from '../shared/adapt';
 import { Art, Btn, GlossContext, Rich, Stars, centerOf, shuffleIdx } from '../components/ui';
 import { type GlossAt, enSpans, sentAtPos, sentOf } from '../shared/gloss';
 import { finishItem, fly, getState as useGameState, logPlay, markUnsure, setData, setExtDone, startItem, toast, useGame } from '../game/store';
@@ -30,7 +30,6 @@ const useHashQuery = () => {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
   return { at: q.get('at'), ret: q.get('ret') };
 };
-const extsOf = (r: { data?: Record<string, unknown> } | undefined) => (r?.data?.ext as Record<string, number>) ?? {};
 /** 只滚动外面那个框，不带着整页一起滚（scrollIntoView 会滚动所有外层） */
 const scrollInto = (box: HTMLElement | null, el: HTMLElement | null | undefined) => {
   if (!box || !el) return;
@@ -394,12 +393,6 @@ function Cam({ cam, dur, moving, children }: { cam: number[]; dur: number; movin
 }
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-/** 这道题哪些拓展必做：always 都要；wrong 要看这道题有没有答错过、点过“不确定” */
-export const requiredExts = (it: Item, r: { perf?: number; unsure?: number; status?: string } | undefined) => {
-  if (!r || r.status !== 'done') return [];
-  const struggled = (r.perf ?? 1) < 0.99 || (r.unsure ?? 0) > 0;
-  return (it.ext ?? []).filter((e) => e.need === 'always' || (e.need === 'wrong' && struggled));
-};
 
 // ---------------- 画面里的题 ----------------
 // 卡片上做的（长文本、点毛病、改错）：卡片在画面上方；其余在画面下方的小弹层 / 大弹层里。做完了，下面出讲解、拓展、继续。

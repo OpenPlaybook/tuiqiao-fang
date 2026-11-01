@@ -1,7 +1,7 @@
 // 刘邦线：每一镜怎么画、怎么动（泗水亭长、沛公、约法三章……）
 import { GOLD, INK, PAPER, RED, banner, campfire, cityWall, f, flame, glow, house, lerp, ridge, seg, sky, soundRings, tent, vtext, wav } from './core';
 import { P, faceCU, horse, person } from './rig';
-import { deskBg, seatRock } from './shots1';
+import { deskBg, seatRock, slips } from './shots1';
 import { dais, glassesShot, tentIn } from './shots2';
 import type { ShotDef } from './Film';
 
@@ -26,6 +26,11 @@ const tablet = (x: number, y: number, s: number, text: string, rot = 0) => `<g t
 /** 广武：左边楚营的山头，右边汉营的山头，中间一道深涧 */
 const gorge = (id: string) => sky(id, '#B2A690', '#D6CCB4') + `<path d="M-200,700 L640,700 L700,1100 L-200,1100 Z" fill="#9A8A6C"/><path d="M1800,700 L960,700 L900,1100 L1800,1100 Z" fill="#9A8A6C"/><path d="M640,700 L960,700 L900,1100 L700,1100 Z" fill="#5A4E3C"/><path d="M640,700 L700,1100 M960,700 L900,1100" stroke="${INK}" stroke-width="3" opacity=".5"/>`;
 export const SHOTS_LB: Record<string, ShotDef> = {
+  'lb.slips': {
+    bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '高祖沛丰邑中阳里人姓刘氏字季'),
+    fg: (u, g, id) => glow(id, 800, 470, 300, g, 0, 0.3),
+    cam: [[800, 480, 1300], [800, 470, 1100]],
+  },
   // ================= 刘邦① 泗水亭长 =================
   'lb.farm': {
     bg: (id) => village(id) + Array.from({ length: 5 }, (_, i) => `<path d="M-200,${600 + i * 50} Q600,${590 + i * 50} 1000,${600 + i * 50}" stroke="#9C8662" stroke-width="6" fill="none" opacity=".6"/>`).join(''),
