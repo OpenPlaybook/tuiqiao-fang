@@ -3,7 +3,7 @@
 import { C, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_LB4: Play = {
@@ -64,9 +64,9 @@ const EXT_GAO: Ext[] = [
       ['人多就一定能赢', '五十六万人恰恰输给了三万人。'],
     ], { keep: true }),
     fill('e', '放进最合适的句子。', ['骄兵必败', '乐极生悲', '得意忘形'], [
-      ['五十六万人输给了三万人，这一仗是___的例子。', '骄兵必败', '自以为强大、轻视敌人的军队，一定会失败。'],
-      ['进了彭城，刘邦每天和诸侯饮酒作乐，可以说是___。', '得意忘形', '因为得意，忘了自己该做什么。'],
-      ['庆功宴还没散，敌军就杀到了城下，真是___。', '乐极生悲', '高兴到了极点，转而发生悲伤的事。'],
+      ['五十六万人输给了三万人，这一仗是___的例子。', '骄兵必败', '线索：五十六万输给三万，刘邦又天天饮酒——轻敌的军队一定会败，说的是道理。'],
+      ['进了彭城，刘邦每天和诸侯饮酒作乐，可以说是___。', '得意忘形', '线索：“每天饮酒作乐”——一得意，忘了自己该做什么，说的是当时的样子。'],
+      ['庆功宴还没散，敌军就杀到了城下，真是___。', '乐极生悲', '线索：庆功宴（乐）还没散，敌军就到了（悲）——高兴到头，转出祸事。'],
     ]),
   ] },
 ];

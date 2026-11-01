@@ -3,7 +3,7 @@
 import { C, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_XH4: Play = {
@@ -57,9 +57,9 @@ const EXT_HAN: Ext[] = [
     ], { keep: true }),
     T('t2', '', '功臣们这番话：先摆自己的功（百余战、数十合），再贬萧何（没有汗马之劳，只会耍笔杆子），最后一问：凭什么？怨气全在这一问里。'),
     fill('e', '放进最合适的句子。', ['汗马功劳', '披坚执锐', '参差不齐'], [
-      ['老校长在学校工作了四十年，立下了___。', '汗马功劳', '付出很大辛苦立下的功劳。'],
-      ['将士们___，冲在最前面。', '披坚执锐', '穿着铠甲，拿着兵器。'],
-      ['这批稿子质量___，有的很好，有的还要再改。', '参差不齐', '长短、高低、好坏不一。'],
+      ['老校长在学校工作了四十年，立下了___。', '汗马功劳', '线索：“工作了四十年”，“立下了”——辛苦立下的大功劳。'],
+      ['将士们___，冲在最前面。', '披坚执锐', '线索：“将士们……冲在最前面”——穿着铠甲、拿着兵器。'],
+      ['这批稿子质量___，有的很好，有的还要再改。', '参差不齐', '线索：“有的很好，有的还要再改”——好坏不一。'],
     ]),
   ] },
 ];

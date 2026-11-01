@@ -4,7 +4,7 @@
 import { C, Mt, So, Wr, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const viz = (k: string, p: Record<string, unknown> = {}) => ({ k, p });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
@@ -85,10 +85,10 @@ const EXT_MEANT: Ext[] = [
     ], { keep: true }),
     T('t2', '', '中文“借”一个字管两个方向，英语分成两个词。所以学英语的人最容易把它们用反：“Can you borrow me your pen?” 就是这样来的。'),
     fill('b', '同样分方向的词，填一填。', ['borrow', 'lend', 'learn', 'teach'], [
-      ['Mr Liu, can I ___ your umbrella? It’s raining.', 'borrow', '东西往我这边来。'],
-      ['Sure, I can ___ you my umbrella.', 'lend', '东西从我这边出去。'],
-      ['Ben wants to ___ Chinese from you.', 'learn', '知识往他那边来：学。'],
-      ['Can you ___ me how to use chopsticks?', 'teach', '知识从你那边出去：教。'],
+      ['Mr Liu, can I ___ your umbrella? It’s raining.', 'borrow', '线索：can I——伞从你那儿到我这儿：borrow。'],
+      ['Sure, I can ___ you my umbrella.', 'lend', '线索：I can ___ you——伞从我这儿到你那儿：lend。'],
+      ['Ben wants to ___ Chinese from you.', 'learn', '线索：from you——Ben 从你那儿学：learn。'],
+      ['Can you ___ me how to use chopsticks?', 'teach', '线索：Can you ___ me——你教我：teach。和 borrow / lend 一样，方向相反的一对。'],
     ]),
   ] },
   { id: 'x2', title: '别人用错的时候', need: 'opt', steps: [
@@ -125,9 +125,9 @@ const EXT_MUST: Ext[] = [
       ['M might be Ms Green.', '证据已经排除了她。'],
     ], { keep: true }),
     fill('b', '填 must、might 或 can’t。', ['must', 'might', 'can’t'], [
-      ['Max’s drum case had only a drum in it. The panda ___ be in his case.', 'can’t', '亲眼看过，不可能在里面。'],
-      ['The same yellow paper, the same M… The note ___ be from Mia.', 'must', '证据很多，很有把握。'],
-      ['Mia likes the garden. She ___ be there now — let’s go and see.', 'might', '只是有可能，要去看看。'],
+      ['Max’s drum case had only a drum in it. The panda ___ be in his case.', 'can’t', '线索：亲眼看过，箱子里只有鼓——不可能在里面：can’t be。'],
+      ['The same yellow paper, the same M… The note ___ be from Mia.', 'must', '线索：两条证据对上了——很有把握：must be。'],
+      ['Mia likes the garden. She ___ be there now — let’s go and see.', 'might', '线索：只是因为她喜欢花园，“let’s go and see”——只有几分可能：might。'],
     ]),
   ] },
   { id: 'x2', title: '中文里的“一定”“也许”“不可能”', need: 'opt', steps: [
@@ -166,10 +166,10 @@ const EXT_MIX: Ext[] = [
     ], { keep: true }),
     T('t3', '', '再一对：**lose**（丢了、输了）/ **miss**（错过、想念）。I lost my key.（钥匙丢了）I missed the bus.（没赶上车）'),
     fill('c', '放进句子。', ['lost', 'missed', 'brought', 'took'], [
-      ['Hurry up, or we’ll be late! — Too late. We ___ the bus.', 'missed', '没赶上车：missed。'],
-      ['Oh no, I ___ my phone. Have you seen it?', 'lost', '东西丢了：lost。'],
-      ['Ben ___ some mooncakes to our class party.', 'brought', '带到我们这边来：brought。'],
-      ['Dad ___ us to the zoo last Sunday.', 'took', '带我们去别处：took。'],
+      ['Hurry up, or we’ll be late! — Too late. We ___ the bus.', 'missed', '线索：Too late——车已经开走了，没赶上：missed。'],
+      ['Oh no, I ___ my phone. Have you seen it?', 'lost', '线索：Have you seen it?——手机找不到了：lost。'],
+      ['Ben ___ some mooncakes to our class party.', 'brought', '线索：to our class party——带到我们这边来：brought。'],
+      ['Dad ___ us to the zoo last Sunday.', 'took', '线索：us to the zoo——带我们去别处：took。'],
     ]),
     C('d', '找出用错的一句：', [
       ['*I lost the bus this morning.', '对，这句错了：没赶上车是 missed the bus。'],
@@ -191,10 +191,10 @@ const EXT_PROOF: Ext[] = [
     ], { keep: true }),
     T('t2', '', 'proof 的动词是 **prove**（证明）。第二章问不在场证明时，侦探常问：Can anyone prove it?（有人能证明吗？）'),
     fill('c', '放进句子。', ['clue', 'evidence', 'proof', 'prove'], [
-      ['A yellow note under the table is our first ___.', 'clue', '一条提示：clue。'],
-      ['The two notes look the same. That’s good ___.', 'evidence', '支持说法的证据：evidence（不可数）。'],
-      ['Can you ___ that you were in the garden?', 'prove', '证明：动词 prove。'],
-      ['A photo with the time on it is ___ that she was there.', 'proof', '足以让人相信的证明：proof。'],
+      ['A yellow note under the table is our first ___.', 'clue', '线索：our first ___——第一条提示，还不能说明什么：clue。'],
+      ['The two notes look the same. That’s good ___.', 'evidence', '线索：两张纸条一样——支持“M 是 Mia”，可还不是百分之百：evidence。'],
+      ['Can you ___ that you were in the garden?', 'prove', '线索：Can you 后面要动词——证明：prove。'],
+      ['A photo with the time on it is ___ that she was there.', 'proof', '线索：带时间的照片——足以证明她当时在场：proof。说 evidence 也对，只是没那么肯定。', ['evidence']],
     ]),
     C('d', '哪一句对？', [
       ['*There is not enough evidence.', '对：evidence 不可数，不加 s，也不说 an evidence。'],
@@ -242,10 +242,10 @@ const EXT_FIND: Ext[] = [
     ], { keep: true }),
     T('t2', '', '刚找到、东西就在眼前，英国人会喊：**We’ve found it!**——第一章的 has taken 又来了：过去的事，现在的结果（东西现在就在这儿）。'),
     fill('c', '放进句子。', ['looking for', 'found', 'find out', 'have found'], [
-      ['What are you ___? — My notebook.', 'looking for', '正在找：looking for。'],
-      ['I ___ my notebook under the bed yesterday.', 'found', '昨天找到了：found。'],
-      ['Let’s ___ what really happened at 2:15.', 'find out', '查明真相：find out。'],
-      ['Look! We ___ the Golden Panda!', 'have found', '刚找到，就在眼前：have found。'],
+      ['What are you ___? — My notebook.', 'looking for', '线索：are you ___——正在找，还没找到：looking for。'],
+      ['I ___ my notebook under the bed yesterday.', 'found', '线索：under the bed yesterday——找到了，过去的事：found。'],
+      ['Let’s ___ what really happened at 2:15.', 'find out', '线索：what really happened——查明一件事的真相：find out。'],
+      ['Look! We ___ the Golden Panda!', 'have found', '线索：Look!——刚找到，熊猫就在眼前：have found。'],
     ]),
     C('d', '找出用错的一句：', [
       ['*I’m finding my keys. Can you help me?', '对，这句错了：正在找要说 I’m looking for my keys.'],
@@ -387,9 +387,9 @@ export const PLAY_EN3_ITEMS: Item[] = [
       ['Don’t forget to bring your umbrella!', '妈妈在家，伞是从她这儿带走的，用 take。'],
     ], { keep: true }),
     fill('c', '放进句子。', ['took', 'brought', 'take'], [
-      ['Mia ___ the panda to the garden to take photos.', 'took', '从礼堂带到花园去：took。'],
-      ['Grandma opened the door and smiled: “You ___ me flowers! Thank you!”', 'brought', '带到说话的人这里来：brought。'],
-      ['Please ___ this note to Ms Green in the office.', 'take', '从这里送到别处去：take。'],
+      ['Mia ___ the panda to the garden to take photos.', 'took', '线索：从礼堂带到花园（离开原来的地方）——took。'],
+      ['Grandma opened the door and smiled: “You ___ me flowers! Thank you!”', 'brought', '线索：奶奶在门口说“You ___ me flowers”——带到说话的人这里来：brought。'],
+      ['Please ___ this note to Ms Green in the office.', 'take', '线索：从这里送到办公室（别处）去——take。'],
     ]),
     T('t2', '', 'take 的用处特别多：**take** photos（拍照）、**take** a bus（坐公交车）、**take** a break（休息一下），还有第一章的 Someone has **taken** it!（拿走了）。'),
   ),

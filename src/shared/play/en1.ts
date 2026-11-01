@@ -4,7 +4,7 @@
 import { C, M, Mt, Od, So, Wr, item } from '../bank/h';
 import type { Art, Ext, FillSub, FragSub, Item, Play, TeachSub, TypeSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const type = (key: string, q: string, accept: string[], why: string, near: Record<string, string> = {}, ph = ''): TypeSub => ({ kind: 'type', key, q, accept, near, why, ph });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 /** 碎片：[文字, 第几层, 对不对（* 开头是对的）, 错在哪 / 讲到哪件事] */
@@ -213,15 +213,15 @@ const EXT_TAKEN: Ext[] = [
       ['两点一刻那一下，他吃了九块', '说过去那一刻，用 ate。'],
     ], { keep: true }),
     fill('t4b', '放进句子。', ['eats', 'ate', 'has eaten'], [
-      ['Ben ___ a mooncake every afternoon.', 'eats', '每天都这样：一般现在时。'],
-      ['Ben ___ a mooncake at 2:15 yesterday.', 'ate', '过去那一刻：一般过去时。'],
-      ['Look at all the plates! Ben ___ nine mooncakes!', 'has eaten', '到现在为止的结果：现在完成时。'],
+      ['Ben ___ a mooncake every afternoon.', 'eats', '线索：every afternoon——每天都这样，用一般现在时；主语是 Ben（他），加 s。'],
+      ['Ben ___ a mooncake at 2:15 yesterday.', 'ate', '线索：at 2:15 yesterday——过去一个具体的时刻，用一般过去时 ate。不能用 has eaten：它不和 yesterday 连用。'],
+      ['Look at all the plates! Ben ___ nine mooncakes!', 'has eaten', '线索：Look at all the plates!——说眼前的结果、到现在为止吃了几块，用 has eaten。'],
     ]),
     fill('d', 'has / have 后面跟过去分词。放进句子。', ['taken', 'lost', 'eaten', 'broken'], [
-      ['Someone has ___ the Golden Panda!', 'taken', 'take → taken'],
-      ['Oh no! I’ve ___ my key.', 'lost', 'lose → lost'],
-      ['Who has ___ my mooncake? It was here a minute ago!', 'eaten', 'eat → eaten'],
-      ['Be careful! Someone has ___ a glass on the floor.', 'broken', 'break → broken'],
+      ['Someone has ___ the Golden Panda!', 'taken', '线索：has 后面用过去分词；拿走了、现在不在——take → taken。'],
+      ['Oh no! I’ve ___ my key.', 'lost', '线索：I’ve 后面用过去分词；钥匙找不到了——lose → lost。'],
+      ['Who has ___ my mooncake? It was here a minute ago!', 'eaten', '线索：月饼“刚才还在”，现在没了——被吃了：eat → eaten。'],
+      ['Be careful! Someone has ___ a glass on the floor.', 'broken', '线索：Be careful!——地上有碎玻璃：break → broken。'],
     ]),
   ] },
   { id: 'x2', title: 'Has anyone seen…? 怎么回答', need: 'opt', steps: [
@@ -294,10 +294,10 @@ const EXT_BORROW: Ext[] = [
       ['I lent a ruler from you.', 'lend 后面跟 to（借给谁），不跟 from。'],
     ], { keep: true }),
     fill('c', '放进句子。', ['borrow', 'lend', 'lent', 'borrowed'], [
-      ['Can I ___ your pen, please?', 'borrow', '我借进来。'],
-      ['Could you ___ me your ruler?', 'lend', '你借给我：lend + 人 + 东西。'],
-      ['My sister ___ me her bike yesterday.', 'lent', '姐姐借出，又是昨天：lent。'],
-      ['I ___ this book from the school library.', 'borrowed', '从图书馆借进来：borrowed。'],
+      ['Can I ___ your pen, please?', 'borrow', '线索：Can I——我从你那里借进来：borrow。'],
+      ['Could you ___ me your ruler?', 'lend', '线索：Could you ___ me——你借给我：lend + 人 + 东西。'],
+      ['My sister ___ me her bike yesterday.', 'lent', '线索：姐姐把车借给我（借出去），又是 yesterday——lend 的过去式 lent。'],
+      ['I ___ this book from the school library.', 'borrowed', '线索：from the library——从图书馆借进来，过去的事：borrowed。'],
     ]),
     T('t2', '', '英语里还有好几对“方向词”：bring（带过来，往说话人这边）/ take（带走，往别处去）；buy（买进）/ sell（卖出）。'),
     C('d', 'Ben 在学校给你打电话：“Can you ___ your notebook to school tomorrow?”', [
@@ -365,10 +365,10 @@ const EXT_WATCH: Ext[] = [
       ['你已经看见了', '“看见了”是 see。'],
     ], { keep: true }),
     fill('b', '放进句子。', ['look', 'see', 'watch', 'saw'], [
-      ['Please ___ at the clock. It’s 2:40!', 'look', '把眼睛转过去看：look at。'],
-      ['The lights went out. I couldn’t ___ anything!', 'see', '太黑，什么都看不见：see。'],
-      ['Mr Liu likes to ___ football on his phone.', 'watch', '盯着看比赛：watch。'],
-      ['I ___ Ben in the hall this morning.', 'saw', '早上看见了 Ben：see 的过去式 saw。'],
+      ['Please ___ at the clock. It’s 2:40!', 'look', '线索：后面有 at——请你转过去看：look at。'],
+      ['The lights went out. I couldn’t ___ anything!', 'see', '线索：灯灭了，太黑——能不能看见（结果）：see。'],
+      ['Mr Liu likes to ___ football on his phone.', 'watch', '线索：football（比赛）——盯着看一段时间：watch。'],
+      ['I ___ Ben in the hall this morning.', 'saw', '线索：this morning 在礼堂碰见了 Ben——看见了，过去式 saw。'],
     ]),
     T('t2', '', '还记得中文《淮阴少年》里的“五种看”吗？瞥、瞪、凝视……英语也分得一样细：glance（瞥一眼）、stare（盯着看）、glare（生气地瞪）、gaze（久久地凝视）。'),
     Mt('c', '这几种“看”，各是什么样子？', ['glance at the clock', 'stare at the empty table', 'glare at the noisy boy', 'gaze at the moon'], ['生气地瞪', '久久地凝视', '瞥一眼', '盯着看（愣住了）'], [2, 3, 0, 1], 'glance 一眼带过；stare 盯着看、愣住了；glare 生气地瞪；gaze 带着感情、久久地看。', { lh: '英语', rh: '怎么看' }),
@@ -380,8 +380,8 @@ const EXT_WATCH: Ext[] = [
       ['我听见了，可是没在听', '顺序反了：先去听（listen），结果没听见（couldn’t hear）。'],
     ], { keep: true }),
     fill('b', '放进句子。', ['listen', 'hear'], [
-      ['Can you ___ the music? It’s very quiet.', 'hear', '能不能听见：hear。'],
-      ['Please ___ to the teacher.', 'listen', '用心听：listen to。'],
+      ['Can you ___ the music? It’s very quiet.', 'hear', '线索：It’s very quiet——声音很小，问能不能听见（结果）：hear。'],
+      ['Please ___ to the teacher.', 'listen', '线索：后面有 to——认真去听：listen to。'],
     ]),
   ] },
 ];
@@ -483,10 +483,10 @@ const EXT_NERVOUS: Ext[] = [
     ], { keep: true }),
     T('t2', '', '后面跟的小词也不一样：afraid **of** / scared **of** + 怕的东西（afraid of the dark）；nervous **about** / worried **about** + 担心的事（nervous about the test）。'),
     fill('c', '放进句子。', ['nervous', 'afraid', 'worried', 'scared'], [
-      ['I’m ___ about the English test tomorrow.', 'nervous', '考试前的紧张：nervous about。'],
-      ['My little brother is ___ of dogs.', 'afraid', '怕狗：afraid of（scared of 也可以）。'],
-      ['Mum is ___ because I’m late home.', 'worried', '妈妈一直惦记着：worried。'],
-      ['The film was so frightening that I was ___ and closed my eyes.', 'scared', '吓坏了：scared。'],
+      ['I’m ___ about the English test tomorrow.', 'nervous', '线索：about the English test——担心明天考不好，用 nervous about。afraid、scared 后面跟 of，说怕某样东西。'],
+      ['My little brother is ___ of dogs.', 'afraid', '线索：后面是 of dogs——怕某样东西：afraid of，scared of 也对。worried 后面跟 about。', ['scared']],
+      ['Mum is ___ because I’m late home.', 'worried', '线索：because I’m late home——一直惦记着一件事，worried。'],
+      ['The film was so frightening that I was ___ and closed my eyes.', 'scared', '线索：frightening（吓人的），吓得 closed my eyes——被吓到了：scared，afraid 也对。', ['afraid']],
     ]),
     T('t3', '', '词还能变形：nervous（紧张的）→ **nervously**（紧张地）。形容词加 -ly，就能说“怎么做”：quick → quickly，quiet → quietly。'),
     C('d', '“She smiled ___ at the judges.”（她紧张地朝评委笑了笑）', [
@@ -520,10 +520,10 @@ const EXT_NOTICE: Ext[] = [
       ['Yes. I watched a boy.', 'watch 是盯着看一段时间；证人只是留意到。'],
     ], { keep: true }),
     fill('d', '放进句子。', ['notice', 'looked', 'watched', 'saw'], [
-      ['I ___ at the clock. It was 2:15.', 'looked', '把眼睛转过去看：looked at。'],
-      ['I didn’t ___ anyone. I was busy with my phone.', 'notice', '没留意到：didn’t notice。'],
-      ['Mr Liu ___ the football match on his phone.', 'watched', '盯着看比赛：watched。'],
-      ['Yesterday I ___ Ben in the library.', 'saw', '看见了：saw。'],
+      ['I ___ at the clock. It was 2:15.', 'looked', '线索：后面有 at the clock——特意把眼睛转过去看：looked at。'],
+      ['I didn’t ___ anyone. I was busy with my phone.', 'notice', '线索：I was busy with my phone——忙着别的，没察觉到：didn’t notice。'],
+      ['Mr Liu ___ the football match on his phone.', 'watched', '线索：the football match——盯着看一段时间的比赛：watched。'],
+      ['Yesterday I ___ Ben in the library.', 'saw', '线索：在图书馆碰见了 Ben——看见了（结果）：saw。'],
     ]),
     T('t3', '', 'notice 还能当名词：**通知、告示**——a notice on the wall（墙上贴的通知）。'),
     C('e', '哪一句用错了？', [
@@ -758,10 +758,10 @@ export const PLAY_EN1_ITEMS: Item[] = [
       ['a finalist and a tourist', '她不是参赛的，也不是来游玩的。'],
     ], { keep: true }),
     fill('c', '放进句子。', ['finalists', 'pianist', 'finally', 'scientist'], [
-      ['Only three stories are ___. One of them will win the Golden Panda.', 'finalists', '进入决赛的：finalists。'],
-      ['Lang Lang plays the piano all over the world. He is a famous ___.', 'pianist', '弹钢琴的人：pianist。'],
-      ['We looked everywhere, and ___ we found the panda in the garden.', 'finally', '最后、终于：final + -ly。'],
-      ['A ___ does experiments in a lab.', 'scientist', '做科学研究的人：scientist。'],
+      ['Only three stories are ___. One of them will win the Golden Panda.', 'finalists', '线索：三篇里“One of them will win”——进了决赛的作品：final + -ist，复数加 s。'],
+      ['Lang Lang plays the piano all over the world. He is a famous ___.', 'pianist', '线索：plays the piano，a famous ___——弹钢琴的人：piano + -ist。'],
+      ['We looked everywhere, and ___ we found the panda in the garden.', 'finally', '线索：到处找，最后才找到——说“怎么样地”发生，用副词：final + -ly。'],
+      ['A ___ does experiments in a lab.', 'scientist', '线索：在实验室做实验的人——science 变 scientist。'],
     ]),
   ),
   item({
@@ -784,10 +784,10 @@ export const PLAY_EN1_ITEMS: Item[] = [
       ['Hurry! We can’t lose the prize-giving!', 'lose 没有“错过”的意思。'],
     ], { keep: true }),
     fill('d', '放进句子。', ['lost', 'missing', 'miss', 'gone'], [
-      ['I ___ my pen yesterday. Can I borrow yours?', 'lost', '自己弄丢了：lost。'],
-      ['One page is ___ from my notebook. Where is it?', 'missing', '缺了、找不到：missing from。'],
-      ['Get up now, or you’ll ___ the bus!', 'miss', '错过：miss。'],
-      ['Ben ate my mooncake. Now it’s all ___!', 'gone', '吃光了、没了：all gone。'],
+      ['I ___ my pen yesterday. Can I borrow yours?', 'lost', '线索：自己的笔，所以要借别人的——把自己的东西弄丢了：lost。'],
+      ['One page is ___ from my notebook. Where is it?', 'missing', '线索：is ___ from my notebook——缺了、找不到：be missing from。'],
+      ['Get up now, or you’ll ___ the bus!', 'miss', '线索：the bus，不快点就赶不上——错过：miss。'],
+      ['Ben ate my mooncake. Now it’s all ___!', 'gone', '线索：被吃掉了，all ___——全没了：all gone。missing 是找不到，可这里知道去哪儿了。'],
     ]),
   ),
 ];

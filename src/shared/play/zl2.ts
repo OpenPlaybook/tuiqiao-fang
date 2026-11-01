@@ -3,7 +3,7 @@
 import { C, Mt, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_ZL2: Play = {
@@ -117,9 +117,9 @@ const EXT_QI: Ext[] = [
     ], { keep: true }),
     T('t3', '', '老人一次次让张良早到，教的是守约、恭敬——更是看他能不能把性子沉下来。'),
     fill('e', '放进最合适的句子。', ['不期而遇', '如期而至', '遥遥无期'], [
-      ['在异乡的火车站，我和小学同学___。', '不期而遇', '没有约定，却碰上了。'],
-      ['盼了一冬天的春雨，终于___。', '如期而至', '按约定的时间来了。'],
-      ['工程一拖再拖，完工的日子___。', '遥遥无期', '远得没有期限。'],
+      ['在异乡的火车站，我和小学同学___。', '不期而遇', '线索：在异乡的车站碰上——没有约好，却遇见了。'],
+      ['盼了一冬天的春雨，终于___。', '如期而至', '线索：“盼了一冬天”“终于”——到了该来的时候就来了。'],
+      ['工程一拖再拖，完工的日子___。', '遥遥无期', '线索：“一拖再拖”——不知道要到哪一天。'],
     ]),
   ] },
 ];

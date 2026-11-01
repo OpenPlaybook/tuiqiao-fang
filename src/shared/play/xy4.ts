@@ -3,7 +3,7 @@
 import { C, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_XY4: Play = {
@@ -56,9 +56,9 @@ const EXT_CHEN: Ext[] = [
       ['势均力敌；两败俱伤', '这一仗一边倒，不是两败俱伤。'],
     ], { keep: true }),
     fill('e', '放进最合适的句子。', ['以少胜多', '出其不意', '狼狈不堪'], [
-      ['三万人打败了五十六万人，彭城之战是有名的___的战例。', '以少胜多', '用少的兵力打败多的。'],
-      ['汉军还在城里喝酒，项羽清晨突然杀到，打了一个___。', '出其不意', '趁对方没有想到的时候行动。'],
-      ['刘邦只带着几十个骑兵逃出来，___。', '狼狈不堪', '困窘、窘迫到了极点。'],
+      ['三万人打败了五十六万人，彭城之战是有名的___的战例。', '以少胜多', '线索：三万对五十六万——兵少的打败了兵多的。'],
+      ['汉军还在城里喝酒，项羽清晨突然杀到，打了一个___。', '出其不意', '线索：汉军“还在喝酒”，项羽“清晨突然杀到”——趁对方没想到时行动。'],
+      ['刘邦只带着几十个骑兵逃出来，___。', '狼狈不堪', '线索：五十六万人只剩“几十个骑兵”逃出——窘迫到了极点。'],
     ]),
   ] },
 ];

@@ -3,7 +3,7 @@
 import { C, Mt, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_XH3: Play = {
@@ -94,9 +94,9 @@ const EXT_JI: Ext[] = [
       ['刘邦运气好', '运气不会一次次补上几万人。'],
     ], { keep: true }),
     fill('f', '放进最合适的句子。', ['后顾之忧', '源源不断', '捉襟见肘'], [
-      ['有萧何守着关中，刘邦在前线打仗，没有___。', '后顾之忧', '来自后方的担心。'],
-      ['关中的粮食和兵员，___地送往前线。', '源源不断', '接连不断。'],
-      ['项羽后来兵少粮尽，处处___。', '捉襟见肘', '拉一下衣襟就露出胳膊肘：困难重重，顾了这头顾不了那头。'],
+      ['有萧何守着关中，刘邦在前线打仗，没有___。', '后顾之忧', '线索：后方有萧何守着——前线的人不用担心身后。'],
+      ['关中的粮食和兵员，___地送往前线。', '源源不断', '线索：“送往前线”一批又一批——接连不断。'],
+      ['项羽后来兵少粮尽，处处___。', '捉襟见肘', '线索：“兵少粮尽”“处处”——顾了这头顾不了那头，困难重重。'],
     ]),
   ] },
 ];

@@ -28,6 +28,7 @@ const checkStep = (s: Sub, where: string) => {
       for (const x of s.sents) {
         if ((x.t.match(/___/g) ?? []).length !== 1) err(`${w}：“${x.t.slice(0, 20)}”不是正好一个空`);
         if (!s.bank.includes(x.a)) err(`${w}：答案“${x.a}”不在词库里`);
+        for (const y of x.alt ?? []) if (!s.bank.includes(y) || y === x.a) err(`${w}：也可以填的“${y}”不在词库里，或和答案重复`);
       }
       break;
     case 'sort':

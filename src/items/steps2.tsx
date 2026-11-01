@@ -136,11 +136,12 @@ export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
   const all = s.sents.every((_, i) => put[i]);
   const check = () => {
     const t = tries + 1; setTries(t);
-    const wrongs = s.sents.map((x, i) => (put[i] === x.a ? -1 : i)).filter((i) => i >= 0);
+    const okAt = (i: number) => put[i] === s.sents[i].a || !!s.sents[i].alt?.includes(put[i]);
+    const wrongs = s.sents.map((_, i) => (okAt(i) ? -1 : i)).filter((i) => i >= 0);
     logAnswer(it, { q: s.key, v: s.sents.map((_, i) => put[i]).join(' / '), ok: !wrongs.length }, [s.key, t]);
     if (!wrongs.length || t >= 3) {
       sfx(wrongs.length ? 'flip' : 'ok'); setSolved(true); setBad([]);
-      const right = Object.fromEntries(s.sents.map((x, i) => [i, x.a]));
+      const right = Object.fromEntries(s.sents.map((x, i) => [i, okAt(i) ? put[i] : x.a])); // 填对的（包括也说得通的）留着学生自己的
       setPut(right); const sc = wrongs.length ? 0.34 : triesScore(t); save({ sc, put: right }); onDone(sc); return;
     }
     sfx('no'); setBad(wrongs);

@@ -3,7 +3,7 @@
 import { C, So, Mt, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_XY3: Play = {
@@ -93,9 +93,9 @@ const EXT_YI: Ext[] = [
       ['yī：衣服', '“衣锦”是穿上锦衣，是动作。'],
     ], { keep: true }),
     fill('e', '放进最合适的句子。', ['衣锦还乡', '锦衣夜行', '目光短浅'], [
-      ['他在外经商二十年，晚年___，出钱给村里修了一所学堂。', '衣锦还乡', '富贵以后回到家乡。'],
-      ['他的论文发表在国外的刊物上，国内的同行却很少读到，他自嘲这是___。', '锦衣夜行', '有了成就，却没人知道。'],
-      ['放着险要富饶的关中不要，一心想着回乡显耀，后人说项羽___。', '目光短浅', '只看得见眼前。'],
+      ['他在外经商二十年，晚年___，出钱给村里修了一所学堂。', '衣锦还乡', '线索：在外经商成功，“晚年”回乡修学堂——富贵以后回到家乡。'],
+      ['他的论文发表在国外的刊物上，国内的同行却很少读到，他自嘲这是___。', '锦衣夜行', '线索：有了成果，国内同行“很少读到”——成就没人看见，像穿着锦衣在夜里走。'],
+      ['放着险要富饶的关中不要，一心想着回乡显耀，后人说项羽___。', '目光短浅', '线索：放着关中不要，“一心想着回乡显耀”——只看得见眼前的风光。'],
     ]),
   ] },
 ];

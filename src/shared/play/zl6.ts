@@ -3,7 +3,7 @@
 import { C, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_ZL6: Play = {
@@ -53,9 +53,9 @@ const EXT_HONG: Ext[] = [
       ['他可以回家休息了', '和约之后发生了什么，往下读就知道。'],
     ], { keep: true }),
     fill('e', '放进最合适的句子。', ['楚河汉界', '握手言和', '不可逾越'], [
-      ['象棋盘中间写着“___”，就来自这段历史。', '楚河汉界', '楚汉以鸿沟为界。'],
-      ['打了好几年仗，楚汉终于___，平分天下。', '握手言和', '停止争斗，讲和。'],
-      ['两种看法之间，好像隔着一道___的鸿沟。', '不可逾越', '没法跨过去。'],
+      ['象棋盘中间写着“___”，就来自这段历史。', '楚河汉界', '线索：“象棋盘中间”写的——楚河、汉界。'],
+      ['打了好几年仗，楚汉终于___，平分天下。', '握手言和', '线索：打了好几年，“终于……平分天下”——停止争斗，讲和。'],
+      ['两种看法之间，好像隔着一道___的鸿沟。', '不可逾越', '线索：“隔着一道……的鸿沟”——跨不过去。'],
     ]),
   ] },
 ];

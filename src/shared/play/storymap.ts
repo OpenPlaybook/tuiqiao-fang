@@ -29,7 +29,7 @@ export const NODES: MapNode[] = [
   { id: 'zh2', title: '执戟郎中', sub: '言不听，画不用', row: 3, lanes: ['hx'], mins: 8 },
   { id: 'lb3', title: '约法三章', sub: '忠言逆耳利于行', row: 4, lanes: ['lb', 'zl'], mins: 6 },
   { id: 'xh2', title: '收图籍', sub: '诸将争金帛，何独收图书', row: 4, lanes: ['xh'], mins: 4 },
-  { id: 'zh3', title: '鸿门宴', sub: '项庄舞剑，意在沛公', row: 5, lanes: ['lb', 'xy', 'xh', 'zl', 'hx'], star: true, mins: 16 },
+  { id: 'zh3', title: '鸿门宴', sub: '项庄舞剑，意在沛公', row: 5, lanes: ['lb', 'xy', 'xh', 'zl', 'hx'], star: true, mins: 17 },
   { id: 'xy3', title: '沐猴而冠', sub: '富贵不归故乡，如衣绣夜行', row: 6, lanes: ['xy'], mins: 7 },
   { id: 'zl4', title: '烧栈道', sub: '示天下无还心', row: 6, lanes: ['zl'], mins: 7 },
   { id: 'zh4', title: '拜将', sub: '萧何追韩信，国士无双', row: 7, lanes: ['lb', 'xh', 'hx'], star: true, mins: 16 },

@@ -3,7 +3,7 @@
 import { C, Mt, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_HX4: Play = {
@@ -79,9 +79,9 @@ const EXT_NIE: Ext[] = [
     ], { keep: true }),
     T('t2', '', '张良、陈平几句话就说清了：眼下不利（形势）；拦不住（做不到）；不如顺势立他（办法）；不然要出事（后果）。'),
     fill('e', '放进最合适的句子。', ['顺水推舟', '随机应变', '当机立断'], [
-      ['拦不住韩信称王，不如___，干脆立他。', '顺水推舟', '顺着形势办事。'],
-      ['刘邦被踩了一脚，马上改口，真是___。', '随机应变', '随着情况变化，灵活应付。'],
-      ['事情紧急，容不得犹豫，必须___。', '当机立断', '在紧要关头立刻作出决断。'],
+      ['拦不住韩信称王，不如___，干脆立他。', '顺水推舟', '线索：“拦不住……不如干脆”——顺着已经形成的形势办。'],
+      ['刘邦被踩了一脚，马上改口，真是___。', '随机应变', '线索：被踩一脚“马上改口”——随着情况变化，灵活应付。'],
+      ['事情紧急，容不得犹豫，必须___。', '当机立断', '线索：“容不得犹豫，必须”——紧要关头立刻拿主意。'],
     ]),
   ] },
 ];

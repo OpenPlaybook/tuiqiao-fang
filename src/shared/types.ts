@@ -44,7 +44,8 @@ export interface WriteSub extends SubBase {
   bonus?: boolean; // 只是加分（不写也能过关）
 }
 /** 选词填句：几句话、一组词 */
-export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: { t: string; a: string; why: string }[] }
+/** alt：也说得通的词（近义词里分不出绝对对错的，也判对；why 里说清两个词的分别） */
+export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: { t: string; a: string; why: string; alt?: string[] }[] }
 /** 打字短答：accept 里任意一个就算对；near：常见的“差一点”的答案和对应的提醒 */
 export interface TypeSub extends SubBase { kind: 'type'; accept: string[]; near?: Record<string, string>; why: string; ph?: string }
 /** 碎片拼接（概括、鉴赏），三层逐层检查：1 故事 / 内容（要讲对、讲全：ev 是它讲到的事，events 是必须讲到的事和缺了时的提醒）→ 2 人物 / 写法 → 3 更深的意思。

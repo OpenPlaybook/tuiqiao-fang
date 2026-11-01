@@ -3,7 +3,7 @@
 import { C, Mt, So, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
-const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
+const fill = (key: string, q: string, bank: string[], sents: [string, string, string, string[]?][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why, alt]) => ({ t, a, why, ...(alt ? { alt } : {}) })) });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_XH5: Play = {
@@ -109,9 +109,9 @@ const EXT_HUA: Ext[] = [
       ['他一直跟在班长后面走路，这叫萧规曹随。', '“随”是沿用规矩，不是跟着走。'],
     ], { keep: true }),
     fill('e', '放进最合适的句子。', ['萧规曹随', '整齐划一', '墨守成规'], [
-      ['前任定下的制度很好用，新任就___，一条也没改。', '萧规曹随', '沿用前人的成规。'],
-      ['同学们的动作___，像一个人一样。', '整齐划一', '整齐一致。'],
-      ['时代变了，做法却一点不改，这就是___了。', '墨守成规', '死守老规矩，不肯改变。'],
+      ['前任定下的制度很好用，新任就___，一条也没改。', '萧规曹随', '线索：前任定的制度好，新任“一条也没改”——照着前人的规矩办，是褒义。'],
+      ['同学们的动作___，像一个人一样。', '整齐划一', '线索：说的是动作“像一个人一样”——整齐一致。'],
+      ['时代变了，做法却一点不改，这就是___了。', '墨守成规', '线索：“时代变了”还不改——死守老规矩，是贬义。萧规曹随是继承好的规矩。'],
     ]),
   ] },
 ];
