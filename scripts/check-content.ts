@@ -13,7 +13,7 @@ const plain = (t: string) => t.replace(/[⟦⟧*]/g, '');
 
 const checkStep = (s: Sub, where: string) => {
   const w = `${where} ${s.key}`;
-  for (const m of JSON.stringify(s).match(/〔[^〕]*〕/g) ?? []) if (!/^〔[^｜〕]+｜[^｜〕]+〕$/.test(m)) err(`${w}：“${m.slice(0, 20)}”要写成〔原文｜白话〕`);
+  if (/[〔〕]/.test(JSON.stringify(s))) err(`${w}：引用原文须用可点字词及释义表，不使用整句翻译标记`);
   if (s.kind === 'choice') for (const o of s.opts) if ((o.t.match(/\*\*/g) ?? []).length % 2) err(`${w}：选项“${o.t.slice(0, 20)}”的 ** 没配对（开头的 * 会被当成正确答案的记号，标红又是正确答案要写 ***字**）`);
   switch (s.kind) {
     case 'choice': {
