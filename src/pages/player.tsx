@@ -277,7 +277,7 @@ export default function PlayerPage({ id }: { id: string }) {
                 </motion.div>
               )}
             </AnimatePresence>
-            {atTask && <TaskView key={item!.id} en={en} it={item!} line={line} prev={lines[idx - 1]} stem={stem} mode={mode} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
+            {atTask && <TaskView key={item!.id} en={en} it={item!} line={line} prev={cardBefore(lines, idx)} stem={stem} mode={mode} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
             {hint && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="absolute right-3 top-3 z-20 flex max-w-[44%] gap-2 rounded-2xl bg-white/95 px-3.5 py-2.5 shadow-xl">
                 <Glasses size={20} className="mt-0.5 shrink-0 text-sky-600" /><div className="text-[15px] font-bold leading-relaxed"><Rich text={hint} /></div>
@@ -415,7 +415,7 @@ export default function PlayerPage({ id }: { id: string }) {
           </div>
         );
       })()}
-      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} side={extOpen.side !== undefined ? { line: lines[extOpen.side], prev: lines[extOpen.side - 1] } : undefined} onExt={(e) => setExtOpen({ it: extOpen.it, ext: e })} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={onGloss} />}</AnimatePresence>
+      <AnimatePresence>{extOpen && <ExtModal key={extOpen.it.id + extOpen.ext.id} it={extOpen.it} ext={extOpen.ext} side={extOpen.side !== undefined ? { line: lines[extOpen.side], prev: cardBefore(lines, extOpen.side) } : undefined} onExt={(e) => setExtOpen({ it: extOpen.it, ext: e })} color={play.color} onClose={() => setExtOpen(null)} gloss={play.gloss} onGloss={onGloss} />}</AnimatePresence>
     </EnCtx.Provider></GlossContext.Provider>
   );
 }
@@ -431,6 +431,9 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
 
 // ---------------- 画面里的题 ----------------
 // 卡片上做的（长文本、点毛病、改错）：卡片在画面上方；其余在画面下方的小弹层 / 大弹层里。做完了，下面出讲解、拓展、继续。
+// 翻译、小结前面可能隔着一句旁白：往前找最近一张有原文卡的句子
+const cardBefore = (lines: Line[], k: number) => { for (let j = k - 1; j >= 0; j--) if (lines[j].card) return lines[j]; return undefined; };
+
 function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont, onExt, onBack, onHint }: { en: boolean; it: Item; line: Line; prev?: Line; stem: Line | null; mode: Mode; color: string; bh: number; bottomEl: HTMLDivElement | null; onCont: () => void; onExt: (e: Ext) => void; onBack: (b: Back) => void; onHint: (h: string) => void }) {
   const rec = useGame((s) => s.player?.recs[it.id]);
   const finished = rec?.status === 'done';

@@ -2,6 +2,7 @@
 import { GOLD, INK, PAPER, RED, banner, cityWall, f, flame, glow, house, lerp, ridge, seg, sky, sunDisc, vtext, wav } from './core';
 import { P, faceCU, person } from './rig';
 import { deskBg, slips } from './shots1';
+import { glassesShot } from './shots2';
 import type { ShotDef } from './Film';
 
 // ---------------- 共用 ----------------
@@ -19,6 +20,7 @@ const coins = (x: number, y: number, n: number, s = 1) => Array.from({ length: n
 
 export const SHOTS_XH: Record<string, ShotDef> = {
   // ================= 萧何① 沛县主吏 =================
+  'xh.glassOpen': glassesShot('萧相国何者沛丰人也以文无害为沛主吏掾'),
   'xh.slips': {
     bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '萧相国何者沛丰人也以文无害为沛主吏掾'),
     fg: (u, g, id) => glow(id, 800, 470, 300, g, 0, 0.3),

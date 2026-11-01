@@ -3,6 +3,7 @@ import { GOLD, INK, PAPER, RED, banner, cityWall, f, flame, glow, house, lerp, m
 import { P, faceCU, horse, person } from './rig';
 import { deskBg, seatRock, slips } from './shots1';
 import { dais, tentIn } from './shots2';
+import { glassesShot } from './shots2';
 import type { ShotDef } from './Film';
 
 // ---------------- 共用 ----------------
@@ -56,6 +57,7 @@ const tiger = (x: number, y: number, s: number, g: number, k: number) => {
 
 export const SHOTS_ZL: Record<string, ShotDef> = {
   // ================= 张良① 博浪沙 =================
+  'zl.glassOpen': glassesShot('留侯张良者其先韩人也大父开地相韩昭侯'),
   'zl.slips': {
     bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '留侯张良者其先韩人也大父开地相韩昭侯'),
     fg: (u, g, id) => glow(id, 800, 470, 300, g, 0, 0.3),

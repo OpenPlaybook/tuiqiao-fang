@@ -1,6 +1,7 @@
 // 第一回　淮阴少年：每一镜怎么画、怎么动（对照 第六堂课/分镜/第一回_淮阴少年.md）
 import { GOLD, INK, PAPER, RED, WH, WW, banner, pin, bareTree, cityWall, f, flame, glow, house, lerp, mist, moon, rain, reeds, ridge, river, rng, seg, sky, sunDisc, torch, vtext, wav, willow } from './core';
 import { P, bowl, faceCU, horse, person, swordHand } from './rig';
+import { glassesShot } from './shots2';
 import type { ShotDef } from './Film';
 
 // ---------------- 共用的背景 ----------------
@@ -53,6 +54,7 @@ export const crowdRow = (seed: number, x0: number, x1: number, y: number, n: num
 
 export const SHOTS1: Record<string, ShotDef> = {
   // ---------- 0 读书眼镜翻开《史记》 ----------
+  'a.glassOpen': glassesShot('淮阴侯韩信者淮阴人也始为布衣时贫无行'),
   'a.slips': {
     bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '淮阴侯韩信者淮阴人也始为布衣时贫无行不得推择为吏'),
     fg: (u, g) => glow('x', 800, 470, 300, g, 0, 0.3),

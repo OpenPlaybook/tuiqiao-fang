@@ -82,6 +82,7 @@ export const SHOTS_LB: Record<string, ShotDef> = {
     fg: (u, g, id) => { const k = seg(u, 0, 0.4); return glow(id, 800, 460, 260, g, 0, 0.4) + tablet(800, lerp(700, 470, k), 1.3, '贺钱万', lerp(-8, 0, k)) + (u > 0.6 ? `<text x="1020" y="520" font-size="40" fill="${RED}" style="font-family:KaiTi, STKaiti, serif" opacity="${f(seg(u, 0.6, 0.9))}">实不持一钱</text>` : ''); },
     cam: [[800, 470, 1200], [800, 470, 1050]],
   },
+  'lb.glassOpen': glassesShot('高祖沛丰邑中阳里人姓刘氏字季'),
   'lb.glasses': glassesShot('素易诸吏乃绐为谒曰贺钱万实不持一钱'),
   'lb.lvgong': {
     bg: (id) => hallIn(id) + `<rect x="1320" y="300" width="200" height="340" fill="#C9B994"/>`,

@@ -1,13 +1,15 @@
 // 分镜联系表（自己检查画面用）：#/filmtest?k=a. 列出所有镜头，每镜看开头、中间、结尾三帧；点一镜放大循环播放
 import { PLAY_ITEMS } from '../shared/play';
 import { Viz } from '../components/viz';
+import { PlayStep, SaveCtx } from '../items/steps2';
+import { ITEM_BY_ID } from '../shared/bank';
 import { useEffect, useRef, useState } from 'react';
 import { SHOTS } from './shots';
 import { FILM_OPT, Film, PACE, frameSvg } from './Film';
 
 export default function FilmTest() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-  return q.get('check') !== null ? <ShotCheck /> : q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : q.get('ext') ? <ExtTest /> : <FilmSheet />;
+  return q.get('check') !== null ? <ShotCheck /> : q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : q.get('ext') ? <ExtTest /> : q.get('step') ? <StepTest /> : <FilmSheet />;
 }
 
 // ---------------- 查画面里的字：#/filmtest?check（可加 =前缀）----------------
@@ -168,6 +170,20 @@ function ExtTest() {
   return (
     <div className="mx-auto max-w-xl space-y-6 p-4">
       {steps.map((s, i) => s.kind === 'teach' && <div key={i} className="rounded-2xl bg-white p-3 shadow"><p className="mb-2 text-sm">{s.t}</p>{s.art && <Viz spec={s.art} />}</div>)}
+    </div>
+  );
+}
+
+/** 把一道题（正题和拓展）的每一步都排出来，自己点一点检查反馈（#/filmtest?step=题号） */
+function StepTest() {
+  const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const it = ITEM_BY_ID[q.get('step') ?? ''];
+  if (!it) return <div className="p-4">没有这道题</div>;
+  const box = (k: string, el: React.ReactNode) => <div key={k} data-step={k} className="rounded-2xl bg-white p-3 shadow">{el}</div>;
+  return (
+    <div className="mx-auto max-w-2xl space-y-4 bg-[#F4EFE4] p-4">
+      {it.steps.map((s) => box(s.key, <PlayStep it={it} s={s} color="#B4532A" onDone={() => {}} />))}
+      {(it.ext ?? []).map((e) => <SaveCtx.Provider key={e.id} value={e.id + ':'}>{e.steps.map((s) => box(e.id + ':' + s.key, <PlayStep it={it} s={s} color="#B4532A" onDone={() => {}} />))}</SaveCtx.Provider>)}
     </div>
   );
 }

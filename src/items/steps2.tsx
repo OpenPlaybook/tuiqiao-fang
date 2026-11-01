@@ -122,6 +122,18 @@ export const ChoiceInline = ({ it, s, onDone, color, revealed, compact }: StepPr
 const OptArt = ({ a }: { a: NonNullable<ChoiceSub['opts'][number]['art']> }) => <div className="mt-1.5 max-w-[300px]">{isViz(a) ? <Viz spec={a} /> : <Art spec={a} className="aspect-[56/22] rounded-lg border border-[#E6DCC6]" />}</div>;
 
 // ---------------- 选词填句 ----------------
+/** 填错了的提示：讲解的第一句（句子里的线索 + 这个词的意思）把答案遮住；讲解里专门说到学生填的那个词，就把那一句也给出来；
+ *  第一次错只给“——”前面的线索，第二次错再给后面的意思；学生填的是别的句子的答案，就告诉他那个词另有去处。 */
+const fillHint = (s: FillSub, i: number, w: string | undefined, level: number) => {
+  const x = s.sents[i], hide = [x.a, ...(x.alt ?? [])].sort((a, b) => b.length - a.length);
+  const mask = (t: string) => hide.reduce((u, h) => u.split(h).join('＿＿'), t);
+  const parts = x.why.match(/[^。！？]+[。！？]?/g) ?? [x.why];
+  const clue = parts[0].split('——')[0]; // 第一次错只给线索，第二次再给意思
+  const first = level < 2 && clue.length >= 6 && clue !== parts[0] ? clue + '。' : mask(parts[0]);
+  const about = w ? parts.slice(1).find((t) => t.includes(w)) : undefined;
+  const other = w !== undefined && s.sents.some((y, j) => j !== i && (y.a === w || y.alt?.includes(w)));
+  return (first.startsWith('线索：') ? '看句子里的' : '想一想：') + first + (about ? mask(about) : '') + (other && !about ? `“${w}”另有一句更合适。` : '');
+};
 type FillSaved = { sc: number; put: Record<number, string> };
 export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
   const [sv, save] = useSaved<FillSaved>(it, s.key);
@@ -156,7 +168,7 @@ export const FillView = ({ it, s, onDone, color }: StepProps<FillSub>) => {
           return (
             <div key={i} className={`rounded-lg border-2 bg-white px-3 py-1.5 ${bad.includes(i) ? 'border-rose-300' : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
               <div className="text-[16px] leading-relaxed"><Rich text={parts[0]} /><button onClick={() => place(i)} className={`mx-1 inline-block min-w-[4em] rounded-md border-b-[3px] px-1.5 text-center font-black ${put[i] ? '' : 'text-transparent'}`} style={{ borderColor: color, color: put[i] ? color : undefined }}>{put[i] ?? '＿＿'}</button><Rich text={parts[1] ?? ''} /></div>
-              {bad.includes(i) && <div className="text-sm text-rose-700">这一句再想想。</div>}
+              {bad.includes(i) && <div className="text-sm leading-snug text-rose-800"><span className="font-black">✗ “{put[i]}”放在这里不合适。</span><Rich text={fillHint(s, i, put[i], tries)} /></div>}
               {solved && <div className="text-sm text-emerald-800">✓ <Rich text={x.why} /></div>}
             </div>
           );
@@ -564,12 +576,13 @@ export const ChoiceChat = ({ it, s, onDone, color, lead, tail, hideQ, wideTail }
 
 // ---------------- 分类：把卡片拖进格子（褒贬色带也是同一个组件，格子排成一条从贬到褒的色带） ----------------
 /** 上面一排没放的卡片，下面几个格子。拖过去就放进去（也可以先点卡片、再点格子）；放进去的卡片还能再拖、再点，换个格子或者拖回上面。
- *  检查以后，错了只说错了几张、不说是哪几张（让学生自己再想想怎么分）；做对了，每张卡片下面说为什么。scale：格子从左到右是“贬 → 中 → 褒”，上面画一条色带。 */
+ *  检查以后，第一次错只说错了几张（让学生自己再想想怎么分），第二次还错就把放错的标红；做对了，每张卡片下面说为什么。scale：格子从左到右是“贬 → 中 → 褒”，上面画一条色带。 */
 export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { init?: boolean }) => {
   const pid = useGame((g) => g.player?.pid ?? '');
   const order = useMemo(() => shuffleIdx(s.cards.length, pid + it.id + s.key), [pid]);
   const [put, setPut] = useState<Record<number, number>>(init ? Object.fromEntries(s.cards.map((c, i) => [i, c.bin])) : {});
   const [bad, setBad] = useState<number[]>([]);
+  const [mark, setMark] = useState<number[]>([]); // 第二次还错：把放错的卡片标红
   const [tries, setTries] = useState(0);
   const [solved, setSolved] = useState(!!init);
   const [sel, setSel] = useState<number | null>(null);
@@ -581,9 +594,9 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
     const wrong = s.cards.map((c, i) => (put[i] === c.bin ? -1 : i)).filter((i) => i >= 0);
     logAnswer(it, { q: s.key, v: s.cards.map((c, i) => `${plain(c.t)}→${s.bins[put[i]]}`).join('；'), ok: !wrong.length }, [s.key, t]);
     if (!wrong.length || t >= 3) { sfx(wrong.length ? 'flip' : 'ok'); setSolved(true); setBad([]); setSel(null); setPut(Object.fromEntries(s.cards.map((c, i) => [i, c.bin]))); onDone(wrong.length ? 0.34 : triesScore(t)); return; }
-    sfx('no'); setBad(wrong);
+    sfx('no'); setBad(wrong); setMark(t >= 2 ? wrong : []);
   };
-  const place = (i: number, j: number) => { if (solved) return; sfx('click'); setPut((p) => { const q = { ...p }; if (j < 0) delete q[i]; else q[i] = j; return q; }); setBad([]); setSel(null); };
+  const place = (i: number, j: number) => { if (solved) return; sfx('click'); setPut((p) => { const q = { ...p }; if (j < 0) delete q[i]; else q[i] = j; return q; }); setBad([]); setMark((m) => m.filter((x) => x !== i)); setSel(null); };
   const zoneAt = (x: number, y: number) => { const z = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest('[data-bin]') as HTMLElement | null; return z ? Number(z.dataset.bin) : null; };
   // 拖：按下以后挪了一点才算拖（没挪就是“点”：选中它）
   useEffect(() => {
@@ -601,7 +614,7 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
     const c = s.cards[i], on = sel === i, ghost = drag?.on && drag.i === i;
     return (
       <div key={i} onPointerDown={(e) => { if (solved) return; e.preventDefault(); setDrag({ i, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, on: false }); }}
-        className={`select-none rounded-lg border-2 px-2.5 py-1 text-[15px] font-bold leading-snug transition ${solved ? 'border-emerald-200 bg-white' : on ? 'cursor-grab bg-[#FFF3D6]' : 'cursor-grab border-[#E6DCC6] bg-white hover:border-amber-300'} ${ghost ? 'opacity-30' : ''}`}
+        className={`select-none rounded-lg border-2 px-2.5 py-1 text-[15px] font-bold leading-snug transition ${solved ? 'border-emerald-200 bg-white' : on ? 'cursor-grab bg-[#FFF3D6]' : mark.includes(i) ? 'cursor-grab border-rose-400 bg-rose-50' : 'cursor-grab border-[#E6DCC6] bg-white hover:border-amber-300'} ${ghost ? 'opacity-30' : ''}`}
         style={{ ...(on ? { borderColor: color } : {}), touchAction: 'none' }}>
         <Rich text={c.t} />
         {solved && <div className="mt-0.5 text-[13px] font-normal leading-snug text-emerald-800">✓ <Rich text={c.why} /></div>}
@@ -632,7 +645,7 @@ export const SortPlay = ({ it, s, onDone, color, init }: StepProps<SortSub> & { 
           );
         })}
       </div>
-      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 ? <span className="text-sm font-bold text-rose-700">有 {bad.length} 张放错了。再想想：每张卡片说的到底是哪一种？</span> : <span className="text-sm text-ink2">把卡片拖进格子；也可以先点卡片，再点格子。</span>}</div>}
+      {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 ? <span className="text-sm font-bold text-rose-700">{mark.length ? `标红的 ${bad.length} 张放错了。对照格子上的名字，再读一遍这几张卡片。` : `有 ${bad.length} 张放错了。再想想：每张卡片说的到底是哪一种？`}</span> : <span className="text-sm text-ink2">把卡片拖进格子；也可以先点卡片，再点格子。</span>}</div>}
       {/* 拖着走的那张 */}
       {drag?.on && createPortal(<div className="pointer-events-none fixed z-[120] max-w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 bg-white px-2.5 py-1 text-[15px] font-bold shadow-xl" style={{ left: drag.x, top: drag.y, borderColor: color }}><Rich text={s.cards[drag.i].t} /></div>, document.body)}
     </div>

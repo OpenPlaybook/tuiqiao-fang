@@ -39,6 +39,7 @@ const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
 export const SHOTS_XY: Record<string, ShotDef> = {
   // ================= 项羽① 学万人敌 =================
+  'xy.glassOpen': glassesShot('项籍者下相人也字羽其季父项梁'),
   'xy.slips': {
     bg: (id) => deskBg(id) + slips(470, 330, 18, 1.2, '项籍者下相人也字羽其季父项梁梁父即楚将项燕'),
     fg: (u, g, id) => glow(id, 800, 470, 300, g, 0, 0.3),
