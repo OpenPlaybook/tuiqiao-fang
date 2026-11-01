@@ -39,6 +39,7 @@ export const PLAY_EN2: Play = {
     'tripped over': { d: '被……绊倒（trip over：脚下被东西绊了一下）' },
     cable: { d: 'n. 电线、电缆', py: '/ˈkeɪbl/' },
     'while I was carrying': { d: '在我正搬着……的时候。while + 一直在做的事（was carrying）。' },
+    'We’ve talked to': { d: '我们（已经）和……谈过了：have + 过去分词，说到现在为止做完的事——三个人现在都问过了。' },
     'made the lights go out': { d: '让灯灭了（make + 东西 + 动词原形：让……）' },
     'plugged it back in': { d: '把插头又插了回去（plug in：插上电源；back：回到原处）' },
     'straight away': { d: '马上、立刻（英式说法；美式常说 right away）' },
@@ -86,8 +87,9 @@ export const PLAY_EN2: Play = {
     { shots: [['e2.pen']], id: 'mia', who: 'Mia', voice: 'mia', t: 'Oh no, ⟦my pen is dead⟧. Ben, can you ⟦borrow⟧ me your pen?', tr: '哎呀，{我的笔没水了}。Ben，{!你能借我你的笔吗}？', trHard: 'frame', task: ['e2-mia'], ask: 'borrow 和 lend 怎么分？' },
     { shots: [['e2.benPen']], id: 'mean', who: 'Ben', voice: 'ben', task: ['e2-mean'], t: '(smiling) ⟦You mean⟧, “Can you ⟦lend⟧ me your pen?” ⟦Here you are⟧.', read: 'You mean, can you lend me your pen? Here you are.', tr: '（笑）{你是想说}“你能把笔{借给}我吗？”{给你}。', trHard: 'frame' },
     { shots: [['e2.miaRun', 1.2]], t: 'Mia writes something quickly and ⟦runs off⟧: “I have to send my photos to the newspaper ⟦before three⟧!”', read: 'Mia writes something quickly and runs off. I have to send my photos to the newspaper before three!', tr: 'Mia 飞快地写了点东西就{跑开了}：“我得{三点以前}把照片发给校报！”', trHard: 'words', voice: 'en' },
+    { shots: [['e2.benPlan']], who: 'Ben', voice: 'ben', t: 'Ms Green, Max, Mia… ⟦We’ve talked to⟧ all three, and they all have an alibi.', read: 'Ms Green, Max, Mia. We’ve talked to all three, and they all have an alibi.', tr: 'Green 老师、Max、Mia……三个人{我们都问过了}，{他们都有}不在场证明。', trHard: 'words' },
     { shots: [['e2.alibiBoard']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '把三个人的不在场证明连一连：两点一刻，谁在做什么？', task: ['e2-alibi'] },
-    { shots: [['e2.mmm', 1.2]], who: 'Ben', voice: 'ben', t: 'Ms Green, Max, Mia… They all have an alibi. And look — all three names ⟦start with⟧ M!', read: 'Ms Green, Max, Mia. They all have an alibi. And look, all three names start with M!', tr: 'Green 老师、Max、Mia……{他们都有}不在场证明。你看——三个人的名字都{以} M {开头}！', trHard: 'frame' },
+    { shots: [['e2.mmm', 1.2]], who: 'Ben', voice: 'ben', t: 'But look — all three names ⟦start with⟧ M!', read: 'But look, all three names start with M!', tr: '可是你看——三个人的名字都{以} M {开头}！', trHard: 'frame' },
     { shots: [['e2.write']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '用一句英语，把 Max 的不在场证明记进侦探笔记：两点一刻，他在做什么？', task: ['e2-write'] },
     { shots: [['e2.noteAgain', 1.2]], t: '**2:49 p.m.** You look at the yellow note again. “Lent the panda.” Something about this word is ⟦strange⟧…', read: '2:49 p.m. You look at the yellow note again. Lent the panda. Something about this word is strange.', tr: '两点四十九。你又看了看那张黄纸条：Lent the panda。{这个词}，好像有点{不对劲}……', trHard: 'frame', voice: 'en', ask: '“Lent the panda” 哪里可能不对劲？' },
   ],
@@ -226,6 +228,15 @@ const EXT_ALIBI: Ext[] = [
       ['Show me your photos!', '像命令，不客气。'],
       ['Can I show your photos?', 'show 的人是 Mia，不是我们。'],
     ]),
+    T('t2', '', 'Ben 刚才说：“We’ve **talked** to all three.”——问的事发生在过去，结果留到现在：三个人现在都问过了。第一章 Green 老师喊的 Someone **has taken** it! 也是这样：拿走发生在过去，现在桌上空着。'),
+    C('c', '要说清楚“两点四十五分，我们和 Max 谈过”，哪一句对？', [
+      ['*We talked to Max at 2:45.', '对：说出了具体的时间点（at 2:45），用一般过去时。'],
+      ['We’ve talked to Max at 2:45.', '现在完成时说的是到现在的结果，不和 at 2:45 这样具体的过去时间连用。'],
+    ], { keep: true }),
+    C('d', '“三个人我们都问过了。下一步，看纸条。”Ben 会说——', [
+      ['*We’ve talked to all three. Now let’s look at the note.', '对：问完了，结果留到现在，接着做下一步。'],
+      ['We were talking to all three. Now let’s look at the note.', 'were talking 是“那时正在谈”，说的不是“已经问完了”。'],
+    ], { keep: true }),
   ] },
 ];
 

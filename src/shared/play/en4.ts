@@ -18,6 +18,8 @@ export const PLAY_EN4: Play = {
     'said yes': { d: '答应了（说了“好”）' },
     'ten past two': { d: '两点十分。英式说时间：分钟 + past + 钟点（过了几点几分）。', more: { t: '过了半点，常说 to：quarter to three（差一刻三点，2:45）、ten to three（差十分三点，2:50）。', q: '“twenty to four” 是几点？', opts: [['3:40', true], ['4:20', false]] } },
     'was on the phone': { d: '在打电话' },
+    'was talking on the phone': { d: '那时正在打电话：was + doing，说过去某一刻正在做的事——Mia 来问的时候，她正打着电话，所以没听清。' },
+    'while Max was carrying his drum': { d: 'Max 正搬着鼓的时候：while + was doing 是一段正在进行的背景；灯灭是这段时间里一下子发生的事（第二章 Max 自己就是这么说的）。' },
     'stuck it on the table': { d: '把它贴在桌子上（stick 的过去式 stuck）' },
     'you lent nothing': { d: '你什么也没借出去' },
     'mix them up': { d: '把它们搞混' },
@@ -47,11 +49,11 @@ export const PLAY_EN4: Play = {
     { side: ['e4-x-rob'], shots: [['e4.miaCU']], id: 'steal', who: 'Mia', voice: 'mia', t: 'I… I didn’t ⟦steal⟧ it! I borrowed it ⟦for a photo⟧. Ms Green ⟦said yes⟧!', read: 'I… I didn’t steal it! I borrowed it for a photo. Ms Green said yes!', tr: '我……我没有{偷}！我是借来{拍照}的。Green 老师{答应了}！', trHard: 'words', task: ['e4-steal'], ask: 'steal 和 borrow 差在哪？' },
     { shots: [['e4.benAsk']], who: 'Ben', voice: 'ben', t: 'When did she say yes?', tr: '她什么时候答应的？', trHard: 'frame' },
     { shots: [['e4.flashAsk', 1.4]], id: 'ten', who: 'Mia', voice: 'mia', t: 'At ⟦ten past two⟧. She ⟦was on the phone⟧. I asked, “Can I borrow the panda for a photo?” and she said, “Yes, yes.”', read: 'At ten past two. She was on the phone. I asked, can I borrow the panda for a photo? And she said, yes, yes.', tr: '{两点十分}。她{正在打电话}。我问：“我能借熊猫拍张照吗？”她说：“好，好。”', trHard: 'words', task: ['e4-ten'], ask: '英式英语怎么说时间？' },
-    { shots: [['e4.remember']], t: 'So that was the “yes, yes”! You remember Ms Green on the phone.', read: 'So that was the yes, yes! You remember Ms Green on the phone.', tr: '原来那句“好，好”是这么回事！你想起了打电话的 Green 老师。', trHard: 'frame', voice: 'en' },
+    { shots: [['e4.remember']], t: 'So that was the “yes, yes”! Ms Green ⟦was talking on the phone⟧, so she didn’t really listen.', read: 'So that was the yes, yes! Ms Green was talking on the phone, so she didn’t really listen.', tr: '原来那句“好，好”是这么回事！Green 老师{当时正在打电话}，{根本没认真听}。', trHard: 'words', voice: 'en' },
     { shots: [['e4.flashNote', 1.2]], who: 'Mia', voice: 'mia', t: 'Then I wrote a note and ⟦stuck it on the table⟧: “Lent the panda. Back at 3.”', read: 'Then I wrote a note and stuck it on the table. Lent the panda. Back at three.', tr: '然后我写了一张纸条，{贴在桌子上}：“熊猫借出去了。三点回来。”', trHard: 'words' },
     { shots: [['e4.benKind']], who: 'Ben', voice: 'ben', t: '(kindly) Mia, ⟦you lent nothing⟧. You borrowed it!', read: 'Mia, you lent nothing. You borrowed it!', tr: '（温和地）Mia，{你什么也没借出去}，你是借进来的！', trHard: 'frame' },
     { shots: [['e4.miaCU']], who: 'Mia', voice: 'mia', t: 'Oh no… borrow, lend… I always ⟦mix them up⟧!', read: 'Oh no… borrow, lend… I always mix them up!', tr: '哎呀……borrow，lend……我总是{把它们搞混}！', trHard: 'words' },
-    { shots: [['e4.noteFall', 1.2]], t: 'At 2:15, when Max tripped, the note ⟦fell off⟧ the table ⟦in the dark⟧. Nobody saw it — ⟦until you did⟧.', read: 'At 2:15, when Max tripped, the note fell off the table in the dark. Nobody saw it, until you did.', tr: '两点一刻 Max 被绊倒的时候，纸条{在黑暗中}从桌上{掉了下来}。谁也没看见——{直到你发现了它}。', trHard: 'words', voice: 'en' },
+    { shots: [['e4.noteFall', 1.2]], t: 'At 2:15, ⟦while Max was carrying his drum⟧, the lights went out. The note ⟦fell off⟧ the table ⟦in the dark⟧. Nobody saw it — ⟦until you did⟧.', read: 'At 2:15, while Max was carrying his drum, the lights went out. The note fell off the table in the dark. Nobody saw it, until you did.', tr: '两点一刻，{Max 正搬着鼓的时候}，灯灭了。纸条{在黑暗中}从桌上{掉了下来}。谁也没看见——{直到你发现了它}。', trHard: 'words', voice: 'en' },
     { shots: [['e4.timeline']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '真相都齐了。把这件事从头到尾，按时间顺序排一排。', task: ['e4-order'] },
     { shots: [['e4.runHall', 1.2]], t: '**2:58 p.m.** You all run back to the hall. Ms Green sees the panda and ⟦drops the phone⟧.', read: '2:58 p.m. You all run back to the hall. Ms Green sees the panda and drops the phone.', tr: '两点五十八。你们一起跑回礼堂。Green 老师一看见熊猫，{手机都掉了}。', trHard: 'words', voice: 'en' },
     { shots: [['e4.greenJoy']], who: 'Ms Green', voice: 'green', t: 'The Golden Panda! ⟦Where was it⟧?', tr: '金熊猫！{它去哪儿了}？', trHard: 'frame' },
@@ -154,6 +156,7 @@ const EXT_BEST: Ext[] = [
 const EXT_EVER: Ext[] = [
   { id: 'x1', title: 'the most … I’ve ever …', need: 'always', steps: [
     T('t1', '', '“我（到现在为止）……过的最……”：**the + 最高级 + 名词 + I’ve ever + 过去分词**。ever 是“曾经、从来”，和 have done 搭配，说的是到现在为止。', ['It’s the best story I’ve ever read.', 'He is the funniest person I’ve ever met.']),
+    T('t2', '', '这也是第一章的老朋友：Ben **has eaten** nine mooncakes，Someone **has taken** it!——have / has + 过去分词，说的都是“到现在为止”。Mia 这句加了 ever：到现在为止拍过的所有照片里。'),
     C('a', 'Mia 说 It’s the most beautiful photo I’ve ever taken! 意思是——', [
       ['*这是我拍过的最美的一张照片', '对：到现在为止拍过的所有照片里，这张最美。'],
       ['我永远拍不出这么美的照片', 'ever 在这里是“曾经”，说的是到现在为止。'],
@@ -251,6 +254,33 @@ const EXT_INTIME: Ext[] = [
 ];
 
 const EXT_REVIEW: Ext[] = [
+  { id: 'x2', title: '四章里的时态，再见一次', need: 'always', steps: [
+    T('t1', '', '把整个案子按时间连起来说一遍。四章里的几种说法，全在这条时间线上：', [
+      '2:00　The panda **was** on the table.',
+      '2:10　Ms Green **was talking** on the phone. Mia **borrowed** the panda.',
+      '2:15　While Max **was carrying** his drum, the lights **went out**.',
+      '2:40　“Someone **has taken** it!”（现在不在了）',
+      '2:55　“We’ve **found** it!”（现在找到了）',
+    ]),
+    C('a', 'Mia 来借熊猫的时候，Green 老师在做什么？哪一句对？', [
+      ['*When Mia asked, Ms Green was talking on the phone.', '对：打电话是一段正在进行的背景，Mia 一问，正好落在这段时间中间。'],
+      ['When Mia asked, Ms Green talked on the phone.', '这样说，像是 Mia 问了以后，她才拿起电话。'],
+    ], { keep: true }),
+    C('b', '两点四十，Green 老师冲进礼堂，看着空桌子喊——', [
+      ['*Someone has taken it!', '对：她说的是眼前的样子：熊猫现在不在了。'],
+      ['Someone was taking it!', 'was taking 是“那时正在拿”；她进来的时候，并没有人正在拿。'],
+    ], { keep: true }),
+    fill('c', '放进句子。', ['was eating', 'tripped', 'has taken', 'must be'], [
+      ['When the lights went out, Ben ___ a mooncake.', 'was eating', '灯灭的那一刻，他正在吃。'],
+      ['While Max was carrying his drum, he ___ over a cable.', 'tripped', '一下子发生的事：一般过去时。'],
+      ['The table is empty! Someone ___ the Golden Panda!', 'has taken', '现在的样子：桌上空了。'],
+      ['The same yellow paper, the same curly M… It ___ Mia!', 'must be', '很有把握的推断。'],
+    ]),
+    C('d', '故事的最后，Ben 说：I’ve only eaten nine! 他的意思是——', [
+      ['*到现在为止，我才吃了九块（还想再吃）', '对：have eaten 说的是到现在为止的数量；only 是“才”。'],
+      ['我每天只吃九块', '说的是到现在为止，不是每天。'],
+    ], { keep: true }),
+  ] },
   { id: 'x1', title: '四章里的词，再见一次', need: 'always', steps: [
     T('t1', '', '这个案子里，每个词都是一条线索：borrow / lend（东西往哪边走）、look / see / notice（看、看见、注意到）、clue / evidence / proof（线索、证据、证明）、nervous / scared（紧张、害怕）、say / tell（说、告诉）。'),
     So('a', '这些词，哪个是“东西往自己这边来”，哪个是“从自己这边出去”？', ['往自己这边来', '从自己这边出去'], [
