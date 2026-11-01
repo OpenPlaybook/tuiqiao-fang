@@ -200,7 +200,7 @@ export const person = (o: PersonOpts) => {
   if (hold === 'scroll') out += `<rect x="${f(wrF[0] - 3)}" y="${f(wrF[1] - 16)}" width="34" height="22" fill="#EFE3C6" stroke="#8A6A3A"/>`;
   out += arm(elF, wrF, robe, true);
   if (L.stripe && L.modern) out += `<path d="M${pt(sh)} L${pt(elF)} L${pt(add(wrF, [elF[0] - wrF[0], elF[1] - wrF[1]], 0.18))}" stroke="${L.stripe}" stroke-width="2.4" fill="none" opacity=".85" stroke-linejoin="round"/>`;
-  return `<g transform="translate(${f(o.x)},${f(o.y)}) scale(${f(s * fc)},${f(s)})" opacity="${o.a ?? 1}">${out}</g>`;
+  return `<g data-p="person" transform="translate(${f(o.x)},${f(o.y)}) scale(${f(s * fc)},${f(s)})" opacity="${o.a ?? 1}">${out}</g>`;
 };
 
 /** 侧面的头：头型、头发 / 头盔 / 头巾、脸（大一点时才画眼睛、眉毛、嘴） */
@@ -274,7 +274,7 @@ export const horse = (o: { x: number; y: number; s?: number; face?: 1 | -1; g?: 
   out += leg(40, -94 + bob, legA(-2, 0, 32) + paw, legA(10, 0.75, 22) + paw * 1.6, true, 0);
   out += leg(-46, -98 + bob, legA(6, 0.5, 30), legA(22, 0, 18), false, 0);
   if (o.rider) out += `<g transform="translate(-6,${f(-128 + bob)})">${person({ x: 0, y: 70, who: o.rider, pose: o.riderPose ?? P.rideRun(ph), g, s: 1 })}</g>`;
-  return `<g transform="translate(${f(o.x)},${f(o.y)}) scale(${f(s * fc)},${f(s)})" opacity="${o.a ?? 1}">${out}</g>`;
+  return `<g data-p="horse" transform="translate(${f(o.x)},${f(o.y)}) scale(${f(s * fc)},${f(s)})" opacity="${o.a ?? 1}">${out}</g>`;
 };
 
 // ---------------- 特写：侧脸（朝右） ----------------
@@ -368,7 +368,7 @@ export const faceCU = (o: FaceOpts) => {
     if (X.beard === 'thin') out += `<path d="M62,108 q8,${f(40 + wav(g, 3) * 2)} 22,64 q8,-36 12,-68 z" fill="${bc}"/><path d="M70,48 q12,4 24,-2" stroke="${bc}" stroke-width="4" stroke-linecap="round" fill="none"/>`;
   }
   const shake = (o.shake ?? 0) * Math.sin(g * 14) * 6, nod = (o.nod ?? 0) * 8;
-  return `<g transform="translate(${f(o.x + shake)},${f(o.y + nod)}) scale(${f(s * fc)},${f(s)})">${out}</g>`;
+  return `<g data-p="face" transform="translate(${f(o.x + shake)},${f(o.y + nod)}) scale(${f(s * fc)},${f(s)})">${out}</g>`;
 };
 
 /** 特写：握剑柄的手（grip 0 松 — 1 紧） */

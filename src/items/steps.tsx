@@ -29,18 +29,21 @@ export const OrderView = ({ it, s, onDone, color }: StepProps<OrderSub>) => {
   const [solved, setSolved] = useState(false);
   const [checked, setChecked] = useState(false);
   const mv = (k: number, d: number) => { const j = k + d; if (j < 0 || j >= ord.length) return; sfx('click'); const o = [...ord]; [o[k], o[j]] = [o[j], o[k]]; setOrd(o); setChecked(false); };
+  // 名次一样的几项谁先谁后都行：第 k 个位置上，只要放的是该在这个名次上的就算对
+  const rankOf = (x: number) => s.rank?.[x] ?? x;
+  const want = s.items.map((_, i) => rankOf(i)).sort((a, b) => a - b);
   const check = () => {
     const t = tries + 1; setTries(t); setChecked(true);
-    const ok = ord.every((x, i) => x === i);
+    const ok = ord.every((x, k) => rankOf(x) === want[k]);
     logAnswer(it, { q: s.key, v: ord.map((i) => s.items[i]).join(' → '), ok }, [s.key, t]);
-    if (ok || t >= 3) { sfx(ok ? 'ok' : 'flip'); setSolved(true); setOrd(s.items.map((_, i) => i)); onDone(ok ? triesScore(t) : 0.34); } else sfx('no');
+    if (ok || t >= 3) { sfx(ok ? 'ok' : 'flip'); setSolved(true); if (!ok) setOrd(s.items.map((_, i) => i)); onDone(ok ? triesScore(t) : 0.34); } else sfx('no');
   };
   return (
     <div>
       <Q text={s.q} />
       <div className="space-y-2">
         {ord.map((x, k) => (
-          <motion.div layout key={x} className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-2.5 ${checked && !solved ? (x === k ? 'border-emerald-300' : 'border-rose-300') : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
+          <motion.div layout key={x} className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-2.5 ${checked && !solved ? (rankOf(x) === want[k] ? 'border-emerald-300' : 'border-rose-300') : solved ? 'border-emerald-200' : 'border-[#E6DCC6]'}`}>
             <span className="flex h-7 w-7 items-center justify-center rounded-full text-sm font-black text-white" style={{ background: color }}>{k + 1}</span>
             <span className="flex-1 text-[17px] font-bold">{s.items[x]}</span>
             {solved && s.tags && <span className="rounded-full bg-amber-100 px-3 py-0.5 text-sm font-black text-amber-800">{s.tags[x]}</span>}

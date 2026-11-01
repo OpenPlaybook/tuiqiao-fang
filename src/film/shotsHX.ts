@@ -1,5 +1,5 @@
 // 韩信线（新写的支线）：假王真王
-import { GOLD, INK, PAPER, RED, banner, cityWall, f, glow, lerp, seg, sky, soundRings, vtext } from './core';
+import { GOLD, INK, PAPER, RED, banner, pin, cityWall, f, glow, lerp, seg, sky, soundRings, vtext } from './core';
 import { P, faceCU, person } from './rig';
 import { tentIn } from './shots2';
 import type { ShotDef } from './Film';
@@ -20,11 +20,11 @@ export const SHOTS_HX: Record<string, ShotDef> = {
   },
   'hx.letter': {
     bg: (id) => tentIn(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const k = seg(u, 0.4, 0.8);
       return glow(id, 800, 560, 300, g, 0, 0.4) + person({ x: 560, y: 800, s: 1.55, who: 'hanxinLang', pose: { ...P.stand(), aF: 40, eF: 70 }, g, face: 1, detail: true }) +
         person({ x: lerp(800, 1300, k), y: 806, s: 1.35, who: 'crowd1', pose: k > 0.02 && k < 0.98 ? P.walk(g, 0.8) : P.bow(0.5), g, face: k > 0.02 ? 1 : -1, hold: 'scroll' }) +
-        `<g opacity="${f(1 - k)}">${letter(700, 640, 0.9, 1)}</g>` + `<g opacity="${f(seg(u, 0.1, 0.3) * (1 - k))}">${vtext(1240, 200, '愿为假王便', 44, GOLD, 0.9)}</g>`;
+        `<g opacity="${f(1 - k)}">${letter(700, 640, 0.9, 1)}</g>` + `<g opacity="${f(seg(u, 0.1, 0.3) * (1 - k))}">${pin(v, 1240 / 1600, 200 / 900, vtext(0, 0, '愿为假王便', 44, GOLD, 0.9))}</g>`;
     },
     cam: [[840, 560, 1400], [900, 580, 1250]],
   },

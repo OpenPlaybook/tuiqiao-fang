@@ -51,7 +51,7 @@ export const SHOTS_SJ: Record<string, ShotDef> = {
     fg: (u, g, id) => {
       let o = glow(id, 1200, 520, 360, g, 0, 0.5) + person({ x: 1200, y: 640, s: 1.5, who: 'liubang', pose: { ...P.sitCross(), aF: 100 + 10 * Math.sin(g * 4), eF: 20 }, g, face: -1, detail: true }) + soundRings(1080, 470, g, { dir: -1, n: 3, r0: 30 });
       for (let i = 0; i < 5; i++) o += person({ x: 220 + i * 150, y: 780 + (i % 2) * 30, s: 1.15, who: ['crowd1', 'caocan', 'crowd2', 'fankuai', 'crowd4'][i], pose: { ...P.sitCross(), head: -10 }, g, face: 1 });
-      return o + `<g opacity="${f(seg(u, 0.3, 0.55))}">${vtext(320, 280, '吾所以有天下者何', 40, '#F1E8D6', 0.9)}</g><g opacity="${f(seg(u, 0.6, 0.85))}">${vtext(250, 280, '项氏之所以失天下者何', 40, GOLD, 0.9)}</g>`;
+      return o + `<g opacity="${f(seg(u, 0.3, 0.55))}">${vtext(330, 205, '吾所以有天下者何', 38, '#F1E8D6', 0.9)}</g><g opacity="${f(seg(u, 0.6, 0.85))}">${vtext(262, 205, '项氏之所以失天下者何', 38, GOLD, 0.9)}</g>`;
     },
     cam: [[800, 540, 1600], [800, 560, 1450]],
   },

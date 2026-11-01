@@ -262,7 +262,7 @@ export const SHOTS5: Record<string, ShotDef> = {
   },
   'h.teacher': {
     bg: (id) => sky(id, '#3A2C24', '#4A3A2E') + `<rect x="420" y="160" width="760" height="600" rx="12" fill="#6A2E26" stroke="${GOLD}" stroke-width="4" opacity=".9"/>` +
-      `<text x="800" y="146" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>北</text><text x="800" y="820" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>南</text><text x="370" y="472" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>西</text><text x="1230" y="472" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>东</text>`,
+      `<text x="800" y="146" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>北</text><text x="800" y="796" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>南</text><text x="370" y="472" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>西</text><text x="1230" y="472" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>东</text>`,
     fg: (u) => {
       const seat = (k: number, x: number, dx: number, name: string, c: string) => { const a = seg(u, k * 0.3, k * 0.3 + 0.25); if (a <= 0) return ''; return `<g opacity="${f(a)}"><circle cx="${x}" cy="460" r="56" fill="${c}" stroke="#E9DFCB" stroke-width="4"/><text x="${x}" y="472" font-size="30" text-anchor="middle" fill="#F4F1E8" ${KAI}>${name}</text><path d="M${f(x + dx * 66)},460 l${f(dx * 60)},0" stroke="#F4F1E8" stroke-width="6" marker-end="url(#ar5)"/></g>`; };
       return `<defs><marker id="ar5" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#F4F1E8"/></marker></defs>` + seat(0, 520, 1, '李左车', '#5A5A4A') + seat(1, 1080, -1, '韩信', '#3F4A52');

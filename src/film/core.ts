@@ -170,6 +170,11 @@ export const house = (x: number, y: number, s = 1, a = 0.9, door = true) => {
   return o + '</g>';
 };
 /** 竖排的字（场景题字） */
+/** 取景框（世界坐标）：Film 每一帧传给镜头的 fg */
+export interface View { x: number; y: number; w: number; h: number }
+/** 钉在画面上：放在取景框的 (fx, fy) 处（0—1），大小不跟着镜头推拉变（按 1600 宽的取景算）。时间、地名、标题这类要一直看得见的字用它 */
+export const pin = (v: View | undefined, fx: number, fy: number, inner: string, x0 = 0, y0 = 0) =>
+  v ? `<g transform="translate(${f(v.x + fx * v.w)},${f(v.y + fy * v.h)}) scale(${f(v.w / 1600)})">${inner}</g>` : `<g transform="translate(${x0},${y0})">${inner}</g>`;
 export const vtext = (x: number, y: number, text: string, size = 40, c = INK, a = 0.85) => [...text].map((ch, i) => `<text x="${x}" y="${f(y + i * size * 1.12)}" font-size="${size}" text-anchor="middle" fill="${c}" opacity="${a}" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${ch}</text>`).join('');
 export const seal = (x: number, y: number, text: string, s = 1) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-26" y="0" width="52" height="${f(text.length * 26 + 10)}" rx="4" fill="${RED}" opacity=".9"/>${[...text].map((ch, i) => `<text x="0" y="${f(26 + i * 26)}" font-size="24" text-anchor="middle" fill="#F6E7C8" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${ch}</text>`).join('')}</g>`;
 export const tent = (x: number, y: number, s = 1, c = '#5B5248', a = 0.9) => `<g opacity="${a}"><path d="M${f(x - 70 * s)},${y} L${x},${f(y - 80 * s)} L${f(x + 70 * s)},${y} Z" fill="${c}"/><path d="M${x},${f(y - 80 * s)} L${f(x - 14 * s)},${y} L${f(x + 14 * s)},${y} Z" fill="${INK}" opacity=".55"/><line x1="${x}" y1="${f(y - 80 * s)}" x2="${x}" y2="${f(y - 100 * s)}" stroke="${INK}" stroke-width="${f(2 * s)}"/></g>`;

@@ -1,5 +1,5 @@
 // 第六回　四面楚歌：每一镜怎么画、怎么动（对照 第六堂课/分镜/第六回_四面楚歌.md）
-import { GOLD, INK, PAPER, RED, banner, bareTree, campfire, cityWall, f, flame, glow, lerp, mist, moon, reeds, ridge, river, rng, seg, sky, snow, soundRings, sunDisc, tent, torch, vtext, wav } from './core';
+import { GOLD, INK, PAPER, RED, banner, pin, bareTree, campfire, cityWall, f, flame, glow, lerp, mist, moon, reeds, ridge, river, rng, seg, sky, snow, soundRings, sunDisc, tent, torch, vtext, wav } from './core';
 import { P, faceCU, horse, person } from './rig';
 import type { ShotDef } from './Film';
 
@@ -45,9 +45,9 @@ const glassesGlow = (x: number, y: number, s: number, g: number) => `<defs><filt
 export const SHOTS6: Record<string, ShotDef> = {
   // ---------- 0 冬天，垓下 ----------
   'b.winter': {
-    bg: (id) => nightPlain(id, { snowy: true }) + bareTree(3, 260, 600, 1.6, 0.85) + bareTree(4, 1440, 590, 1.2, 0.7) + vtext(1480, 120, '垓下', 56, '#E9DFCB', 0.8),
-    fg: (u, g, id) => {
-      let o = '';
+    bg: (id) => nightPlain(id, { snowy: true }) + bareTree(3, 260, 600, 1.6, 0.85) + bareTree(4, 1440, 590, 1.2, 0.7),
+    fg: (u, g, id, v) => {
+      let o = pin(v, 1480 / 1600, 120 / 900, vtext(0, 0, '垓下', 56, '#E9DFCB', 0.8));
       for (let i = 0; i < 7; i++) o += tent(560 + i * 80, 590 + (i % 2) * 14, 0.6, '#4A4642', 0.95);
       o += glow(id, 800, 580, 120, g, 0, 0.4) + flame(800, 600, 1, g);
       return o + reeds(31, g, -100, 1700, 680, 60, 50, '#8C8A84', 0.6) + snow(41, g, 140, 0.8, 50);
@@ -79,7 +79,7 @@ export const SHOTS6: Record<string, ShotDef> = {
   // ---------- 3 夜深，四面楚歌 ----------
   'b.songs': {
     bg: (id) => nightPlain(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       let o = '';
       for (let i = 0; i < 18; i++) { const x = 60 + i * 88, y = 470 - Math.abs(Math.sin(i * 0.7)) * 50; o += torch(id, x, y, 0.8, g, i * 0.2); }
       for (let i = 0; i < 5; i++) o += tent(600 + i * 90, 640, 0.6, '#3A3632');
@@ -87,7 +87,7 @@ export const SHOTS6: Record<string, ShotDef> = {
       o += soundRings(800, 620, g, { dir: -Math.PI / 2, n: 5, r0: 520, r1: 60, a: 0.55 * amp, c: '#E9DFCB', spread: 1.2, period: 3 });
       o += soundRings(800, 620, g + 0.8, { dir: Math.PI, n: 4, r0: 700, r1: 80, a: 0.5 * amp, c: '#E9DFCB', spread: 0.5, period: 3 });
       o += soundRings(800, 620, g + 1.6, { dir: 0, n: 4, r0: 700, r1: 80, a: 0.5 * amp, c: '#E9DFCB', spread: 0.5, period: 3 });
-      return o + vtext(1500, 120, '楚歌', 54, '#E9DFCB', 0.5 * amp);
+      return o + pin(v, 1480 / 1600, 120 / 900, vtext(0, 0, '楚歌', 54, '#E9DFCB', 0.5 * amp));
     },
     cam: [[800, 470, 1600], [800, 520, 1400]],
   },
@@ -268,15 +268,18 @@ export const SHOTS6: Record<string, ShotDef> = {
     cam: [[800, 500, 1600], [820, 520, 1450]],
   },
   'b.poets': {
-    bg: (id) => wujiangBg(id, false) + `<g transform="translate(800,700)"><path d="M-480,-420 Q0,-500 480,-420 L450,-404 Q0,-470 -450,-404 Z" fill="${INK}"/><rect x="-440" y="-404" width="22" height="404" fill="#5A4630"/><rect x="418" y="-404" width="22" height="404" fill="#5A4630"/><rect x="-200" y="-260" width="400" height="150" fill="#EFE3C6" stroke="#8A6A3A" stroke-width="4"/></g>`,
+    bg: (id) => wujiangBg(id, false) + `<g transform="translate(800,700)"><path d="M-480,-420 Q0,-500 480,-420 L450,-404 Q0,-470 -450,-404 Z" fill="${INK}"/><rect x="-440" y="-404" width="22" height="404" fill="#5A4630"/><rect x="418" y="-404" width="22" height="404" fill="#5A4630"/></g>`,
     fg: (u, g) => {
-      const who = ['poetTang', 'poetSong', 'poetLi'], xs = [520, 800, 1080];
-      let o = '';
+      // 三个人各写一幅挂轴：人站在左边，自己那幅挂轴在右手边，下面署名——哪句是谁写的，一眼看得出
+      const who = ['poetTang', 'poetSong', 'poetLi'], xs = [470, 720, 970], names = ['杜牧', '王安石', '李清照'];
       const lines = ['卷土重来未可知', '肯与君王卷土来', '不肯过江东'];
+      let o = '';
       xs.forEach((x, i) => {
-        const a = seg(u, i * 0.25, i * 0.25 + 0.2);
+        const a = seg(u, i * 0.25, i * 0.25 + 0.2), sx = x + 150, w = seg(u, i * 0.25 + 0.15, i * 0.25 + 0.3); // 挂轴离人远一点：写字的手只碰到纸边，不挡字
+        o += `<g opacity="${f(a)}"><line x1="${sx}" y1="290" x2="${sx}" y2="336" stroke="${INK}" stroke-width="2"/><rect x="${sx - 42}" y="336" width="84" height="8" rx="3" fill="#6A4E30"/><rect x="${sx - 36}" y="344" width="72" height="300" fill="#F3E9D0" stroke="#B89A6A" stroke-width="2"/><rect x="${sx - 42}" y="644" width="84" height="8" rx="3" fill="#6A4E30"/>` +
+          `<text x="${sx}" y="370" font-size="34" fill="${INK}" opacity="${f(w)}" writing-mode="tb" letter-spacing="2" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${lines[i]}</text>` +
+          `<text x="${sx}" y="692" font-size="30" font-weight="700" fill="#3A2E22" text-anchor="middle" opacity="${f(w)}" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${names[i]}</text></g>`;
         if (a > 0) o += person({ x, y: 712, s: 1.8, who: who[i], pose: P.write(g + i), g, face: 1, hold: 'brush', a, detail: true });
-        o += `<text x="${700 + i * 60}" y="${470}" font-size="30" fill="${INK}" opacity="${f(seg(u, i * 0.25 + 0.15, i * 0.25 + 0.3))}" writing-mode="tb" style="font-family:KaiTi, STKaiti, 'Kaiti SC', serif">${lines[i]}</text>`;
       });
       return o;
     },

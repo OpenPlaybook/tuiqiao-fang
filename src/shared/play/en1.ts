@@ -8,9 +8,10 @@ const fill = (key: string, q: string, bank: string[], sents: [string, string, st
 const type = (key: string, q: string, accept: string[], why: string, near: Record<string, string> = {}, ph = ''): TypeSub => ({ kind: 'type', key, q, accept, near, why, ph });
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 /** 碎片：[文字, 第几层, 对不对（* 开头是对的）, 错在哪 / 讲到哪件事] */
-const frag = (q: string, rows: [string, 1 | 2 | 3, string?][], events: Record<string, string>, need: FragSub['need'], order: string, model: string): FragSub => ({
-  kind: 'frag', key: 'a', q, events, need, order, model,
-  frags: rows.map(([t, layer, x]) => t.startsWith('*') ? { t: t.slice(1), layer, ok: true, ...(x ? { ev: x } : {}) } : { t, layer, ok: false, why: x }),
+/** 拼句：[句子（* 是对的）, 第几层, 对的写事件 ev / 错的写为什么, { seq（事情的先后，一样的可以互换）, after（评价放在哪件事后面）}] */
+const frag = (q: string, rows: [string, 1 | 2 | 3, string?, { seq?: number; after?: string }?][], events: Record<string, string>, need: FragSub['need'], model: string): FragSub => ({
+  kind: 'frag', key: 'a', q, events, need, model,
+  frags: rows.map(([t, layer, x, o]) => t.startsWith('*') ? { t: t.slice(1), layer, ok: true, ...(x ? { ev: x } : {}), ...(o ?? {}) } : { t, layer, ok: false, why: x }),
 });
 const viz = (k: string, p: Record<string, unknown> = {}) => ({ k, p });
 
@@ -448,21 +449,20 @@ const EXT_CLUE: Ext[] = [
 const EXT_ORDER: Ext[] = [
   { id: 'x1', title: '用英语说说这一章', need: 'opt', steps: [
     frag('用英语讲讲第一章：挑句子，拼成一段话。', [
-      ['*The Golden Panda, the top prize of the English Festival, has gone missing.', 1, 'gone'],
-      ['*Ms Green saw it on the table at two, and at 2:15 the lights went out.', 1, 'time'],
-      ['*Mr Liu saw a boy with a big drum case, and there is a note: “Lent the panda. Back at 3. — M”', 1, 'clue'],
+      ['*The Golden Panda, the top prize of the English Festival, has gone missing.', 1, 'gone', { seq: 0 }],
+      ['*Ms Green saw it on the table at two, and at 2:15 the lights went out.', 1, 'time', { seq: 0 }],
+      ['*Mr Liu saw a boy with a big drum case, and there is a note: “Lent the panda. Back at 3. — M”', 1, 'clue', { seq: 1 }],
       ['Ben took the panda in the dark.', 1, '没有证据：灯灭时 Ben 在吃月饼。'],
       ['The panda was broken at 2:15.', 1, '没人说熊猫坏了，是不见了。'],
       ['Mr Liu was sleeping at 2:15.', 1, '他在看球赛：was watching the match。'],
-      ['*So maybe the panda was not stolen — someone may have borrowed it.', 2],
-      ['*But nobody knows who M is.', 2],
+      ['*So maybe the panda was not stolen — someone may have borrowed it.', 2, undefined, { after: 'clue' }],
+      ['*But nobody knows who M is.', 2, undefined, { after: 'clue' }],
       ['So Ms Green has stolen it.', 2, '这只是猜测——而且 Green 老师急得脸都白了。'],
       ['So the case is closed.', 2, '案子还没破呢。'],
       ['*We have twenty minutes to find out who M is and where the panda is.', 3],
       ['We have twenty days to find the panda.', 3, '是二十分钟。'],
     ], { gone: '还没说发生了什么事：金熊猫怎么了？', time: '还没说时间：两点、两点一刻发生了什么？', clue: '还没说找到的线索：鼓箱、纸条。' },
     { 1: '先说说发生了什么事、有哪些线索。', 2: '事情和线索都说对了。再说说：从线索能想到什么？', 3: '最后说说：接下来要做什么？' },
-    '内容都对了。顺序调一调：先说发生了什么，再说想到什么，最后说接下来要做什么。拖动句子换位置。',
     'The Golden Panda, the top prize of the English Festival, has gone missing. Ms Green saw it on the table at two, and at 2:15 the lights went out. Mr Liu saw a boy with a big drum case, and there is a note: “Lent the panda. Back at 3. — M” So maybe the panda was not stolen — someone may have borrowed it. But nobody knows who M is. We have twenty minutes to find out who M is and where the panda is.'),
   ] },
 ];

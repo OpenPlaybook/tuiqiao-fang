@@ -2,13 +2,13 @@
 // 镜头切换时，上一镜淡出（0.3 秒）；静的那一层每一镜只画一次。
 // 帧率跟着机器走（见 PACE）：画得动就 30 帧/秒，画不动就一档档往下降（最低 6 帧/秒），把时间留给点按钮、做题这些操作。
 import { useEffect, useRef } from 'react';
-import { WH, WW, clamp, defs, ease, finish, lerp, paperTile } from './core';
+import { WH, WW, clamp, defs, ease, finish, lerp, paperTile, type View } from './core';
 import { SHOTS } from './shots';
 
 export type ShotSpec = [string, number?]; // [镜头名, 权重]
 export interface ShotDef {
   bg: (id: string) => string; // 静的：天、山、建筑
-  fg: (u: number, g: number, id: string) => string; // 动的：人、水、雾、火
+  fg: (u: number, g: number, id: string, v: View) => string; // 动的：人、水、雾、火。v 是这一帧的取景框：要一直留在画面里的字（时间、地名）用 core.ts 的 pin 钉在取景框上
   cam: [number, number, number][]; // 镜头：[中心 x, 中心 y, 取景宽]，起点 → 终点（缓入缓出）；一个就是不动
 }
 /** 一句话里第几镜、这一镜的进度 */
@@ -22,17 +22,19 @@ export const shotAt = (shots: ShotSpec[], p: number) => {
   }
   return { i: 0, u: 0 };
 };
-const camAt = (d: ShotDef, u: number) => {
+/** 这一帧的取景框（世界坐标） */
+export const camRect = (d: ShotDef, u: number): View => {
   const c = d.cam, a = c[0], b = c[c.length - 1], t = ease(u);
   const w = lerp(a[2], b[2], t), cx = lerp(a[0], b[0], t), cy = lerp(a[1], b[1], t), h = (w * 9) / 16;
-  return `${(cx - w / 2).toFixed(1)} ${(cy - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`;
+  return { x: cx - w / 2, y: cy - h / 2, w, h };
 };
+const camAt = (d: ShotDef, u: number) => { const v = camRect(d, u); return `${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`; };
 let uidN = 0;
 /** 静态渲染一帧（封面、联系表用；只画一次，纸纹还用滤镜） */
 export const frameSvg = (key: string, u: number, g = 3) => {
   const d = SHOTS[key]; if (!d) return '';
   const id = `s${++uidN}_`;
-  return `<svg viewBox="${camAt(d, u)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">${defs(id)}${d.bg(id)}${d.fg(u, g, id)}${finish(id)}</svg>`;
+  return `<svg viewBox="${camAt(d, u)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">${defs(id)}${d.bg(id)}${d.fg(u, g, id, camRect(d, u))}${finish(id)}</svg>`;
 };
 
 // ---------------- 帧率：跟着机器走 ----------------
@@ -122,7 +124,7 @@ export function Film({ shots, prog, lid = '', className = '', running = true, fp
         svgEl = cur.current.querySelector('svg'); fgEl = cur.current.querySelector('[data-fg]');
       }
       if (svgEl && fgEl && (runRef.current || u !== lastU || fresh)) { // 暂停着、画面没变，就不重画
-        const t1 = performance.now(), html = d.fg(u, g, id);
+        const t1 = performance.now(), html = d.fg(u, g, id, camRect(d, u));
         svgEl.setAttribute('viewBox', camAt(d, u)); fgEl.innerHTML = FILM_OPT.blur ? html : html.replace(/ filter="url\(#[^)]*\)"/g, ''); lastU = u;
         if (fresh) skip = 2; else if (skip) skip--; else { pend = now; busy = 0; mc.port2.postMessage(t1); } // 换镜头要画整个背景，这一帧和后面两帧不算
         if (FILM_OPT.stats) { FILM_OPT.stats.draw.push(now); FILM_OPT.stats.js.push(performance.now() - t1); }

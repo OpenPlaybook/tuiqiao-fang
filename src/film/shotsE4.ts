@@ -34,13 +34,13 @@ export const SHOTS_E4: Record<string, ShotDef> = {
   },
   'e4.flashAsk': {
     bg: (id) => officeBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const k = seg(u, 0, 0.4), yes = seg(u, 0.55, 0.7);
       let o = person({ x: 820, y: 760, s: 1.6, who: 'green', pose: { ...P.stand(), aF: 135, eF: 135, head: 8 + Math.sin(g * 5) * 6 * yes }, g, face: -1, hold: 'phone' });
       o += person({ x: lerp(1700, 1150, k), y: 780, s: 1.4, who: 'mia', pose: k < 1 ? P.walk(g) : P.mix(P.stand(), P.point(0.6), 0.4), g, face: -1, hold: 'camera' });
       if (k >= 1) o += `<g transform="translate(1180,300)"><rect x="-250" y="-60" width="500" height="96" rx="24" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><path d="M-20,36 l10,44 l26,-44 z" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><text x="0" y="0" font-size="30" text-anchor="middle" fill="${INK}" ${HAND}>Can I borrow the panda</text><text x="0" y="28" font-size="30" text-anchor="middle" fill="${INK}" ${HAND}>for a photo?</text></g>`;
       if (yes > 0) o += `<g transform="translate(560,340)" opacity="${f(yes)}"><rect x="-120" y="-50" width="240" height="80" rx="20" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><path d="M60,30 l40,40 l-10,-40 z" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><text x="0" y="6" font-size="38" text-anchor="middle" fill="${INK}" ${HAND}>Yes, yes…</text></g>`;
-      return o + flashback(id) + timeTag(220, 110, '2:10');
+      return o + flashback(id) + timeTag(220, 110, '2:10', v);
     },
     cam: [[900, 500, 1500], [900, 480, 1400]],
   },
@@ -51,10 +51,10 @@ export const SHOTS_E4: Record<string, ShotDef> = {
   },
   'e4.flashNote': {
     bg: (id) => backstageBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const k = seg(u, 0.1, 0.8);
       return `<rect x="560" y="560" width="480" height="24" fill="#7A5236"/><rect x="580" y="584" width="18" height="120" fill="#5A3E28"/><rect x="1000" y="584" width="18" height="120" fill="#5A3E28"/>` +
-        `<g transform="translate(700,520) scale(.3)">${stickyNote(0, 0, 1, k, -3)}</g>` + person({ x: 960, y: 760, s: 1.6, who: 'mia', pose: P.write(g), g, face: -1, hold: 'pen' }) + `<g transform="translate(900,560)" opacity="${f(1 - seg(u, 0.6, 0.85))}">${trophy(id, 0, 0, 0.35, g)}</g>` + flashback(id) + timeTag(220, 110, '2:12');
+        `<g transform="translate(700,520) scale(.3)">${stickyNote(0, 0, 1, k, -3)}</g>` + person({ x: 960, y: 760, s: 1.6, who: 'mia', pose: P.write(g), g, face: -1, hold: 'pen' }) + `<g transform="translate(900,560)" opacity="${f(1 - seg(u, 0.6, 0.85))}">${trophy(id, 0, 0, 0.35, g)}</g>` + flashback(id) + timeTag(1380, 110, '2:12', v);
     },
     cam: [[820, 520, 1300], [800, 540, 1150]],
   },
@@ -65,11 +65,11 @@ export const SHOTS_E4: Record<string, ShotDef> = {
   },
   'e4.noteFall': {
     bg: (id) => backstageBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const dark = seg(u, 0.1, 0.15) - seg(u, 0.75, 0.8), fall = seg(u, 0.2, 0.6);
       return `<rect x="560" y="560" width="480" height="24" fill="#7A5236"/><rect x="580" y="584" width="18" height="120" fill="#5A3E28"/><rect x="1000" y="584" width="18" height="120" fill="#5A3E28"/>` +
         `<g transform="translate(${f(lerp(720, 820, fall))},${f(lerp(520, 700, fall))}) rotate(${f(lerp(-3, 175, fall))}) scale(.3)">${stickyNote(0, 0, 1, 1, 0)}</g>` +
-        `<rect x="-200" y="-200" width="2000" height="1400" fill="#06060A" opacity="${f(dark * 0.75)}"/>` + timeTag(220, 110, '2:15') + flashback(id);
+        `<rect x="-200" y="-200" width="2000" height="1400" fill="#06060A" opacity="${f(dark * 0.75)}"/>` + timeTag(1380, 110, '2:15', v) + flashback(id);
     },
     cam: [[820, 560, 1200], [800, 600, 900]],
   },

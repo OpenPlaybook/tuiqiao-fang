@@ -5,6 +5,7 @@
 import { PLAYS } from '../src/shared/play';
 import { ITEM_BY_ID } from '../src/shared/bank';
 import type { Item, Sub } from '../src/shared/types';
+import { orderProblem } from '../src/shared/frag';
 
 let bad = 0;
 const err = (m: string) => { bad++; console.log('✗ ' + m); };
@@ -42,7 +43,16 @@ const checkStep = (s: Sub, where: string) => {
       break;
     case 'order':
       if (s.items.length < 2) err(`${w}：排序少于两项`);
+      if (s.rank && (s.rank.length !== s.items.length || s.rank.some((r, i) => i && r < s.rank![i - 1]))) err(`${w}：rank 要和 items 一样长，并且按写的顺序从小到大`);
       break;
+    case 'frag': {
+      const evs = new Set(s.frags.map((f) => f.ev).filter(Boolean));
+      for (const f of s.frags) if (f.after && !evs.has(f.after)) err(`${w}：“${f.t}”的 after 指向不存在的事件 ${f.after}`);
+      // 标准答案（对的句子按写的顺序）本身要能通过顺序检查
+      const model = s.frags.map((_, i) => i).filter((i) => s.frags[i].ok);
+      const bad = orderProblem(s.frags, model); if (bad) err(`${w}：按写的顺序拼都过不了：${bad}`);
+      break;
+    }
     case 'spot':
       if (!s.bad.length || s.bad.some((i) => i < 0 || i >= s.segs.length)) err(`${w}：毛病的序号越界`);
       if (s.fix) { checkStep(s.fix, `${w}.fix`); for (const k of Object.keys(s.fixed ?? {})) if (!s.fix.opts.some((o) => o.t === k)) err(`${w}：fixed 的“${k}”不是 fix 的选项`); }

@@ -131,7 +131,7 @@ export const SHOTS3: Record<string, ShotDef> = {
   // ---------- 10 座次（俯视图） ----------
   'd.seats': {
     bg: (id) => sky(id, '#3A2C24', '#4A3A2E') + `<rect x="420" y="160" width="760" height="600" rx="12" fill="#6A2E26" stroke="${GOLD}" stroke-width="4" opacity=".9"/>` +
-      `<text x="800" y="146" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>北</text><text x="800" y="820" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>南</text><text x="370" y="462" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>西</text><text x="1230" y="462" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>东</text>`,
+      `<text x="800" y="146" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>北</text><text x="800" y="796" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>南</text><text x="370" y="462" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>西</text><text x="1230" y="462" font-size="36" text-anchor="middle" fill="#E9DFCB" ${KAI}>东</text>`,
     fg: (u, g) => {
       // 坐在哪一边、脸朝哪边（箭头）
       const seat = (k: number, x: number, y: number, dx: number, dy: number, name: string, c: string) => {

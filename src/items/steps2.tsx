@@ -9,6 +9,7 @@ import { Glasses, GripVertical, Lock, X } from 'lucide-react';
 import type { ChoiceSub, FillSub, FragSub, Item, LongSub, MatchSub, MisSub, SortSub, SpotSub, Sub, TeachSub, TypeSub } from '../shared/types';
 import { Art, Btn, GlossContext, LETTERS, Rich, shuffleIdx } from '../components/ui';
 import { Viz, isViz } from '../components/viz';
+import { orderProblem } from '../shared/frag';
 import { getState, logAnswer, setData, useGame } from '../game/store';
 import { sfx } from '../game/sound';
 import { OrderView, WriteView } from './steps';
@@ -228,8 +229,8 @@ export const FragView = ({ it, s, onDone, color }: StepProps<FragSub>) => {
         if (!l3.length) lines = [s.need[3]];
         else if (w3.length) { bad = w3; lines = w3.map(say); }
         else {
-          const layers = chosen.map((i) => F[i].layer);
-          if (layers.some((v, k) => k && v < layers[k - 1])) lines = [s.order];
+          const bad = orderProblem(F, chosen);
+          if (bad) lines = [bad];
           else ok = true;
         }
       }

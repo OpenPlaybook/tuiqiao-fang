@@ -1,6 +1,6 @@
 // 英文第一章 Gone!：每一镜怎么画、怎么动（对照 第六堂课/分镜/英文第一章_Gone.md）
 // 现代的学校：礼堂（舞台、红幕、横幅、一排排学生的后脑勺）、后台的桌子和金熊猫、钟、走廊、门卫室、手机里的球赛、纸条、线索板。
-import { GOLD, INK, RED, SKIN, clamp, f, glow, lerp, rng, seg, sky, wav } from './core';
+import { GOLD, INK, RED, SKIN, clamp, f, glow, lerp, pin, rng, seg, sky, wav, type View } from './core';
 import { P, faceCU, person } from './rig';
 import type { ShotDef } from './Film';
 
@@ -96,7 +96,7 @@ const gateBg = (id: string) =>
   sky(id, '#BFD9EA', '#E8EEE8') +
   // 远处的教学楼
   `<rect x="120" y="180" width="760" height="300" fill="#E6D2C0"/>` + Array.from({ length: 4 }, (_, r) => Array.from({ length: 9 }, (_, c) => `<rect x="${150 + c * 80}" y="${200 + r * 66}" width="50" height="40" fill="#A9C6D6"/>`).join('')).join('') +
-  `<rect x="120" y="170" width="760" height="16" fill="#C9B4A0"/><text x="500" y="164" font-size="30" font-weight="900" fill="#8E2A26" text-anchor="middle" ${SANS}>No. 8 Middle School</text>` +
+  `<rect x="120" y="170" width="760" height="16" fill="#C9B4A0"/>` +
   // 树
   [60, 940, 1520].map((x, i) => `<rect x="${x - 10}" y="320" width="20" height="200" fill="#6E5A40"/><circle cx="${x}" cy="300" r="${90 - i * 6}" fill="#6E9A5E"/><circle cx="${x - 40}" cy="340" r="60" fill="#5E8A50"/><circle cx="${x + 46}" cy="336" r="56" fill="#7AA868"/>`).join('') +
   `<path d="M-200,520 L1800,520 L1800,1100 L-200,1100 Z" fill="#B9B4AA"/><path d="M-200,520 L1800,520" stroke="#9A958C" stroke-width="4"/>` +
@@ -195,7 +195,9 @@ const reachHand = (x: number, y: number) => `<g transform="translate(${f(x)},${f
   `<rect x="-62" y="-40" width="18" height="62" rx="9" fill="${SKIN}" stroke="${INK}" stroke-width="3.5" transform="rotate(-40 -44 10)"/></g>`;
 /** 回忆的画面：发黄、四周压暗 */
 export const flashback = (id: string) => `<rect x="-200" y="-200" width="2000" height="1300" fill="#C9A86A" opacity=".22" style="mix-blend-mode:multiply"/><rect x="-200" y="-200" width="2000" height="1300" fill="url(#${id}v)" opacity=".9"/>`;
-export const timeTag = (x: number, y: number, t: string) => `<g transform="translate(${x},${y})"><rect x="-90" y="-44" width="180" height="62" rx="12" fill="#1E1A18" opacity=".75"/><text x="0" y="2" font-size="40" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>${t}</text></g>`;
+/** 时间标签：给了取景框 v，就按原来在整幅画（1600×900）里的位置钉在画面上，镜头推拉也不会被切掉 */
+export const timeTag = (x: number, y: number, t: string, v?: View) => pin(v, x / 1600, y / 900, timeTagSvg(t), x, y);
+const timeTagSvg = (t: string) => `<g><rect x="-90" y="-44" width="180" height="62" rx="12" fill="#1E1A18" opacity=".75"/><text x="0" y="2" font-size="40" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>${t}</text></g>`;
 export const talk = (g: number, k = 1) => (Math.sin(g * 11) * 0.5 + 0.5) * 0.6 * k; // 说话时嘴一张一合
 export const screenPanda = (id: string, x: number, y: number, s: number, g: number) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-210" y="-150" width="420" height="300" fill="#1C2440"/><rect x="-200" y="-140" width="400" height="280" fill="#2E3E6E"/>${glow(id, 0, -20, 160, g, 0, 0.5)}${trophy(id, 0, 70, 0.75, g)}<text x="0" y="124" font-size="22" font-weight="900" fill="#FFE9A8" text-anchor="middle" ${SANS}>TOP PRIZE · THE GOLDEN PANDA</text></g>`;
 
@@ -326,10 +328,10 @@ export const SHOTS_E1: Record<string, ShotDef> = {
   // ---------- 8 两点一刻，灯灭了一分钟；灯再亮，熊猫不见了（回忆） ----------
   'e.lightsOut': {
     bg: (id) => backstageBg(id) + table(820, 560, 420),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const dark = u < 0.18 ? 0 : u < 0.24 ? (Math.sin(g * 40) > 0 ? 0.9 : 0.2) : u < 0.68 ? 0.94 : u < 0.72 ? (Math.sin(g * 40) > 0 ? 0.2 : 0.9) : 0;
       const gone = u > 0.6;
-      return (gone ? '' : trophy(id, 820, 552, 1.1, g, 1)) + `<rect x="-200" y="-200" width="2000" height="1300" fill="#05060A" opacity="${f(dark)}"/>` + flashback(id) + timeTag(1300, 200, '2:15') + (u > 0.75 ? `<text x="820" y="420" font-size="90" font-weight="900" fill="#C23B2E" text-anchor="middle" ${SANS} opacity="${f(seg(u, 0.75, 0.85))}">?!</text>` : '');
+      return (gone ? '' : trophy(id, 820, 552, 1.1, g, 1)) + `<rect x="-200" y="-200" width="2000" height="1300" fill="#05060A" opacity="${f(dark)}"/>` + flashback(id) + timeTag(1300, 200, '2:15', v) + (u > 0.75 ? `<text x="820" y="420" font-size="90" font-weight="900" fill="#C23B2E" text-anchor="middle" ${SANS} opacity="${f(seg(u, 0.75, 0.85))}">?!</text>` : '');
     },
     cam: [[820, 460, 1200], [820, 470, 1050]],
   },
@@ -341,9 +343,9 @@ export const SHOTS_E1: Record<string, ShotDef> = {
   },
   'e.benDark': {
     bg: (id) => sky(id, '#14161C', '#1E2028'),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const bite = Math.sin(g * 5.6);
-      return glow(id, 820, 520, 220, g, 0, 0.35) + seated('ben', 760, 800, 2.3, g, { pose: P.eat(g * 0.9), hold: 'mooncake', mood: 'laugh' }) + `<rect x="-200" y="-200" width="2000" height="1300" fill="#05060A" opacity=".45"/>` + flashback(id) + timeTag(1300, 250, '2:15') +
+      return glow(id, 820, 520, 220, g, 0, 0.35) + seated('ben', 760, 800, 2.3, g, { pose: P.eat(g * 0.9), hold: 'mooncake', mood: 'laugh' }) + `<rect x="-200" y="-200" width="2000" height="1300" fill="#05060A" opacity=".45"/>` + flashback(id) + timeTag(220, 110, '2:15', v) +
         Array.from({ length: 5 }, (_, i) => { const k = (g * 0.7 + i / 5) % 1; return `<circle cx="${f(900 + i * 8)}" cy="${f(470 + k * 300)}" r="4" fill="#C98A3E" opacity="${f(1 - k)}"/>`; }).join('') + `<text x="1080" y="380" font-size="54" font-weight="900" fill="#FFE9A8" ${SANS} opacity="${f(0.5 + 0.5 * Math.max(0, bite))}">munch</text>`;
     },
     cam: [[820, 520, 1300], [820, 500, 1100]],
@@ -402,11 +404,11 @@ export const SHOTS_E1: Record<string, ShotDef> = {
   // ---------- 15 两点二十，一个男生拖着大鼓箱去了音乐教室（回忆） ----------
   'e.drumBoy': {
     bg: (id) => corridorBg(id, true) + `<rect x="1300" y="300" width="200" height="320" fill="#7A5236"/><rect x="1290" y="250" width="220" height="44" rx="6" fill="#2F5DA8"/><text x="1400" y="282" font-size="24" font-weight="900" fill="#fff" text-anchor="middle" ${SANS}>MUSIC ROOM</text>`,
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const x = lerp(200, 1180, seg(u, 0, 0.9)), roll = g * 4;
       const caseX = x - 190;
       return `<g transform="translate(${f(caseX)},${720})"><ellipse cx="0" cy="-110" rx="110" ry="120" fill="#3A3A44" stroke="${INK}" stroke-width="5"/><ellipse cx="0" cy="-110" rx="80" ry="88" fill="none" stroke="#5A5A66" stroke-width="5"/><rect x="-10" y="-236" width="20" height="30" rx="4" fill="#5A5A66"/><circle cx="-50" cy="10" r="18" fill="#1E1E22"/><circle cx="50" cy="10" r="18" fill="#1E1E22"/><line x1="-50" y1="10" x2="${f(-50 + Math.cos(roll) * 14)}" y2="${f(10 + Math.sin(roll) * 14)}" stroke="#8A8A90" stroke-width="3"/></g>` +
-        person({ x, y: 740, s: 1.5, who: 'drummer', pose: { ...P.walk(g * 1.4, 1), aB: 70, eB: 10 }, g }) + flashback(id) + timeTag(200, 120, '2:20');
+        person({ x, y: 740, s: 1.5, who: 'drummer', pose: { ...P.walk(g * 1.4, 1), aB: 70, eB: 10 }, g }) + flashback(id) + timeTag(200, 120, '2:20', v);
     },
     cam: [[800, 470, 1600], [950, 470, 1450]],
   },

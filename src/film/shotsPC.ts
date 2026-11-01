@@ -1,5 +1,5 @@
 // 彭城之战：刘邦线《彭城之败》和项羽线《彭城大捷》共用的镜头（同一场仗，两个人看）
-import { GOLD, INK, PAPER, RED, banner, bareTree, cityWall, f, flame, glow, house, lerp, moon, ridge, river, seg, sky, sunDisc, tent, vtext, wav } from './core';
+import { GOLD, INK, PAPER, RED, banner, bareTree, cityWall, f, flame, glow, house, lerp, moon, ridge, river, seg, sky, sunDisc, tent, vtext, wav, pin } from './core';
 import { P, faceCU, horse, person } from './rig';
 import { hallIn } from './shotsLB';
 import { tentIn } from './shots2';
@@ -152,7 +152,7 @@ export const SHOTS_PC: Record<string, ShotDef> = {
   },
   'pc.push': {
     bg: (id) => sky(id, '#7A7262', '#A89C84') + ridge({ y: 440, amp: 50, seed: 671, a: 0.25 }) + `<path d="M-200,640 L1800,640 L1800,1100 L-200,1100 Z" fill="#8A7A5E"/>`,
-    fg: (u, g) => {
+    fg: (u, g, _id, v) => {
       // 一连三次：孩子被推下车，滕公跳下去抱回来
       const c = (u * 3) % 1, fall = seg(c, 0.1, 0.35), back = seg(c, 0.55, 0.9);
       const down = fall > 0 && back < 1;
@@ -163,7 +163,7 @@ export const SHOTS_PC: Record<string, ShotDef> = {
       o += person({ x: kx, y: ky, s: 0.8, who: 'crowd3', pose: fall * (1 - back) > 0.5 ? { ...P.sitCross(), lean: -20 } : P.stand(), g, face: 1 }) + person({ x: kx - 50, y: ky + 4, s: 0.72, who: 'yuji', pose: fall * (1 - back) > 0.5 ? { ...P.sitCross(), lean: -14 } : P.stand(), g, face: 1 });
       // 后面追来的楚骑
       o += horse({ x: lerp(-200, 120, (u * 3) % 1), y: 830, s: 0.85, face: 1, g, gait: 'run', ph: g * 1.8, c: '#2A2420', rider: 'soldier' });
-      return o + `<g opacity="${f(seg(u, 0.1, 0.2))}">${vtext(1380, 200, ['一', '二', '三'][Math.min(2, Math.floor(u * 3))], 64, '#7A2A22', 0.85)}</g>`;
+      return o + `<g opacity="${f(seg(u, 0.1, 0.2))}">${pin(v, 0.86, 0.16, vtext(0, 0, ['一', '二', '三'][Math.min(2, Math.floor(u * 3))], 64, '#7A2A22', 0.85))}</g>`;
     },
     cam: [[760, 600, 1500], [760, 620, 1400]],
   },

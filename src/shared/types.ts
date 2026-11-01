@@ -22,7 +22,8 @@ export interface SortSub extends SubBase { kind: 'sort'; bins: string[]; cards: 
 /** 连线：左边每一项配右边一项 */
 export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right: string[]; pairs: number[]; why: string; lh?: string; rh?: string }
 /** 排序：items 按正确顺序写；tags 是排好以后显示的年份等 */
-export interface OrderSub extends SubBase { kind: 'order'; items: string[]; tags?: string[]; why: string }
+/** rank：每一项的名次（不写就是写的顺序）；名次一样的，谁先谁后都算对（同时发生、互不相干的几步） */
+export interface OrderSub extends SubBase { kind: 'order'; items: string[]; tags?: string[]; why: string; rank?: number[] }
 /** AI 误译：AI 的译文切成几段，有错的段写了正确意思 */
 /** fixed：改好以后显示的样子，~~删掉的~~、++加上的++（不写就显示“划掉原文 + 正确意思”） */
 export interface MisSeg { t: string; bad?: { word: string; opts: string[]; ok: number; why: string; fixed?: string } }
@@ -48,8 +49,9 @@ export interface FillSub extends SubBase { kind: 'fill'; bank: string[]; sents: 
 export interface TypeSub extends SubBase { kind: 'type'; accept: string[]; near?: Record<string, string>; why: string; ph?: string }
 /** 碎片拼接（概括、鉴赏），三层逐层检查：1 故事 / 内容（要讲对、讲全：ev 是它讲到的事，events 是必须讲到的事和缺了时的提醒）→ 2 人物 / 写法 → 3 更深的意思。
  *  ok=false 的是干扰（why 说错在哪）；need 是某一层一句都没有时的提醒。学生看不到“层”这个说法。 */
-export interface Frag { t: string; layer: 1 | 2 | 3; ok: boolean; why?: string; ev?: string }
-export interface FragSub extends SubBase { kind: 'frag'; frags: Frag[]; events: Record<string, string>; need: Record<1 | 2 | 3, string>; order: string; model: string }
+/** 拼句的顺序不卡死：第 1 层（事情）按 seq 排先后（不写就是写的顺序，seq 一样的可以互换）；第 2 层（评价）放在 after 那件事后面就行（不写就是放在第一件事后面）；第 3 层（总结）放在事情讲完以后 */
+export interface Frag { t: string; layer: 1 | 2 | 3; ok: boolean; why?: string; ev?: string; seq?: number; after?: string }
+export interface FragSub extends SubBase { kind: 'frag'; frags: Frag[]; events: Record<string, string>; need: Record<1 | 2 | 3, string>; model: string }
 /** 长文本：文本里用 ⟨1|这几个字⟩ 把题针对的字、词、句标出来（下划线 + 编号），点哪个做哪个 */
 export interface LongSub extends SubBase { kind: 'long'; text: string; qs: Record<string, ChoiceSub | TypeSub>; title?: string }
 /** 讲：老师讲一小段（可以带例子、画面），和后面那一问一起出现 */

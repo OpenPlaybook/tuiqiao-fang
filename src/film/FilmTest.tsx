@@ -7,7 +7,60 @@ import { FILM_OPT, Film, PACE, frameSvg } from './Film';
 
 export default function FilmTest() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-  return q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : q.get('ext') ? <ExtTest /> : <FilmSheet />;
+  return q.get('check') !== null ? <ShotCheck /> : q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : q.get('ext') ? <ExtTest /> : <FilmSheet />;
+}
+
+// ---------------- 查画面里的字：#/filmtest?check（可加 =前缀）----------------
+// 每个镜头画开头、1/4、中间、3/4、结尾五帧，量出每个字和人物、马、特写脸（rig.ts 里带 data-p 的组）的位置，列出：
+//   盖人：字画在人物上面、压住了人（人在字前面挡住招牌这种不算）；叠字：两列字互相压；切字：字只露出一部分（整个在画面外不算）。
+// 背景旗子上的“楚”“汉”、墙上的招牌在镜头移动时被边缘带过，是正常取景；要看的是标题、诗句、时间、人名这类该完整出现的字。
+function ShotCheck() {
+  const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
+  const pre = q.get('check') ?? '';
+  const [rows, setRows] = useState<{ k: string; u: number; on: string; over: string; cut: string }[] | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const out: { k: string; u: number; on: string; over: string; cut: string }[] = [];
+      const op = (el: Element, root: Element) => { let o = 1; for (let e: Element | null = el; e && e !== root.parentElement; e = e.parentElement) { const a = e.getAttribute('opacity'); if (a !== null) o *= +a; } return o; };
+      const inter = (a: DOMRect, b: DOMRect) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      const keys = Object.keys(SHOTS).filter((k) => k.startsWith(pre));
+      for (const [n, k] of keys.entries()) {
+        for (const u of [0, 0.25, 0.5, 0.75, 1]) {
+          if (!alive || !box.current) return;
+          box.current.innerHTML = frameSvg(k, u, 3);
+          const svg = box.current.querySelector('svg'); if (!svg) continue;
+          const R = svg.getBoundingClientRect();
+          const chars = [...svg.querySelectorAll('text')].map((t) => ({ t, r: t.getBoundingClientRect(), o: op(t, svg), s: t.textContent ?? '' })).filter((c) => c.o > 0.2 && c.s.trim() && c.r.width > 0);
+          const figs = [...svg.querySelectorAll('[data-p]')].map((p) => ({ el: p, r: p.getBoundingClientRect(), o: op(p, svg) })).filter((x) => x.o > 0.3);
+          const on: string[] = [], over: string[] = [], cut: string[] = [];
+          chars.forEach((c, i) => {
+            const A = c.r.width * c.r.height;
+            if (figs.some((x) => inter(c.r, x.r) / A > 0.35 && x.el.compareDocumentPosition(c.t) & Node.DOCUMENT_POSITION_FOLLOWING && !x.el.contains(c.t))) on.push(c.s);
+            if (chars.some((d, j) => j !== i && Math.abs(d.r.left - c.r.left) > 2 && inter(c.r, d.r) / A > 0.25)) over.push(c.s);
+            const vis = inter(c.r, R) / A; if (vis > 0.05 && vis < 0.9) cut.push(c.s);
+          });
+          if (on.length || over.length || cut.length) out.push({ k, u, on: on.join(''), over: over.join(''), cut: cut.join('') });
+        }
+        if (n % 20 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+      if (alive) setRows(out);
+    })();
+    return () => { alive = false; };
+  }, []);
+  return (
+    <div className="p-4 text-[14px]">
+      <div ref={box} style={{ position: 'fixed', left: 0, top: 0, width: 960, height: 540, opacity: 0.01, pointerEvents: 'none', zIndex: -1 }} />
+      {!rows ? <div>正在查……</div> : <>
+        <div className="mb-2 font-black">有 {new Set(rows.map((r) => r.k)).size} 个镜头要看一眼（点镜头名看联系表）</div>
+        <table className="w-full"><tbody>{rows.map((r, i) => (
+          <tr key={i} className="border-b"><td className="pr-3"><a className="text-sky-700 underline" href={`#/filmtest?k=${r.k},`}>{r.k}</a></td><td className="pr-3">u={r.u}</td>
+            <td>{r.on && <span className="mr-3 text-rose-700">盖人：{r.on}</span>}{r.over && <span className="mr-3 text-amber-700">叠字：{r.over}</span>}{r.cut && <span className="text-ink2">切字：{r.cut}</span>}</td></tr>
+        ))}</tbody></table>
+      </>}
+    </div>
+  );
 }
 function FilmSheet() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');

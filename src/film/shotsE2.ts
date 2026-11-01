@@ -74,12 +74,12 @@ export const SHOTS_E2: Record<string, ShotDef> = {
   },
   'e2.printerStop': {
     bg: (id) => officeBg(id, false),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const out = Math.min(seg(u, 0, 0.45), 0.5) * 2, dark = seg(u, 0.45, 0.5) - seg(u, 0.9, 1) * 0;
       let o = person({ x: 860, y: 760, s: 1.5, who: 'green', pose: { ...P.stand(), aF: 135, eF: 135, head: 8 }, g, face: 1, hold: 'phone' });
       o += `<g transform="translate(1065,440)"><rect x="-60" y="${f(-80 * out)}" width="120" height="${f(80 * out)}" fill="#FBF8EE" stroke="#BDB6A6"/><text x="0" y="${f(-80 * out + 26)}" font-size="16" font-weight="900" fill="#8E2A26" text-anchor="middle" ${SANS}>CERTIFICATE</text></g>`;
       o += `<rect x="-200" y="-200" width="2000" height="1400" fill="#0E0E14" opacity="${f(dark * 0.85)}"/>`;
-      return o + flashback(id) + timeTag(220, 110, '2:15');
+      return o + flashback(id) + timeTag(220, 110, '2:15', v);
     },
     cam: [[900, 480, 1300], [980, 470, 1100]],
   },
@@ -96,13 +96,13 @@ export const SHOTS_E2: Record<string, ShotDef> = {
   },
   'e2.greenPhone': {
     bg: (id) => officeBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       let o = person({ x: 820, y: 760, s: 1.5, who: 'green', pose: { ...P.stand(), aF: 135, eF: 135, head: 8 + Math.sin(g * 5) * 6 }, g, face: -1, hold: 'phone' });
       const k = seg(u, 0.2, 0.8);
       o += `<g opacity=".5" filter="url(#${id}s)">${person({ x: lerp(1700, 1250, k), y: 780, s: 1.4, who: 'stuA', pose: P.walk(g, 1 - k), g, face: -1 })}${person({ x: lerp(1900, 1450, k), y: 780, s: 1.3, who: 'stuB', pose: P.walk(g + 0.4, 1 - k), g, face: -1 })}</g>`;
       const say = (Math.floor(g * 0.8) % 2) === 0;
       if (k > 0.5) o += `<g transform="translate(560,${say ? 330 : 360})"><rect x="-120" y="-50" width="240" height="80" rx="20" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><path d="M60,30 l40,40 l-10,-40 z" fill="#FBF7EA" stroke="${INK}" stroke-width="3"/><text x="0" y="6" font-size="38" text-anchor="middle" fill="${INK}" ${HAND}>Yes, yes…</text></g>`;
-      return o + flashback(id) + timeTag(220, 110, '2:10');
+      return o + flashback(id) + timeTag(220, 110, '2:10', v);
     },
     cam: [[900, 500, 1500], [900, 520, 1350]],
   },
@@ -128,14 +128,14 @@ export const SHOTS_E2: Record<string, ShotDef> = {
   },
   'e2.tripFlash': {
     bg: (id) => backstageBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const k = seg(u, 0, 0.5), trip = seg(u, 0.45, 0.6), dark = seg(u, 0.58, 0.62);
       const x = lerp(300, 820, k);
       let o = `<path d="M-200,740 Q600,700 900,760 Q1100,800 1300,700 L1310,640" stroke="#1E1E22" stroke-width="8" fill="none"/><rect x="1290" y="600" width="50" height="60" fill="#DADCDE" stroke="${INK}" stroke-width="3"/>`;
       o += `<rect x="${f(lerp(1296, 1240, trip))}" y="${f(lerp(624, 700, trip))}" width="18" height="14" fill="#2A2A2E"/>`; // 插头被扯出来
       o += `<g transform="rotate(${f(trip * 30)} ${f(x)} 780)">${person({ x, y: 780, s: 1.5, who: 'drummer', pose: { ...P.walk(g * 1.2, 1 - trip), aF: 70, eF: 30, aB: 70, eB: 30, lean: 10 + trip * 20 }, g, face: 1 })}<ellipse cx="${f(x + 70)}" cy="620" rx="70" ry="70" fill="#B23A2E" stroke="${INK}" stroke-width="4"/></g>`;
       o += `<rect x="-200" y="-200" width="2000" height="1400" fill="#06060A" opacity="${f(dark * 0.9)}"/>`;
-      return o + flashback(id) + timeTag(220, 110, '2:15');
+      return o + flashback(id) + timeTag(1380, 110, '2:15', v);
     },
     cam: [[800, 520, 1600], [880, 580, 1300]],
   },
@@ -151,10 +151,10 @@ export const SHOTS_E2: Record<string, ShotDef> = {
   },
   'e2.girlFlash': {
     bg: (id) => backstageBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const x = lerp(1700, -200, seg(u, 0.1, 0.9));
       return `<g opacity=".7" filter="url(#${id}s)">${person({ x, y: 780, s: 1.4, who: 'mia', pose: P.walk(g * 1.6, 1.3), g, face: -1, hold: 'camera' })}</g>` +
-        `<path d="M${f(x + 60)},620 h220 M${f(x + 60)},680 h300 M${f(x + 60)},740 h180" stroke="#F4F1E8" stroke-width="5" opacity=".35"/>` + flashback(id) + timeTag(220, 110, '2:12');
+        `<path d="M${f(x + 60)},620 h220 M${f(x + 60)},680 h300 M${f(x + 60)},740 h180" stroke="#F4F1E8" stroke-width="5" opacity=".35"/>` + flashback(id) + timeTag(1380, 110, '2:12', v);
     },
     cam: [[800, 520, 1600], [800, 540, 1500]],
   },
@@ -179,10 +179,10 @@ export const SHOTS_E2: Record<string, ShotDef> = {
   },
   'e2.gardenFlash': {
     bg: (id) => gardenBg(id),
-    fg: (u, g, id) => {
+    fg: (u, g, id, v) => {
       const flash = ((g * 0.7) % 1) < 0.08 ? 1 : 0;
       return flowers(71, g) + person({ x: 980, y: 820, s: 1.5, who: 'mia', pose: { ...P.bow(0.3), aF: 90, eF: 60 }, g, face: -1, hold: 'camera' }) +
-        `<rect x="-200" y="-200" width="2000" height="1400" fill="#fff" opacity="${f(flash * 0.5)}"/>` + flashback(id) + timeTag(220, 110, '2:15');
+        `<rect x="-200" y="-200" width="2000" height="1400" fill="#fff" opacity="${f(flash * 0.5)}"/>` + flashback(id) + timeTag(220, 110, '2:15', v);
     },
     cam: [[800, 520, 1600], [860, 600, 1300]],
   },

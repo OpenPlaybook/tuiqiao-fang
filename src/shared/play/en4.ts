@@ -394,7 +394,7 @@ export const PLAY_EN4_ITEMS: Item[] = [
     'Max tripped over a cable. The lights went out, and the note fell off the table.',
     'Mia was taking photos of the panda in the garden.',
     'You and Ben found the panda between the flowers.',
-  ], '2:00 → 2:10 → 2:12 → 2:15 → 2:15–2:56 → 2:56。', ['2:00', '2:10', '2:12', '2:15', 'after 2:15', '2:56'])),
+  ], '2:00 → 2:10 → 2:12 → 2:15 → 2:56。两点一刻 Max 被绊倒、灯灭的时候，Mia 正在花园里拍照——同一时刻的两件事，谁先谁后都行。', ['2:00', '2:10', '2:12', '2:15', '2:15', '2:56'], [0, 1, 2, 3, 3, 4])),
 
   item({
     id: 'e4-too', st: 'en4', lv: 2, type: 'word', topic: 'too … to', label: 'too busy to listen', intro: '', ask: 'too … to 是什么意思？',

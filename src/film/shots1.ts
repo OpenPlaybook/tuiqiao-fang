@@ -1,5 +1,5 @@
 // 第一回　淮阴少年：每一镜怎么画、怎么动（对照 第六堂课/分镜/第一回_淮阴少年.md）
-import { GOLD, INK, PAPER, RED, WH, WW, banner, bareTree, cityWall, f, flame, glow, house, lerp, mist, moon, rain, reeds, ridge, river, rng, seg, sky, sunDisc, torch, vtext, wav, willow } from './core';
+import { GOLD, INK, PAPER, RED, WH, WW, banner, pin, bareTree, cityWall, f, flame, glow, house, lerp, mist, moon, rain, reeds, ridge, river, rng, seg, sky, sunDisc, torch, vtext, wav, willow } from './core';
 import { P, bowl, faceCU, horse, person, swordHand } from './rig';
 import type { ShotDef } from './Film';
 
@@ -330,9 +330,9 @@ export const SHOTS1: Record<string, ShotDef> = {
   },
   // ---------- 18 大泽乡起兵；韩信离开淮阴 ----------
   'a.revolt': {
-    bg: (id) => sky(id, '#2A2A30', '#45434A') + ridge({ y: 420, amp: 120, seed: 61, a: 0.5, color: '#1C1C22' }) + `<path d="M-200,640 L1800,640 L1800,1100 L-200,1100 Z" fill="#2E2C30"/>` + vtext(120, 120, '揭竿而起', 48, '#E9DFCB', 0.75),
-    fg: (u, g, id) => {
-      let o = '';
+    bg: (id) => sky(id, '#2A2A30', '#45434A') + ridge({ y: 420, amp: 120, seed: 61, a: 0.5, color: '#1C1C22' }) + `<path d="M-200,640 L1800,640 L1800,1100 L-200,1100 Z" fill="#2E2C30"/>`,
+    fg: (u, g, id, v) => {
+      let o = pin(v, 120 / 1600, 120 / 900, vtext(0, 0, '揭竿而起', 48, '#E9DFCB', 0.75));
       for (let i = 0; i < 14; i++) { const x = 160 + i * 100, up = seg(u, i * 0.03, 0.4 + i * 0.03); o += person({ x, y: 700 + (i % 2) * 30, s: 1.3, who: 'rebel', pose: P.cheer(g * 1.2 + i * 0.2), g, face: i < 7 ? 1 : -1, hold: i % 3 === 0 ? 'pole' : i % 3 === 1 ? 'torch' : undefined, a: up }); }
       for (let i = 0; i < 6; i++) o += torch(id, 220 + i * 230, 560 - (i % 2) * 30, 1.3, g, i * 0.2);
       return o + rain(71, g, 160, 0.35);
