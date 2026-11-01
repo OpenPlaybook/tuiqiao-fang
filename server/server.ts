@@ -9,6 +9,7 @@ import { withClassroom } from './store';
 import { playerSchema,configPatchSchema,defaultAi,type Classroom } from './schema';
 import { newPlayer } from '../src/shared/adapt';
 
+import {mergeProgress} from '../src/shared/sync';
 import type { Player } from '../src/shared/types';
 const joinSchema=z.object({name:z.string().trim().min(1).max(20),sid:z.string().trim().min(1).max(80),avatar:z.number().int().min(0).max(30),roundId:z.string().uuid().optional()}).strict();
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
@@ -55,8 +56,9 @@ export async function handleTuiqiaoApi(input:EnsembleApiRequest):Promise<Respons
    checkRound(state,player.roundId);const old=authenticate(state,player.pid,player.token);
    if(old.name!==player.name||old.sid!==player.sid)throw new ToolError(400,'学生信息不匹配');
    if(old.revision!==player.revision)return {value:json({error:'进度已更新，正在合并',player:old},409),changed:false};
-   // Current revision is a full replacement of this student's current facts, never a second award.
-   const next:Player={...player,createdAt:old.createdAt,revision:old.revision+1,updatedAt:Date.now()};
+   // Merge immutable completed answers and recalculate rewards; late clients cannot restore an old award.
+   let merged:Player;try{merged=mergeProgress(old,player);}catch{throw new ToolError(400,'作答得分依据不完整，请刷新后重试');}
+   const next:Player={...merged,createdAt:old.createdAt,revision:old.revision+1,updatedAt:Date.now()};
    state.players[next.pid]=next;state.lastSeen[next.pid]=Date.now();return {value:json({player:next}),changed:true};
   });
  }

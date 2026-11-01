@@ -1,4 +1,4 @@
-// 教师后台：学生（星星、加权分、三条线的能力）、题目（错得最多的选项）、好句子、AI、设置。
+// 教师后台：学生（星星、探索点、能力估计）、题目（错得最多的选项）、好句子、AI、设置。
 import { useState } from 'react';
 import { api,base, type TeacherState } from '../game/api';
 import { STATIONS, TRACKS, LV_NAME, openMode, openPatch } from '../shared/adapt';
@@ -44,7 +44,7 @@ function TeacherBody({st}:{st:TeacherState}){
       {tab === 'players' && (
         <div className="card mt-4 overflow-x-auto p-0">
           <table className="w-full text-sm">
-            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星', '加权分', '妙笔', '完成', '探索分', '点字（意思 / 句中）', '提问', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
+            <thead className="bg-[#F3ECDC] text-left"><tr>{['', '姓名', '学校', '星星',  '妙笔', '完成', '探索点', '点字（意思 / 句中）', '提问', '平均难度', ...TRACKS.map((t) => `能力·${t.name}`), '不确定', ...STATIONS.map((s) => s.name), '现在在', '最近'].map((h, i) => <th key={i} className="whitespace-nowrap px-2.5 py-2 font-black">{h}</th>)}</tr></thead>
             <tbody>
               {st.players.map((p, i) => (
                 <tr key={p.pid} className="border-t border-[#EFE6D2]">
@@ -52,7 +52,7 @@ function TeacherBody({st}:{st:TeacherState}){
                   <td className="whitespace-nowrap px-2.5 py-1.5 font-black"><Avatar i={p.avatar} size={26} /> {p.name}</td>
                   <td className="px-2.5 py-1.5">{p.sid}</td>
                   <td className="px-2.5 py-1.5 font-black text-amber-700">{p.stars}</td>
-                  <td className="px-2.5 py-1.5 text-base font-black">{p.weighted}</td>
+
                   <td className="px-2.5 py-1.5">{p.bonus || ''}</td>
                   <td className="px-2.5 py-1.5">{p.done}</td>
                   <td className="px-2.5 py-1.5 font-bold text-sky-700">{p.side || ''}</td>
@@ -68,7 +68,7 @@ function TeacherBody({st}:{st:TeacherState}){
               ))}
             </tbody>
           </table>
-          <div className="px-4 py-3 text-xs text-ink2">加权分 = 每题星星 × 难度系数（★1、★★1.5、★★★2、👑2.6）+ 妙笔分。能力值 1—4 对应 ★—👑，由做题表现估计（第一次就对、用没用“不确定”、第几次答对）。</div>
+          <div className="px-4 py-3 text-xs text-ink2">星星已综合任务难度、题量、知识与剧情价值。能力值 1—4 对应基础、进阶、挑战、高阶，由做题表现估计（第一次就对、用没用“不确定”、第几次答对）。</div>
         </div>
       )}
 
@@ -79,7 +79,7 @@ function TeacherBody({st}:{st:TeacherState}){
               <div className="px-4 py-2 text-lg font-black" style={{ color: s.color }}>{s.emoji} {s.name}</div>
               <table className="w-full text-sm"><thead className="bg-[#F3ECDC] text-left"><tr>{['题', '难度', '做过', '完成', '平均星', '第一次就对', '不确定', '错选（次数）', '学生点开的字 / 不明白'].map((h) => <th key={h} className="px-3 py-1.5 font-black">{h}</th>)}</tr></thead>
                 <tbody>{st.items.filter((x) => x.st === s.id).map((x) => (
-                  <tr key={x.id} className="border-t border-[#EFE6D2]"><td className="px-3 py-1.5 font-bold">{x.label}</td><td className="px-3 py-1.5">{LV_NAME[x.lv as Lv]}</td><td className="px-3 py-1.5">{x.n || ''}</td><td className="px-3 py-1.5">{x.done || ''}</td><td className="px-3 py-1.5">{x.done ? x.avgStars.toFixed(1) : ''}</td>
+                  <tr key={x.id} className="border-t border-[#EFE6D2]"><td className="px-3 py-1.5 font-bold">{x.label}</td><td className="px-3 py-1.5">{LV_NAME[x.lv as Lv]}</td><td className="px-3 py-1.5">{x.n || ''}</td><td className="px-3 py-1.5">{x.done || ''}</td><td className="px-3 py-1.5">{x.done ? `${x.avgStars.toFixed(1)}/${x.maxStars}` : ''}</td>
                     <td className="px-3 py-1.5">{x.firstN ? `${Math.round((100 * x.firstOk) / x.firstN)}%` : ''}</td><td className="px-3 py-1.5">{x.unsure || ''}</td>
                     <td className="px-3 py-1.5 text-rose-800">{x.wrong.map((w) => `${w.v.slice(0, 26)}（${w.n}）`).join('；')}</td>
                     <td className="px-3 py-1.5 text-sky-800">{(x.opens ?? []).map((w) => `${w.v.slice(0, 20)}（${w.n}）`).join('；')}</td></tr>

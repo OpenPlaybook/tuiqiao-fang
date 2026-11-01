@@ -1,3 +1,4 @@
+import {taskBudget,extensionBudget,extensionStars} from '../shared/reward-budget';
 // 播放式故事：画面（水墨 + 镜头推拉）+ 配音 + 字幕，一句一句往下播；播到题就停，题在画面里做。
 // 画面只在播放时动；停在题上、做拓展、暂停、看完时整个画面定住（不重画，题目底下没有东西在变，各种浏览器都不会闪）；画面上面不用毛玻璃（backdrop-blur）。
 // 画面尽量大：字幕、进度条都在画面里；右边窄栏是“台本”（播过的每一句，可点的字随时能点；做过的题、拓展入口挂在题下面），最下面可以问 AI。
@@ -290,8 +291,8 @@ export default function PlayerPage({ id }: { id: string }) {
             {sideNow.length > 0 && (
               <div className="absolute right-3 z-20 flex max-w-[46%] flex-col items-end gap-1.5" style={{ top: retTo && vy < 40 ? 44 : 12 }}>
                 {sideNow.map(({ it, k }) => (
-                  <motion.button key={it.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} onClick={(e) => { e.stopPropagation(); openSide(it, k); }} title="可做可不做；做了也得星星" className="flex items-center gap-1.5 rounded-full bg-[#FFF8EA]/95 px-3 py-1 text-left text-[14px] font-black text-[#2B2722] shadow-lg ring-1 ring-[#E3C48F] hover:bg-white">
-                    <span className="shrink-0 text-[12px] text-[#9A5B2E]">☆ 支线任务</span><span className="kai text-[16px] font-normal">{it.label}</span>
+                  <motion.button key={it.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} onClick={(e) => { e.stopPropagation(); openSide(it, k); }} title={`可做可不做；最多 ${taskBudget(it.id)} 颗星`} className="flex items-center gap-1.5 rounded-full bg-[#FFF8EA]/95 px-3 py-1 text-left text-[14px] font-black text-[#2B2722] shadow-lg ring-1 ring-[#E3C48F] hover:bg-white">
+                    <span className="shrink-0 text-[12px] text-[#9A5B2E]">☆ 支线任务 · {taskBudget(it.id)} 星</span><span className="kai text-[16px] font-normal">{it.label}</span>
                   </motion.button>
                 ))}
               </div>
@@ -401,14 +402,14 @@ export default function PlayerPage({ id }: { id: string }) {
               ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, lv: 2 }); logPlay(id, 'gloss2', glossPop.w); }} className="mt-1.5 text-[14px] font-black text-sky-700 underline">放在这句话里怎么理解？</button>
               : <div className="mt-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[15px] leading-relaxed"><div className="text-[12px] font-black text-sky-700">在这句话里</div><span className="kai text-[1.05em]">“{glossPop.sent[0]}”</span>：{glossPop.sent[1]}</div>)}
             {!glossPop.locked && glossPop.g.more && (!glossPop.more
-              ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, more: true, wrong: [] }); }} className="mt-1.5 block text-[14px] font-black text-[#9A5B2E] underline">🧭 这个{en ? '词' : '字'}还能怎么用？</button>
+              ? <button onClick={() => { sfx('click'); setGlossPop({ ...glossPop, more: true, wrong: [] }); }} className="mt-1.5 block text-[14px] font-black text-[#9A5B2E] underline">💎 这个{en ? '词' : '字'}还能怎么用？</button>
               : <div className="mt-1.5 max-w-[320px] rounded-lg bg-amber-50 px-2.5 py-1.5 text-[15px] leading-relaxed">
                   <div>{glossPop.g.more.t}</div>
                   <div className="mt-1 font-black">{glossPop.g.more.q}</div>
                   <div className="mt-1 flex flex-wrap gap-1">{shuffleIdx(glossPop.g.more.opts.length, p.pid + glossPop.w).map((i) => { const [t, ok] = glossPop.g.more!.opts[i];
                     const bad = glossPop.wrong?.includes(i), good = glossPop.got && ok;
                     return <button key={i} disabled={glossPop.got || bad} onClick={() => {
-                      if (ok) { sfx('ok'); const first = !(useGameState().player?.recs[`${id}-log`]?.log ?? []).some((e) => e.q === 'more' && e.v === glossPop.w); logPlay(id, 'more', glossPop.w); if (first) toast({ emoji: '🧭', title: '探索分 +1', text: `“${glossPop.w}”的别的用法` }); setGlossPop({ ...glossPop, got: true }); }
+                      if (ok) { sfx('ok'); const first = !(useGameState().player?.recs[`${id}-log`]?.log ?? []).some((e) => e.q === 'more' && e.v === glossPop.w); logPlay(id, 'more', glossPop.w); if (first) toast({ emoji: '💎', title: '探索点 +1', text: `“${glossPop.w}”的别的用法` }); setGlossPop({ ...glossPop, got: true }); }
                       else { sfx('no'); setGlossPop({ ...glossPop, wrong: [...(glossPop.wrong ?? []), i] }); }
                     }} className={`rounded-lg border-2 px-2 py-0.5 text-left font-bold ${good ? 'border-emerald-400 bg-emerald-50' : bad ? 'border-rose-200 bg-rose-50 text-ink2 line-through' : 'border-[#E6DCC6] bg-white hover:border-amber-300'}`}>{t}</button>;
                   })}</div>
@@ -453,11 +454,11 @@ function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont,
     scores[i] = x;
     if (i + 1 < steps.length) { setTimeout(() => setStep(i + 1), 700); return; }
     if (finished) return;
-    const { stars, perf } = resultOf(scores, rec?.unsure ?? 0);
-    setTimeout(() => { finishItem(it, stars, perf); sfx('star'); const c = centerOf(ref.current); fly(c.x, c.y, stars); setData(it, { scores }); }, 400);
+    const { stars } = resultOf(it, scores, rec?.unsure ?? 0);
+    setTimeout(() => { finishItem(it, scores); sfx('star'); const c = centerOf(ref.current); fly(c.x, c.y, stars); }, 400);
   };
   const s = steps[step], lay = layoutOf(s);
-  const body = <div key={s.key}><PlayStep it={it} s={s} color={color} onDone={(x) => stepDone(step, x)} revealed={revealed} /></div>;
+  const body = <div key={s.key}><div className="mb-1 text-xs text-ink2">☆ 最多 {taskBudget(it.id)} 颗星</div><PlayStep it={it} s={s} color={color} onDone={(x) => stepDone(step, x)} revealed={revealed} /></div>;
   const hintBtn = !finished && hintN < it.hints.length && (
     <button onClick={(e) => { e.stopPropagation(); sfx('hint'); onHint(it.hints[hintN]); setHintN(hintN + 1); }} className="flex shrink-0 items-center gap-1 rounded-full border-2 border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[13px] font-black text-sky-800" title="给我一点提示（不扣星）"><Glasses size={15} />{hintN ? '再提示' : '提示'}</button>
   );
@@ -466,8 +467,8 @@ function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont,
       <div className="flex gap-2 text-[15px] leading-relaxed"><Glasses size={18} className="mt-0.5 shrink-0 text-sky-600" /><div><Rich text={it.explain} /></div></div>
       {(it.back ?? []).map((b) => <button key={b.label} onClick={() => onBack(b)} className="ml-6 mt-1 flex items-center gap-1 text-left text-sm font-black text-sky-700 underline"><CornerUpLeft size={14} className="shrink-0" />{b.label}</button>)}
       <div className="sticky -bottom-3 -mx-4 -mb-3 mt-2 flex flex-wrap items-center gap-2 bg-[#FFFDF8] px-4 pb-2 pt-1.5">
-        <Stars n={rec!.stars} size={18} />
-        {(it.ext ?? []).map((e) => <ExtChip key={e.id} e={e} done={exts[e.id] !== undefined} onClick={() => onExt(e)} />)}
+        <Stars n={rec!.stars} max={taskBudget(it.id)} size={18} />
+        {(it.ext ?? []).map((e) => <ExtChip key={e.id} itemId={it.id} score={exts[e.id]} e={e} done={exts[e.id] !== undefined} onClick={() => onExt(e)} />)}
         <span className="ml-auto" />
         {need.length > 0 ? <Btn size="sm" color={color} onClick={() => onExt(need[0])}>先做拓展</Btn> : <Btn size="sm" color={color} onClick={onCont}>继续 ▶</Btn>}
       </div>
@@ -501,9 +502,9 @@ function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont,
     </>
   );
 }
-const ExtChip = ({ e, done, onClick }: { e: Ext; done: boolean; onClick: () => void }) => (
-  <button onClick={onClick} className={`flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-[13px] font-bold ${done ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-[#E6DCC6] bg-white hover:border-amber-300'}`}>
-    {e.title}{done && <span className="text-emerald-600">✓</span>}
+const ExtChip = ({ e, done, onClick, itemId, score }: { e: Ext; done: boolean; onClick: () => void; itemId:string; score?:number }) => (
+  <button onClick={onClick} title={`最多 ${extensionBudget(itemId,e.id)} 颗星`} className={`flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-[13px] font-bold ${done ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-[#E6DCC6] bg-white hover:border-amber-300'}`}>
+    {done ? `${extensionStars(itemId,e.id,score!)>0?'★':'☆'} ${extensionStars(itemId,e.id,score!)} ` : '☆ '}{e.title}{done && <span className="text-emerald-600">✓</span>}
   </button>
 );
 /** 一道题做到哪了：todo 没做；part 做了，还有拓展没做；all 题和拓展都做完了 */
@@ -631,8 +632,8 @@ function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onT
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 pb-1 pl-6 text-[13px]">
               {sides[k].map((s) => { const sr = p.recs[s.id], sd = sr?.status === 'done'; return (
                 <Fragment key={s.id}>
-                  <button onClick={() => onSide(s, k)} className="flex items-center gap-1 font-black hover:underline" title="支线任务：可做可不做，做了也得星星">
-                    {sd ? <Stars n={sr!.stars} size={13} /> : <span className="rounded-full bg-[#F3E2C4] px-1.5 text-[11px] text-[#7A4A1E]">☆ 支线</span>}{s.label}
+                  <button onClick={() => onSide(s, k)} className="flex items-center gap-1 font-black hover:underline" title={`支线任务：最多 ${taskBudget(s.id)} 颗星`}>
+                    {sd ? <Stars n={sr!.stars} max={taskBudget(s.id)} size={13} /> : <span className="rounded-full bg-[#F3E2C4] px-1.5 text-[11px] text-[#7A4A1E]">☆ 支线</span>}{s.label}
                   </button>
                   {sd && (s.ext ?? []).map((e) => { const d = extsOf(sr)[e.id] !== undefined; return <button key={e.id} onClick={() => onExt(s, e)} className={`font-bold hover:underline ${d ? 'text-emerald-700' : 'text-[#9A5B2E]'}`}>· {e.title}{d ? ' ✓' : ''}</button>; })}
                 </Fragment>
@@ -652,7 +653,7 @@ function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onT
               {showTask && (
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 pb-1 pl-6 text-[13px]">
                   <button onClick={() => onTask(k)} disabled={k > maxIdx} className="flex items-center gap-1 font-black hover:underline">
-                    {isDone ? <Stars n={r!.stars} size={13} /> : <span className="rounded-full bg-amber-400 px-1.5 text-[11px] text-white">待做</span>}
+                    {isDone ? <Stars n={r!.stars} max={taskBudget(it.id)} size={13} /> : <span className="rounded-full bg-amber-400 px-1.5 text-[11px] text-white">待做</span>}
                     {isDone ? it.label : '轮到你'}
                   </button>
                   {isDone && (it.ext ?? []).map((e) => { const d = extsOf(r)[e.id] !== undefined; return <button key={e.id} onClick={() => onExt(it, e)} className={`font-bold hover:underline ${d ? 'text-emerald-700' : 'text-[#9A5B2E]'}`}>· {e.title}{d ? ' ✓' : ''}</button>; })}
@@ -669,7 +670,7 @@ function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onT
   );
 }
 
-// ---------------- 问 AI：不直接给全部答案——先讲一半，问你一个小问题，你想对了再讲后一半（想对了得 1 个探索分） ----------------
+// ---------------- 问 AI：不直接给全部答案——先讲一半，问你一个小问题，你想对了再讲后一半（想对了得 1 个探索点） ----------------
 function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Item | null; line: Line; before: string[]; hint: string; preset: { q: string; n: number } | null }) {
   const p = useGame((s) => s.player)!;
   const aiOn = useGame((s) => s.config.ai);
@@ -696,7 +697,7 @@ function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Ite
   askRef.current = ask;
   const pick = (i: number) => {
     if (!a || got !== null || wrong.includes(i)) return;
-    if (a.opts[i].ok) { sfx('ok'); setGot(i); if (!wrong.length) logPlay(play.id, 'askok', a.ask); toast({ emoji: '🧭', title: wrong.length ? '想通了' : '探索分 +1', text: wrong.length ? '' : '你自己想出了后一半' }); }
+    if (a.opts[i].ok) { sfx('ok'); setGot(i); if (!wrong.length) logPlay(play.id, 'askok', a.ask); toast({ emoji: '💎', title: wrong.length ? '想通了' : '探索点 +1', text: wrong.length ? '' : '你自己想出了后一半' }); }
     else { sfx('no'); setWrong((w) => [...w, i]); }
   };
   const fb = (v: string) => { if (!a) return; logPlay(play.id, 'askfb', `${v}｜${a.ask}`); setA({ ...a, fb: v }); sfx('click'); };
@@ -805,8 +806,8 @@ function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it
     setTimeout(() => {
       if (cur + 1 < qs.length) { setCur(cur + 1); return; }
       if (side) {
-        const sc = qs.map((k) => scores[k] ?? 0), { stars, perf } = resultOf(sc, rec?.unsure ?? 0);
-        finishItem(it, stars, perf); setData(it, { scores: sc }); const c = centerOf(endRef.current); fly(c.x, c.y, stars);
+        const sc = qs.map((k) => scores[k] ?? 0), { stars } = resultOf(it, sc, rec?.unsure ?? 0);
+        finishItem(it, sc); const c = centerOf(endRef.current); fly(c.x, c.y, stars);
       } else { const vs = Object.values(scores); setExtDone(it, ext.id, vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 1); }
       setCur(qs.length); sfx('star');
     }, 900);
@@ -818,7 +819,7 @@ function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it
         <GlossContext.Provider value={{ gloss, onGloss }}>
           <SaveCtx.Provider value={pre}>
             {/* 标题栏不跟着滚：一直看得到在做哪一段、第几问 */}
-            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2">{side ? <span className="rounded-full bg-[#F3E2C4] px-2 py-0.5 text-[13px] font-black text-[#7A4A1E]">{rec?.status === 'done' ? '★' : '☆'} 支线任务</span> : <Glasses size={20} className="text-sky-600" />}<span className="text-lg font-black">{ext.title}</span>
+            <div className="mx-5 mt-4 flex shrink-0 items-center gap-2 border-b border-[#EFE6D2] pb-2">{side ? <span className="rounded-full bg-[#F3E2C4] px-2 py-0.5 text-[13px] font-black text-[#7A4A1E]">{rec?.status === 'done' ? '★' : '☆'} 支线任务 · {taskBudget(it.id)} 星</span> : <Glasses size={20} className="text-sky-600" />}<span className="text-lg font-black">{ext.title}</span>
               {qs.length > 1 && <span className="flex gap-1">{qs.map((_, k) => <span key={k} className={`h-1.5 w-4 rounded-full ${k < cur ? 'bg-emerald-500' : k === cur ? '' : 'bg-[#E6DCC6]'}`} style={k === cur && !finished ? { background: color } : {}} />)}</span>}
               {canClose && <button onClick={onClose} className="ml-auto rounded-full p-1.5 text-ink2 hover:bg-black/5" aria-label="关闭"><X size={20} /></button>}</div>
             {/* 和读书眼镜的对话：它在左边讲、问，我的回答在右边 */}
@@ -839,7 +840,7 @@ function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it
             </div>
             {!finished && !required && <div className="mt-2 text-right"><button onClick={onClose} className="text-sm font-bold text-ink2 underline">先不做了，回到故事</button></div>}</div>
             {finished && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[#EFE6D2] px-5 py-2.5">
-              {side && rec?.status === 'done' && <><Stars n={rec.stars} size={18} />{(it.ext ?? []).map((e) => <ExtChip key={e.id} e={e} done={extsOf(rec)[e.id] !== undefined} onClick={() => onExt(e)} />)}</>}
+              {side && rec?.status === 'done' && <><Stars n={rec.stars} max={taskBudget(it.id)} size={18} />{(it.ext ?? []).map((e) => <ExtChip key={e.id} itemId={it.id} score={extsOf(rec)[e.id]} e={e} done={extsOf(rec)[e.id] !== undefined} onClick={() => onExt(e)} />)}</>}
               <span className="ml-auto" /><Btn color={color} onClick={onClose}>回到故事 ›</Btn></div>}
           </SaveCtx.Provider>
         </GlossContext.Provider>

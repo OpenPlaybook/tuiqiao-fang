@@ -36,17 +36,17 @@ export function StoryMap() {
   );
 }
 
-// ---------------- 星星、探索分：这一边一共得了多少、满分多少 ----------------
+// ---------------- 星星、探索点：这一边一共得了多少、满分多少 ----------------
 function Tally({ tab }: { tab: 'zh' | 'en' }) {
   const p = useGame((s) => s.player)!;
   const ids = PLAYS.filter((c) => (tab === 'en') === (c.lang === 'en')).map((c) => c.id);
-  const got = ids.reduce((a, id) => a + stationStars(p, id), 0), max = ids.reduce((a, id) => a + maxStarsOf(id), 0);
+  const got = ids.reduce((a, id) => a + stationStars(p, id), 0), max = ids.reduce((a, id) => a + maxStarsOf(id,p), 0);
   const side = ids.reduce((a, id) => a + stationSide(p, id), 0), done = ids.filter((id) => playComplete(p, id)).length;
   return (
     <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl bg-white/80 px-4 py-2.5">
-      <div className="flex items-center gap-1.5"><Star size={22} className="fill-amber-400 text-amber-500" /><span className="text-2xl font-black text-amber-700">{got}</span><span className="text-ink2">/ {max} 颗星</span></div>
+      <div className="flex items-center gap-1.5"><Star size={22} className={got>0?"fill-amber-400 text-amber-500":"text-amber-500"} /><span className="text-2xl font-black text-amber-700">{got}</span><span className="text-ink2">/ 最多 {max} 颗星</span></div>
       <div className="h-2.5 min-w-[120px] flex-1 overflow-hidden rounded-full bg-[#EFE6D2]"><div className="h-full rounded-full bg-amber-400" style={{ width: `${max ? (got / max) * 100 : 0}%` }} /></div>
-      <div className="flex items-center gap-1"><span className="text-xl">🧭</span><span className="text-xl font-black text-sky-700">{side}</span><span className="text-ink2">探索分</span></div>
+      <div className="flex items-center gap-1"><span className="text-xl">💎</span><span className="text-xl font-black text-sky-700">{side}</span><span className="text-ink2">探索点</span></div>
       <div className="text-ink2">读完 <b className="text-ink">{done}</b> / {ids.length} {tab === 'en' ? '章' : '站'}</div>
     </div>
   );
@@ -88,7 +88,7 @@ function ZhMap() {
           const col = n.star ? 0 : LANES.findIndex((l) => l.id === n.lanes[0]);
           const left = n.star ? '82px' : `calc(72px + 10px + ((100% - 72px - 50px) / 5 + 10px) * ${col})`;
           const width = n.star ? 'calc(100% - 82px)' : 'calc((100% - 72px - 50px) / 5)';
-          return <NodeCard key={n.id} n={n} style={{ position: 'absolute', top: top[n.row], height: rowH[n.row], left, width }} dim={dim(n)} open={isOpen(st, n.id)} lock={lockReason(st, n.id)} stars={PLAY_BY_ID[n.id] ? stationStars(p, n.id) : 0} max={maxStarsOf(n.id)} side={PLAY_BY_ID[n.id] ? stationSide(p, n.id) : 0} full={playComplete(p, n.id)} />;
+          return <NodeCard key={n.id} n={n} style={{ position: 'absolute', top: top[n.row], height: rowH[n.row], left, width }} dim={dim(n)} open={isOpen(st, n.id)} lock={lockReason(st, n.id)} stars={PLAY_BY_ID[n.id] ? stationStars(p, n.id) : 0} max={maxStarsOf(n.id,p)} side={PLAY_BY_ID[n.id] ? stationSide(p, n.id) : 0} full={playComplete(p, n.id)} />;
         })}
       </div>
     </div>
@@ -112,7 +112,7 @@ function NodeCard({ n, style, dim, open, lock, stars, max, side, full }: { n: Ma
         <div className="truncate text-[12px] text-ink2">{lock === 'progress' ? `先读完：${needFirst(n.id).map((x) => `《${PLAY_BY_ID[x]?.title ?? x}》`).join('或')}` : n.sub}</div>
       </div>
       <div className="shrink-0 text-right text-[12px] leading-tight text-ink2">
-        {!play ? '制作中' : !open ? <span className="flex items-center gap-0.5"><Lock size={12} />{lock === 'progress' ? '还没到' : '等老师开放'}</span> : <><div>{full && <span className="font-black text-emerald-600">✓ </span>}约 {n.mins} 分</div><div className="font-bold"><span className="text-amber-700">★{stars}</span><span className="text-ink2">/{max}</span>{side > 0 && <span className="text-sky-700"> 🧭{side}</span>}</div></>}
+        {!play ? '制作中' : !open ? <span className="flex items-center gap-0.5"><Lock size={12} />{lock === 'progress' ? '还没到' : '等老师开放'}</span> : <><div>{full && <span className="font-black text-emerald-600">✓ </span>}约 {n.mins} 分</div><div className="font-bold"><span className="text-amber-700">{stars>0?'★':'☆'}{stars}</span><span className="text-ink2">/最多{max}</span>{side > 0 && <span className="text-sky-700"> 💎{side}</span>}</div></>}
       </div>
     </motion.button>
   );
@@ -136,7 +136,7 @@ function EnList() {
             <motion.button key={c.id} whileHover={open ? { y: -2 } : {}} disabled={!open} onClick={() => { sfx('click'); go(`/c/${c.id}`); }}
               className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left ${open ? 'bg-white hover:shadow' : 'bg-[#F1EBDD] opacity-70'}`} style={{ borderColor: open ? c.color + '66' : '#E6DCC6' }}>
               <div className="flex-1"><div className="font-serif text-lg font-black" style={{ color: c.color }}>{c.title}</div><div className="text-sm text-ink2">{c.sub}</div></div>
-              {open ? <div className="text-right"><div className="text-sm font-bold text-ink2">{full && <span className="text-emerald-600">✓ 读完了 </span>}</div><div className="text-sm font-black"><span className="text-amber-700">★ {stationStars(p, c.id)}</span><span className="text-ink2"> / {maxStarsOf(c.id)}</span>{side > 0 && <span className="text-sky-700"> 🧭 {side}</span>}</div></div> : <span className="flex items-center gap-1 text-sm font-bold text-ink2"><Lock size={16} />{lockReason(st, c.id) === 'progress' ? '先看完上一章' : '等老师开放'}</span>}
+              {open ? <div className="text-right"><div className="text-sm font-bold text-ink2">{full && <span className="text-emerald-600">✓ 读完了 </span>}</div><div className="text-sm font-black"><span className="text-amber-700">{stationStars(p,c.id)>0?'★':'☆'} {stationStars(p, c.id)}</span><span className="text-ink2"> / 最多 {maxStarsOf(c.id,p)}</span>{side > 0 && <span className="text-sky-700"> 💎 {side}</span>}</div></div> : <span className="flex items-center gap-1 text-sm font-bold text-ink2"><Lock size={16} />{lockReason(st, c.id) === 'progress' ? '先看完上一章' : '等老师开放'}</span>}
             </motion.button>
           );
         })}

@@ -2,7 +2,7 @@ import {DEMO} from './demo';
 import { useSyncExternalStore } from 'react';
 import { RequestError } from '@/src/shared/http';
 import {STATION_IDS,type Player,type GameConfig,type Item,type LogEntry,type Rec,type StationId} from '../shared/types';
-import {newPlayer,progressOpen,openMode,trackOf} from '../shared/adapt';
+import {newPlayer,progressOpen,openMode,trackOf,resultOf,normalizeRewards} from '../shared/adapt';
 import { api,ApiError,lessonId,flow,setParticipant } from './api';
 import { mergeProgress } from '../shared/sync';
 import { playerSchema,configSchema } from '../../server/schema';
@@ -18,7 +18,7 @@ const LS_KEY = 'rdfz_tuiqiao_'  + lessonId;
 type Cache = {player:Player;confirmed?:Player;config:GameConfig;roundId?:string;pendingJoin:boolean;dirty:boolean};
 function load():Cache|null {
  try {const raw=localStorage.getItem(LS_KEY);if(!raw)return null;const c=JSON.parse(raw);
-  const player=playerSchema.parse(c.player),confirmed=c.confirmed?playerSchema.parse(c.confirmed):undefined;
+  const player=normalizeRewards(playerSchema.parse(c.player)),confirmed=c.confirmed?normalizeRewards(playerSchema.parse(c.confirmed)):undefined;
   return {player,confirmed,config:configSchema.passthrough().parse(c.config),roundId:typeof c.roundId==='string'?c.roundId:undefined,pendingJoin:c.pendingJoin===true,dirty:c.dirty===true};
  }catch{return null;}
 }
@@ -144,7 +144,7 @@ export const logAnswer = (it: Item, e: Omit<LogEntry, 'id' | 't'>, tries?: [stri
 });
 export const markUnsure = (it: Item) => mutate((p) => { ensure(p, it).unsure++; });
 export const setData = (it: Item, data: Record<string, unknown>) => mutate((p) => { const r = ensure(p, it); r.data = { ...(r.data ?? {}), ...data }; });
-export const finishItem = (it: Item, stars: number, perf: number) => mutate((p) => { const r = ensure(p, it); if (r.status === 'done') return; r.status = 'done'; r.stars = stars; r.perf = perf; r.t1 = Date.now(); });
+export const finishItem = (it: Item, scores: number[]) => mutate((p) => { const r=ensure(p,it); if(r.status==='done')return; const result=resultOf(it,scores,r.unsure); r.status='done';r.stars=result.stars;r.perf=result.perf;r.data={...r.data,scores:[...scores]};r.t1=Date.now(); });
 export const addBonus = (it: Item, n: number) => mutate((p) => { const r = ensure(p, it); r.bonus = Math.max(r.bonus, n); });
 /** 播放式故事里的记录（点字、提问）：记在这一回的“记录”条目上 */
 export const logPlay = (playId: string, q: 'gloss' | 'gloss2' | 'more' | 'ask' | 'askok' | 'askfb', v: string) => mutate((p) => {

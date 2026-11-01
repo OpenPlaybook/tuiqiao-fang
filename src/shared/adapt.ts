@@ -1,4 +1,6 @@
-// 自适应：能力估计、选题的难度版本、星星与加权分。学生端和服务器共用，结果只取决于玩家记录。
+import {taskBudget,extensionBudget} from './reward-budget';
+import {assessReward,repricePlayer,extensionTotal,recordTotal} from './reward-quality';
+// 自适应：能力估计、选题的难度版本、星星与探索点。学生端和服务器共用，结果只取决于玩家记录。
 import type { Item, Line, Lv, Player, Rec, StationId, Track } from './types';
 import { ITEMS, ITEM_BY_ID } from './bank';
 import { PLAYS, PLAY_BY_ID } from './play';
@@ -25,8 +27,7 @@ export const openPatch = (t: Track, m: OpenMode): Record<string, boolean> => ({ 
 export const lineOf = (it: Item): Track => trackOf(it.st);
 
 export const B: Record<Lv, number> = { 1: -1.2, 2: -0.3, 3: 0.6, 4: 1.5 };
-export const W: Record<Lv, number> = { 1: 1, 2: 1.5, 3: 2, 4: 2.6 };
-export const LV_NAME: Record<Lv, string> = { 1: '★', 2: '★★', 3: '★★★', 4: '👑' };
+export const LV_NAME: Record<Lv, string> = { 1: '基础', 2: '进阶', 3: '挑战', 4: '高阶' };
 const THETA0 = -0.6;
 const pExpect = (th: number, b: number) => 1 / (1 + Math.exp(-1.4 * (th - b)));
 
@@ -62,22 +63,16 @@ export const taskItem = (p: Player, ids: string[] | undefined, tr: Track): Item 
 // ---------------- 一题的星星与表现 ----------------
 export const scoredSteps = (it: Item) => it.steps.filter((s) => !(s.kind === 'write' && s.bonus));
 /** 每一步的得分（第一次就对 1，第二次 0.67，之后 0.34）→ 星星和“表现”（答错到最后才对的算 0，用了“不确定”打七折） */
-export const resultOf = (scores: number[], unsure: number) => {
-  const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 1;
-  const perfStep = (x: number): number => (x >= 0.99 ? 1 : x >= 0.84 ? 0.75 : x >= 0.66 ? 0.5 : x >= 0.49 ? 0.3 : 0);
-  const perf = scores.length ? scores.map(perfStep).reduce((a, b) => a + b, 0) / scores.length : 1;
-  return { stars: Math.max(1, Math.round(3 * mean)), perf: Math.max(0, Math.min(1, perf * (unsure > 0 ? 0.7 : 1))) };
-};
+export const resultOf = assessReward;
 
 // ---------------- 汇总 ----------------
-/** 主线、支线的任务都得星星；每个拓展得分六成以上再加 1 颗。 */
-export const extStars = (r: Rec) => Object.values((r.data?.ext as Record<string, number>) ?? {}).filter((x) => x >= 0.6).length;
-const recStars = (r: Rec) => (r.status === 'done' ? r.stars : 0) + extStars(r);
+/** 主线、支线的任务都得星星；每个合格拓展按其预算与质量结算。 */
+export const extStars = extensionTotal;
+const recStars = recordTotal;
 export const starsOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + recStars(r), 0);
-/** 探索分（不含支线任务）：问 AI 时自己想出了后一半（askok）、点字时去看了这个字的别的用法并答对（more，同一个字只算一次） */
+/** 探索点（不含支线任务）：问 AI 时自己想出了后一半（askok）、点字时去看了这个字的别的用法并答对（more，同一个字只算一次） */
 export const sideOf = (p: Player) => Object.values(p.recs).filter((r) => r.id.endsWith('-log')).reduce((s, r) => s + r.log.filter((e) => e.q === 'askok').length + new Set(r.log.filter((e) => e.q === 'more').map((e) => e.v)).size, 0);
 export const bonusOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.bonus || 0), 0);
-export const weightedOf = (p: Player) => Math.round((doneRecs(p).reduce((s, r) => s + r.stars * W[ITEM_BY_ID[r.id].lv] + extStars(r), 0) + bonusOf(p)) * 10) / 10;
 export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).reduce((s, r) => s + recStars(r), 0);
 /** 只为出支线题才有的句子（出题的问句、AI 眼镜的错译、小结）：播放时跳过，这句话放进支线任务的弹窗里 */
 export const sideOnly = (lines: Line[], k: number) => {
@@ -88,14 +83,19 @@ export const sideOnly = (lines: Line[], k: number) => {
 };
 /** 一站的支线任务（挂在各句上的可选题） */
 export const sideItemsOf = (id: string): Item[] => (PLAY_BY_ID[id]?.lines ?? []).flatMap((l) => (l.side ?? []).map((x) => ITEM_BY_ID[x]).filter(Boolean));
-/** 一站最多能得几颗星：每道题 3 颗，再加这道题的每个拓展 1 颗（选做的也算——全做完才是满星）；支线任务也算 */
-export const maxStarsOf = (id: string) => (PLAY_BY_ID[id]?.lines ?? []).reduce((a, l) => { const it = l.task?.length ? ITEM_BY_ID[l.task[0]] : null; return a + (it ? 3 + (it.ext?.length ?? 0) : 0); }, 0)
-  + sideItemsOf(id).reduce((a, it) => a + 3 + (it.ext?.length ?? 0), 0);
-/** 一站的探索分：问 AI 时自己想出了后一半、点字去看了别的用法并答对（同一个字只算一次） */
+/** 一站最多能得几颗星：题目与拓展按各自奖励预算汇总（选做的也算——全做完才是满星）；支线任务也算 */
+const itemMax=(it:Item)=>taskBudget(it.id)+(it.ext??[]).reduce((n,e)=>n+extensionBudget(it.id,e.id),0);
+/** 总上限按题槽计算；未选的难度版本取上限，已选版本使用实际预算。 */
+export const maxStarsOf=(id:string,p?:Player)=>(PLAY_BY_ID[id]?.lines??[]).reduce((n,l)=>{
+ const ids=l.task??[];const chosen=p&&ids.find(k=>p.recs[k]&&!p.recs[k].prac);
+ return n+(chosen?itemMax(ITEM_BY_ID[chosen]):ids.length?Math.max(...ids.map(k=>itemMax(ITEM_BY_ID[k]))):0);
+},0)+sideItemsOf(id).reduce((n,it)=>n+itemMax(it),0);
+export const normalizeRewards=(p:Player)=>repricePlayer(p,ITEM_BY_ID);
+/** 一站的探索点：问 AI 时自己想出了后一半、点字去看了别的用法并答对（同一个字只算一次） */
 export const stationSide = (p: Player, id: string) => { const r = p.recs[`${id}-log`]; return r ? r.log.filter((e) => e.q === 'askok').length + new Set(r.log.filter((e) => e.q === 'more').map((e) => e.v)).size : 0; };
 export const unsureOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.unsure || 0), 0);
 export const avgLvOf = (p: Player, tr?: Track) => { const d = doneRecs(p, (r) => !r.prac && (!tr || trackOf(r.st) === tr)); return d.length ? d.reduce((s, r) => s + ITEM_BY_ID[r.id].lv, 0) / d.length : 0; };
-export const maxStars = () => STATIONS.reduce((s, x) => s + 3 * x.n, 0);
+export const maxStars = (p?:Player) => PLAYS.reduce((n,x)=>n+maxStarsOf(x.id,p),0);
 export const newPlayer = (pid: string, token: string, name: string, sid: string, avatar: number, roundId: string): Player => ({ pid, token, roundId, revision: 0, name, sid, avatar, createdAt: Date.now(), recs: {}, updatedAt: Date.now() });
 export { ITEMS };
 

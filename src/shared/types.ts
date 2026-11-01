@@ -90,7 +90,7 @@ export interface Back { ch: string; line: string; label: string }
  *  d：这个字词本身的意思（点一下就看到，哪一句里点都一样）；py：读音。
  *  s：放在句子里怎么理解（再点“放在这句话里怎么理解”才展开）。按出处分条——键是这个字所在那句话里的一小段原文（原样照抄、把这个字包在里面），
  *     值是这一句里的理解；显示成“那段原文”：解释。点哪一处就找包住那一处的那一条，找不到就不显示第二层。见 src/shared/gloss.ts。
- *  more：这个字的别的用法（支线：讲一句 + 一个小问题，答对得 1 个探索分）；back：回扣到别的回的某一句 */
+ *  more：这个字的别的用法（探索：讲一句 + 一个小问题，答对得 1 个探索点）；back：回扣到别的回的某一句 */
 export interface Gloss { d: string; s?: Record<string, string>; py?: string; ex?: string; back?: Back; more?: { t: string; q: string; opts: [string, boolean][] } }
 export interface Line {
   id?: string; // 回扣用的句号

@@ -2,6 +2,7 @@
 //   连线一对一（几项归到同一个是分类题），分类每格不止一张（一格一张是连线题）；
 //   选择：有正确答案，序号不越界，选项不重复；填空：每句一个空，答案在词库里，词库不重复（同一个词可以填两处）；分类、连线、排序、挑错、改错：序号不越界；
 //   每道题、每段拓展里的步骤 key 不重复；拓展紧接着把正题再问一遍的，提醒出来；题都挂在句子上，一道题不挂两处；原文（wy）不用“……”省略；节点里不写默认阅读顺序的话。
+import { REWARD_BUDGET } from '../src/shared/reward-budget';
 import { PLAYS } from '../src/shared/play';
 import { ITEM_BY_ID } from '../src/shared/bank';
 import type { Item, Sub } from '../src/shared/types';
@@ -9,6 +10,15 @@ import { orderProblem } from '../src/shared/frag';
 
 let bad = 0;
 const err = (m: string) => { bad++; console.log('✗ ' + m); };
+const graded=Object.values(ITEM_BY_ID).filter(it=>it.steps.length);
+for(const it of graded){
+ const reward=REWARD_BUDGET[it.id];
+ if(!reward||!Number.isInteger(reward.stars)||reward.stars<1){err(`${it.id}：缺少有效任务奖励`);continue;}
+ const ids=new Set((it.ext??[]).map(e=>e.id));
+ for(const id of ids)if(!Number.isInteger(reward.extensions[id])||reward.extensions[id]<1)err(`${it.id}/${id}：缺少有效拓展奖励`);
+ for(const id of Object.keys(reward.extensions))if(!ids.has(id))err(`${it.id}/${id}：孤立奖励配置`);
+}
+for(const id of Object.keys(REWARD_BUDGET))if(!graded.some(it=>it.id===id))err(`${id}：孤立任务奖励`);
 const plain = (t: string) => t.replace(/[⟦⟧*]/g, '');
 
 const checkStep = (s: Sub, where: string) => {

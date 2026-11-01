@@ -1,7 +1,7 @@
 // 学生端页面：登录、我的成绩。
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { STATIONS, stationDone, stationStars, starsOf } from '../shared/adapt';
+import { STATIONS, stationDone, stationStars, starsOf, maxStars } from '../shared/adapt';
 import { Art, Avatar, AVATARS, Btn, Rich, isEnter } from '../components/ui';
 import { join, useGame } from '../game/store';
 import { frameSvg } from '../film/Film';
@@ -51,7 +51,7 @@ export function MePage() {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <div className="card p-8">
-        <div className="flex items-center gap-4"><Avatar i={p.avatar} size={64} /><div><div className="text-3xl font-black">{p.name}</div><div className="text-ink2">{p.sid}</div></div><div className="ml-auto text-right"><div className="text-4xl font-black text-amber-700">★ {starsOf(p)}</div><div className="text-sm text-ink2">共 {STATIONS.reduce((s, x) => s + x.n * 3, 0)} 颗</div></div></div>
+        <div className="flex items-center gap-4"><Avatar i={p.avatar} size={64} /><div><div className="text-3xl font-black">{p.name}</div><div className="text-ink2">{p.sid}</div></div><div className="ml-auto text-right"><div className="text-4xl font-black text-amber-700">{starsOf(p)>0?'★':'☆'} {starsOf(p)}</div><div className="text-sm text-ink2">共 {maxStars(p)} 颗</div></div></div>
         <div className="mt-6 space-y-2">{STATIONS.map((x) => <div key={x.id} className="flex items-center gap-3 rounded-xl bg-[#FBF7EE] px-4 py-2.5"><span className="text-2xl">{x.emoji}</span><span className="font-black" style={{ color: x.color }}>{x.name}</span><span className="ml-auto text-sm text-ink2">{stationDone(p, x.id)} / {x.n} 题</span><span className="w-16 text-right font-black text-amber-700">★ {stationStars(p, x.id)}</span></div>)}</div>
         <div className="mt-6"><Btn onClick={() => go('/')}>回地图</Btn></div>
       </div>

@@ -64,7 +64,7 @@ export const Btn = ({ children, onClick, color = '#2B2722', shadow, className = 
 export const StarIcon = ({ size = 24, on = true }: { size?: number; on?: boolean }) => (
   <svg width={size} height={size} viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill={on ? '#E0A526' : 'none'} stroke={on ? '#B9801A' : '#CFC4AE'} strokeWidth="1.2" strokeLinejoin="round" /></svg>
 );
-export const Stars = ({ n, max = 3, size = 22 }: { n: number; max?: number; size?: number }) => <span className="inline-flex gap-0.5">{Array.from({ length: max }, (_, i) => <StarIcon key={i} size={size} on={i < n} />)}</span>;
+export const Stars = ({ n, max, size = 22 }: { n: number; max: number; size?: number }) => <span className="inline-flex items-center gap-1" title={`已获得 ${n} / 最多 ${max} 颗星`} aria-label={`已获得 ${n} / 最多 ${max} 颗星`}><StarIcon size={size} on={n > 0}/><span className="tabular-nums">{n}<span className="text-ink2">/{max}</span></span></span>;
 
 export const AVATARS = ['🦊', '🐼', '🐯', '🦉', '🐰', '🐨', '🦁', '🐸', '🐧', '🐱', '🐶', '🦄'];
 export const Avatar = ({ i, size = 40 }: { i: number; size?: number }) => (
@@ -73,12 +73,11 @@ export const Avatar = ({ i, size = 40 }: { i: number; size?: number }) => (
 
 // ---------------- 星星计数器、飞星星 ----------------
 let counterEl: HTMLElement | null = null;
-/** 探索分：AI 追问和释义练习；支线任务另计星星。 */
+/** 探索点：AI 追问和释义练习；支线任务另计星星。 */
 const SideCounter = () => {
   const p = useGame((s) => s.player);
   const n = p ? sideOf(p) : 0;
-  if (!n) return null;
-  return <motion.div key={n} initial={{ scale: 1.3 }} animate={{ scale: 1 }} title="探索分：问 AI 时自己想出了答案、去看了字的别的用法" className="flex items-center gap-1 rounded-full border-2 border-sky-200 bg-white/90 px-3 py-1 chunky"><span className="text-lg">🧭</span><span className="text-xl font-black tabular-nums text-sky-700">{n}</span></motion.div>;
+  return <motion.div key={n} initial={{ scale: 1.3 }} animate={{ scale: 1 }} title="探索点：问 AI 时自己想出了答案、去看了字的别的用法" className="flex items-center gap-1 rounded-full border-2 border-sky-200 bg-white/90 px-3 py-1 chunky"><span className="text-lg">💎</span><span className="text-xl font-black tabular-nums text-sky-700">{n}</span></motion.div>;
 };
 const StarCounter = () => {
   const p = useGame((s) => s.player);

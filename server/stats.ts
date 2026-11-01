@@ -1,7 +1,8 @@
+import {taskBudget} from '../src/shared/reward-budget';
 import type {Classroom} from './schema';
 import type {Player,Rec,StationId} from '../src/shared/types';
 import {ITEMS} from '../src/shared/bank';
-import {sideOf,STATIONS,TRACKS,avgLvOf,bonusOf,doneRecs,stationDone,stationStars,starsOf,thetaLv,thetaOf,unsureOf,weightedOf} from '../src/shared/adapt';
+import {sideOf,STATIONS,TRACKS,avgLvOf,bonusOf,doneRecs,stationDone,stationStars,starsOf,thetaLv,thetaOf,unsureOf} from '../src/shared/adapt';
 import {aiLeft,aiStatus,aiReady} from './ai';
 export function classroomStats(state:Classroom){
 const players=new Map(Object.entries(state.players)),lastSeen=new Map(Object.entries(state.lastSeen)),config=state.config;
@@ -12,7 +13,7 @@ const currentOf = (p: Player) => {
   return best ? STATIONS.find((s) => s.id === best!.st)?.name ?? '' : '';
 };
 const summary = (p: Player) => ({
-  pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), weighted: weightedOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
+  pid: p.pid, name: p.name, sid: p.sid, avatar: p.avatar, stars: starsOf(p), bonus: bonusOf(p), unsure: unsureOf(p),
   done: doneRecs(p, (r) => !r.prac).length, avgLv: avgLvOf(p),
   side: sideOf(p), gloss: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss').length, 0), gloss2: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'gloss2').length, 0), asks: Object.values(p.recs).reduce((a, r) => a + r.log.filter((e) => e.q === 'ask').length, 0),
   theta: Object.fromEntries(TRACKS.map((t) => [t.id, Math.round(thetaLv(thetaOf(p, t.id)) * 10) / 10])),
@@ -46,7 +47,7 @@ const askList = (ps: Player[]) => {
 };
 const teacherState = () => {
   const ps = [...players.values()];
-  const items = ITEMS.map((it) => {
+  const items = ITEMS.filter(it=>it.steps.length).map((it) => {
     const rs = ps.map((p) => p.recs[it.id]).filter(Boolean) as Rec[];
     const dn = rs.filter((r) => r.status === 'done');
     const wrong = new Map<string, number>(), opens = new Map<string, number>();
@@ -60,14 +61,14 @@ const teacherState = () => {
         if (!e.ok) wrong.set(e.v, (wrong.get(e.v) ?? 0) + 1);
       }
     }
-    return { id: it.id, st: it.st, lv: it.lv, label: it.label, n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
+    return { id: it.id, st: it.st, lv: it.lv, label: it.label, maxStars: taskBudget(it.id), n: rs.length, done: dn.length, avgStars: dn.length ? dn.reduce((s, r) => s + r.stars, 0) / dn.length : 0, unsure: rs.reduce((s, r) => s + r.unsure, 0), firstN, firstOk, wrong: [...wrong.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => ({ v, n })), opens: [...opens.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([v, n]) => ({ v, n })) };
   }).filter((x) => x.st !== 'log' && (x.n > 0 || STATIONS.some((s) => s.id === x.st)));
-  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.weighted - a.weighted), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), glosses: glossList(ps), now: Date.now(), ai: ai.status() };
+  return { config: { ...config, aiReady: ai.ready() }, players: ps.map(summary).sort((a, b) => b.stars - a.stars), items, good: ai.goodTexts().slice(0, 120), asks: askList(ps), glosses: glossList(ps), now: Date.now(), ai: ai.status() };
 };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 const exportCsv = () => {
-  const head = ['姓名', '学校', '星星', '加权分', '妙笔分', '完成题数', '平均难度', ...TRACKS.map((t) => `能力·${t.name}（1—4）`), '不确定次数', ...STATIONS.map((s) => `${s.name} 星星`)];
-  const rows = [...players.values()].map(summary).sort((a, b) => b.weighted - a.weighted).map((s) => [s.name, s.sid, s.stars, s.weighted, s.bonus, s.done, s.avgLv.toFixed(2), ...TRACKS.map((t) => s.theta[t.id]), s.unsure, ...STATIONS.map((x) => s.stations[x.id].stars)]);
+  const head = ['姓名', '学校', '星星',  '妙笔分', '完成题数', '平均难度', ...TRACKS.map((t) => `能力·${t.name}（1—4）`), '不确定次数', ...STATIONS.map((s) => `${s.name} 星星`)];
+  const rows = [...players.values()].map(summary).sort((a, b) => b.stars - a.stars).map((s) => [s.name, s.sid, s.stars, s.bonus, s.done, s.avgLv.toFixed(2), ...TRACKS.map((t) => s.theta[t.id]), s.unsure, ...STATIONS.map((x) => s.stations[x.id].stars)]);
   return '﻿' + [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
 };
 
