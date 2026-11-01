@@ -819,7 +819,7 @@ function ExtModal({ it, ext, side, onExt, color, onClose, gloss, onGloss }: { it
               {side && (() => {
                 // 挂着的那句话：AI 眼镜的错译、小结这类句子本身就在题里，只给它前面那句原文
                 const l = side.line, c = l.hide ? side.prev?.card : l.card, t = c?.t ?? (l.hide ? '' : l.t);
-                return t ? <div className="rounded-xl bg-[#F7EFD9] px-4 py-2">{(c?.by ?? l.who) && <div className="text-xs font-black text-[#8A6A2F]"><Rich text={c?.by ?? l.who!} /></div>}<div className="kai text-[19px] leading-relaxed"><Rich text={t} /></div></div> : null;
+                return t ? <div className="rounded-xl bg-[#F7EFD9] px-4 py-2">{(c?.by ?? l.who) && <div className="text-xs font-black text-[#8A6A2F]"><Rich text={c?.by ?? l.who!} /></div>}<div className={l.tr !== undefined ? 'font-serif text-[19px] leading-relaxed' : 'kai text-[19px] leading-relaxed'}><Rich text={t} /></div></div> : null;
               })()}
               {pieces.map(({ i, lead, tail, hideQ, wide }) => { const s = ext.steps[i]; return (
                 <motion.div key={s.key} ref={(el) => { refs.current[i] = el; }} initial={i > (qs[firstShown.current] ?? -1) ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>

@@ -97,13 +97,13 @@ export const PLAY_EN1: Play = {
   lines: [
     { shots: [['e.hall', 1.2], ['e.clock240', 0.8]], t: '**Friday, 2:40 p.m.** The school hall is full of students.', tr: '星期五下午两点四十。学校{礼堂}里{坐满了}学生。', trHard: 'words', voice: 'en', ask: '英语节（English Festival）一般有哪些活动？' },
     { shots: [['e.stage'], ['e.panda', 0.9]], t: 'In twenty minutes, the English Festival will give out its top ⟦prize⟧ — the ⟦Golden Panda⟧.', tr: '再过二十分钟，英语节就要{颁发}{最高奖}——{金熊猫}。', trHard: 'frame', voice: 'en' },
-    { shots: [['e.finalists'], ['e.hands', 0.8]], id: 'cold', t: 'Your story is one of the three ⟦finalists⟧. Your hands are cold.', tr: '你写的故事是三篇{决赛作品}之一。你的手{冰凉}。', trHard: 'words', voice: 'en', task: ['e1-nervous'] },
+    { side: ['e1-x-final'], shots: [['e.finalists'], ['e.hands', 0.8]], id: 'cold', t: 'Your story is one of the three ⟦finalists⟧. Your hands are cold.', tr: '你写的故事是三篇{决赛作品}之一。你的手{冰凉}。', trHard: 'words', voice: 'en', task: ['e1-nervous'] },
     { shots: [['e.benOffer']], who: 'Ben', voice: 'ben', t: '⟦Relax⟧! You’ll be fine. Want a ⟦mooncake⟧?', tr: '{放轻松}！你{没问题的}。来块{月饼}？', trHard: 'frame' },
     { shots: [['e.map'], ['e.benEats', 1.1]], id: 'ben', t: 'Ben is an ⟦exchange student⟧ from London. He has been in Beijing for two weeks, and he has already eaten nine mooncakes.', tr: 'Ben 是从伦敦来的{交换生}。他{!来北京已经两个星期了}，已经吃了九块{月饼}。', trHard: 'frame', voice: 'en', ask: '交换生是怎么回事？' },
     { shots: [['e.door'], ['e.greenRun']], id: 'door', t: 'Suddenly the door ⟦bursts open⟧. Ms Green, the teacher ⟦in charge⟧, runs in. Her face is white.', tr: '突然，门被{!猛地推开}。{!负责}英语节的 Green 老师{跑了进来}，{!脸色发白}。', trHard: 'words', voice: 'en' },
     { shots: [['e.glasses']], prompt: true, who: 'AI 眼镜', voice: 'ai', hide: true, t: 'AI 眼镜把刚才这几句翻成了中文。可是有几处不太对——找出来。', task: ['e1-mis'] },
     { shots: [['e.greenCU']], id: 'taken', who: 'Ms Green', voice: 'green', t: 'Has anyone seen the Golden Panda? Someone has taken it!', tr: '有人{看见}金熊猫了吗？有人把它{!拿走了}！', trHard: 'frame', task: ['e1-taken', 'e1-taken3'], ask: 'has taken 和 took 有什么不一样？' },
-    { shots: [['e.emptyTable']], who: 'Ms Green', voice: 'green', t: 'It was right here on this table at two o’clock. I saw it.', tr: '两点钟的时候，它{就在}这张{桌子}上。我{看见}了。', trHard: 'frame' },
+    { side: ['e1-x-lose'], shots: [['e.emptyTable']], who: 'Ms Green', voice: 'green', t: 'It was right here on this table at two o’clock. I saw it.', tr: '两点钟的时候，它{就在}这张{桌子}上。我{看见}了。', trHard: 'frame' },
     { shots: [['e.lightsOut']], who: 'Ms Green', voice: 'green', t: 'Then at 2:15, the lights ⟦went out⟧ for a minute. Maybe someone took it in the dark!', tr: '后来两点一刻，灯{灭}了一分钟。{说不定}有人{趁黑}把它{拿走}了！', trHard: 'words' },
     { shots: [['e.greenAsk']], who: 'Ms Green', voice: 'green', t: 'What were you all doing when the lights went out?', tr: '灯灭的时候，{你们}都{在做}什么？', trHard: 'frame' },
     { shots: [['e.benDark']], id: 'eating', who: 'Ben', voice: 'ben', t: 'I was eating a mooncake, of course!', tr: '我{!在吃}月饼呀，{那还用说}！', trHard: 'frame', task: ['e1-eating'], ask: 'was eating 和 ate 有什么不一样？' },
@@ -741,4 +741,53 @@ export const PLAY_EN1_ITEMS: Item[] = [
     'Ms Green found that the panda was gone.',
     'If the note is true, the panda will be back.',
   ], '2:00 熊猫还在 → 2:15 灯灭 → 2:20 鼓箱 → 2:40 发现不见了 → 3:00（纸条说）会回来。', ['2:00', '2:15', '2:20', '2:40', '3:00 ?'])),
+  // ---------------- 支线任务：可做可不做（补词汇：词族、易混的词、挑错） ----------------
+  item({
+    id: 'e1-x-final', st: 'en1', lv: 2, type: 'word', topic: 'final → finalist', label: 'finalist：一个词变出一家人', intro: '', ask: 'finalist 和 final 有什么关系？',
+    hints: ['-ist、-er 常常表示“做……的人”。'],
+    explain: 'final（最后的；决赛）+ -ist → finalist（进入决赛的人或作品）。英语里一个词加上词尾，就能变出一家人：-ist、-er 表示人，-ly 表示“怎么做”。',
+  },
+    T('t1', '', '“Your story is one of the three **finalists**.”——**final** 是“最后的；决赛”，加上 **-ist**，就成了“进入决赛的人（或作品）”。'),
+    C('a', 'Your story is one of the three finalists. 意思是——', [
+      ['*你的故事是进了决赛的三篇之一', '对：三篇里选一篇拿金熊猫。'],
+      ['你的故事是最后写完的三篇之一', 'finalist 是进入决赛的，不是最后写完的。'],
+    ], { keep: true }),
+    T('t2', '', '**-ist** 常常表示“做……的人”：art → **artist**（艺术家），piano → **pianist**（钢琴家），science → **scientist**（科学家），tour → **tourist**（游客）。**-er** 也表示人：teach → **teacher**，report → **reporter**（记者），photograph → **photographer**（摄影师）。'),
+    C('b', 'Mia 给校报拍照、写新闻。她在校报当——', [
+      ['*a reporter and a photographer', '对：report + -er，photograph + -er。'],
+      ['a finalist and a tourist', '她不是参赛的，也不是来游玩的。'],
+    ], { keep: true }),
+    fill('c', '放进句子。', ['finalists', 'pianist', 'finally', 'scientist'], [
+      ['Only three stories are ___. One of them will win the Golden Panda.', 'finalists', '进入决赛的：finalists。'],
+      ['Lang Lang plays the piano all over the world. He is a famous ___.', 'pianist', '弹钢琴的人：pianist。'],
+      ['We looked everywhere, and ___ we found the panda in the garden.', 'finally', '最后、终于：final + -ly。'],
+      ['A ___ does experiments in a lab.', 'scientist', '做科学研究的人：scientist。'],
+    ]),
+  ),
+  item({
+    id: 'e1-x-lose', st: 'en1', lv: 2, type: 'word', topic: 'lose / miss / missing', label: 'lose、miss、missing', intro: '', ask: 'lose 和 miss 有什么不一样？',
+    hints: ['missing：不见了；lose：把自己的东西弄丢；miss：错过、想念。'],
+    explain: '东西不见了，说 It’s missing 或 It’s gone；自己弄丢了，说 I lost it；错过、想念，用 miss。中文都可能说“丢”“没了”，英语分得很清楚。',
+  },
+    T('t1', '', '金熊猫不见了。英语可以说：The Golden Panda is **missing**!（不见了、找不到）也可以说 It’s **gone**!（没了）。这一章的题目就是 Gone!'),
+    C('a', 'Green 老师并没有把熊猫弄丢，是有人拿走了。哪一句说得最准确？', [
+      ['*The Golden Panda is missing!', '对：只说“不见了”，不说是谁弄的。'],
+      ['Ms Green lost the Golden Panda.', 'lost 是“她自己弄丢了”，可熊猫是被人拿走的。'],
+    ], { keep: true }),
+    T('t2', '', '**lose**（lost, lost）：把自己的东西弄丢、找不到了（I lost my key.），也是“输”（We lost the match.）。**miss**：错过（miss the bus）、没打中（He missed the ball.），还有“想念”（I miss my family.）。'),
+    C('b', 'Ben 来北京两个星期了。他给妈妈打电话：“I ___ you, Mum!”', [
+      ['*miss', '对：想念。'],
+      ['lose', 'lose 是弄丢，不是想念。'],
+    ], { keep: true }),
+    C('c', '“快点！还有二十分钟就颁奖了，可不能错过！”', [
+      ['*Hurry! We can’t miss the prize-giving!', '对：错过一件事，用 miss。'],
+      ['Hurry! We can’t lose the prize-giving!', 'lose 没有“错过”的意思。'],
+    ], { keep: true }),
+    fill('d', '放进句子。', ['lost', 'missing', 'miss', 'gone'], [
+      ['I ___ my pen yesterday. Can I borrow yours?', 'lost', '自己弄丢了：lost。'],
+      ['One page is ___ from my notebook. Where is it?', 'missing', '缺了、找不到：missing from。'],
+      ['Get up now, or you’ll ___ the bus!', 'miss', '错过：miss。'],
+      ['Ben ate my mooncake. Now it’s all ___!', 'gone', '吃光了、没了：all gone。'],
+    ]),
+  ),
 ];

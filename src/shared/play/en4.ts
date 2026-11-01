@@ -1,7 +1,7 @@
 // 英文故事 The Case of the Golden Panda · Chapter 4 Case Closed（播放式：分镜动画 + 英文配音 + 字幕，播到题就停）
 // 真相：两点十分 Mia 问正在打电话的 Green 老师“能借熊猫拍张照吗”，Green 老师随口说了“Yes, yes”；Mia 写纸条时把 borrow 写成了 lent；灯灭时纸条掉到了桌子底下。
 // 语法：英式说时间（ten past two）、too … to、最高级 + ever、道歉和回应。
-import { C, Mt, Od, So, Wr, item } from '../bank/h';
+import { C, S, Mt, Od, So, Wr, item } from '../bank/h';
 import type { Art, Ext, FillSub, Item, Play, TeachSub } from '../types';
 
 const fill = (key: string, q: string, bank: string[], sents: [string, string, string][]): FillSub => ({ kind: 'fill', key, q, bank, sents: sents.map(([t, a, why]) => ({ t, a, why })) });
@@ -43,8 +43,8 @@ export const PLAY_EN4: Play = {
     'I’ve only eaten nine': { d: '我才吃了九块（到现在为止）：have eaten 说到现在为止的数量。' },
   },
   lines: [
-    { shots: [['e4.miaRed', 1.2]], t: '**2:56 p.m.** Mia ⟦holds her camera tight⟧. Her face ⟦goes red⟧.', read: '2:56 p.m. Mia holds her camera tight. Her face goes red.', tr: '两点五十六。Mia {紧紧抱着她的相机}，{脸红了}。', trHard: 'words', voice: 'en', ask: 'go red 为什么用 go？' },
-    { shots: [['e4.miaCU']], id: 'steal', who: 'Mia', voice: 'mia', t: 'I… I didn’t ⟦steal⟧ it! I borrowed it ⟦for a photo⟧. Ms Green ⟦said yes⟧!', read: 'I… I didn’t steal it! I borrowed it for a photo. Ms Green said yes!', tr: '我……我没有{偷}！我是借来{拍照}的。Green 老师{答应了}！', trHard: 'words', task: ['e4-steal'], ask: 'steal 和 borrow 差在哪？' },
+    { side: ['e4-x-red'], shots: [['e4.miaRed', 1.2]], t: '**2:56 p.m.** Mia ⟦holds her camera tight⟧. Her face ⟦goes red⟧.', read: '2:56 p.m. Mia holds her camera tight. Her face goes red.', tr: '两点五十六。Mia {紧紧抱着她的相机}，{脸红了}。', trHard: 'words', voice: 'en', ask: 'go red 为什么用 go？' },
+    { side: ['e4-x-rob'], shots: [['e4.miaCU']], id: 'steal', who: 'Mia', voice: 'mia', t: 'I… I didn’t ⟦steal⟧ it! I borrowed it ⟦for a photo⟧. Ms Green ⟦said yes⟧!', read: 'I… I didn’t steal it! I borrowed it for a photo. Ms Green said yes!', tr: '我……我没有{偷}！我是借来{拍照}的。Green 老师{答应了}！', trHard: 'words', task: ['e4-steal'], ask: 'steal 和 borrow 差在哪？' },
     { shots: [['e4.benAsk']], who: 'Ben', voice: 'ben', t: 'When did she say yes?', tr: '她什么时候答应的？', trHard: 'frame' },
     { shots: [['e4.flashAsk', 1.4]], id: 'ten', who: 'Mia', voice: 'mia', t: 'At ⟦ten past two⟧. She ⟦was on the phone⟧. I asked, “Can I borrow the panda for a photo?” and she said, “Yes, yes.”', read: 'At ten past two. She was on the phone. I asked, can I borrow the panda for a photo? And she said, yes, yes.', tr: '{两点十分}。她{正在打电话}。我问：“我能借熊猫拍张照吗？”她说：“好，好。”', trHard: 'words', task: ['e4-ten'], ask: '英式英语怎么说时间？' },
     { shots: [['e4.remember']], t: 'So that was the “yes, yes”! You remember Ms Green on the phone.', read: 'So that was the yes, yes! You remember Ms Green on the phone.', tr: '原来那句“好，好”是这么回事！你想起了打电话的 Green 老师。', trHard: 'frame', voice: 'en' },
@@ -65,7 +65,7 @@ export const PLAY_EN4: Play = {
     { shots: [['e4.photo', 1.2]], id: 'ever', who: 'Mia', voice: 'mia', t: 'And here’s my photo for the ⟦front page⟧. It’s ⟦the most beautiful photo I’ve ever taken⟧!', read: 'And here’s my photo for the front page. It’s the most beautiful photo I’ve ever taken!', tr: '这是我给{头版}拍的照片。这是{我拍过的最美的一张}！', trHard: 'frame', task: ['e4-ever'], ask: 'the most … I’ve ever … 怎么用？' },
     { shots: [['e4.write']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '侦探笔记的最后一行：用一两句英语，写下金熊猫到底是怎么“不见”的。', task: ['e4-write'] },
     { shots: [['e4.mooncake', 1.2]], who: 'Ben', voice: 'ben', t: 'Now, can I have a mooncake? ⟦I’ve only eaten nine⟧!', read: 'Now, can I have a mooncake? I’ve only eaten nine!', tr: '好啦，我能吃块月饼了吗？{我才吃了九块}！', trHard: 'frame', ask: 'Ben 为什么说 I’ve only eaten nine？' },
-    { id: 'review', shots: [['e4.endBoard', 1.4]], who: 'AI 眼镜', voice: 'ai', t: '案子破了。回头看看：has taken、was eating、borrow 和 lend、must be……每一个词，都是一条线索。', read: '案子破了。回头看看，has taken，was eating，borrow 和 lend，must be，每一个词，都是一条线索。', ask: '这四章里，你觉得哪个词是最关键的线索？', task: ['e4-review'] },
+    { side: ['e4-x-spot'], id: 'review', shots: [['e4.endBoard', 1.4]], who: 'AI 眼镜', voice: 'ai', t: '案子破了。回头看看：has taken、was eating、borrow 和 lend、must be……每一个词，都是一条线索。', read: '案子破了。回头看看，has taken，was eating，borrow 和 lend，must be，每一个词，都是一条线索。', ask: '这四章里，你觉得哪个词是最关键的线索？', task: ['e4-review'] },
   ],
 };
 
@@ -417,4 +417,75 @@ export const PLAY_EN4_ITEMS: Item[] = [
     examples: ['Mia borrowed the Golden Panda for a photo, but Ms Green was on the phone and didn’t really listen.', 'Nobody stole the panda. Mia borrowed it for a photo, and her note fell under the table.'],
     words: ['Mia', 'borrowed', 'the Golden Panda', 'for a photo'], frame: 'Mia ______ the Golden Panda for a photo, but ______ .', ph: 'Mia …',
   })),
+  // ---------------- 支线任务：可做可不做（补词汇：词族、易混的词、挑错） ----------------
+  item({
+    id: 'e4-x-red', st: 'en4', lv: 2, type: 'word', topic: 'embarrassed / nervous / scared', label: 'Her face goes red', intro: '', ask: '脸红了，英语怎么说？',
+    hints: ['被人当场撞见，又不好意思，是哪种心情？'],
+    explain: 'Her face goes red：她脸红了。被当场撞见、不好意思，是 embarrassed；等着宣布结果、怕表现不好，是 nervous；怕黑、怕狗，是 scared / afraid。',
+  },
+    T('t1', '', '“Mia holds her camera tight. Her face **goes red**.”——go red：（脸）变红。go 在这里是“变得”：go red（脸红），go white（脸色发白）。'),
+    C('a', '被人当场找到，脸一下子红了。Mia 这时最可能是——', [
+      ['*embarrassed（尴尬、不好意思）', '对：被撞见，又怕被当成小偷。'],
+      ['bored（无聊）', '她一点也不无聊。'],
+    ], { keep: true }),
+    T('t2', '', '第一章里也有说心情的词：等着宣布结果、手心发凉，是 **nervous**；怕黑、怕狗，是 **scared / afraid**。再加一个：**embarrassed**，尴尬、不好意思。'),
+    C('b', '第一章开头，Green 老师冲进礼堂，“Her face is white.”她当时最可能是——', [
+      ['*worried and scared（又急又怕）', '对：金熊猫不见了。'],
+      ['embarrassed（不好意思）', '她是急坏了、吓坏了。'],
+    ], { keep: true }),
+    fill('c', '放进句子。', ['embarrassed', 'nervous', 'scared'], [
+      ['I called my teacher “Mum” by mistake. Everyone laughed. I was so ___!', 'embarrassed', '当众出丑：embarrassed。'],
+      ['I have a big test tomorrow. I’m a bit ___.', 'nervous', '怕考不好：nervous。'],
+      ['My little sister is ___ of the dark.', 'scared', '怕黑：scared of。'],
+    ]),
+  ),
+  item({
+    id: 'e4-x-rob', st: 'en4', lv: 2, type: 'word', topic: 'steal / rob', label: 'steal 和 rob', intro: '', ask: 'steal 和 rob 有什么不一样？',
+    hints: ['steal 后面跟东西；rob 后面跟人或地方。'],
+    explain: 'steal 后面跟被偷的东西（steal a phone）；rob 后面跟被抢的人或地方（rob a bank），常常带着暴力。偷东西的人是 thief，抢劫的人是 robber。',
+  },
+    T('t1', '', '“I didn’t **steal** it!”——steal 后面跟**东西**：steal the panda, steal a phone。还有一个词 **rob**，后面跟**人或地方**：rob a bank（抢银行），rob a shop，rob someone（抢某人）。rob 常常带着暴力。'),
+    C('a', '哪一句对？', [
+      ['*Someone stole my bike.', '对：steal + 东西。'],
+      ['Someone robbed my bike.', 'rob 后面跟人或地方，不跟东西。'],
+    ], { keep: true }),
+    C('b', '“两个人冲进银行，抢走了钱。”', [
+      ['*Two men robbed a bank.', '对：rob + 地方。'],
+      ['Two men stole a bank.', '银行不能被“偷走”：用 rob。'],
+    ], { keep: true }),
+    T('t2', '', '做这些事的人：**thief**（小偷，复数 thieves），**robber**（抢劫的人）。Mia 急着说自己不是 thief：她是借的，还打算还。'),
+    fill('c', '放进句子。', ['thief', 'robber', 'stole', 'robbed'], [
+      ['A ___ took my wallet on the bus, and I didn’t feel a thing.', 'thief', '悄悄偷东西的人：thief。'],
+      ['The ___ ran into the shop and shouted, “Give me the money!”', 'robber', '冲进去抢的人：robber。'],
+      ['Somebody ___ the money from the shop at night.', 'stole', 'steal + 东西（the money）。'],
+      ['Somebody ___ the shop at night.', 'robbed', 'rob + 地方（the shop）。'],
+    ]),
+  ),
+  item({
+    id: 'e4-x-spot', st: 'en4', lv: 3, type: 'spot', topic: 'spot the wrong word', label: '笔记里用错的词', intro: '', ask: 'look、see、watch 怎么分？',
+    hints: ['每句只有一个词用错了：想想四章里那几对最容易混的词。'],
+    explain: '四句里的错，正是四章里最容易混的几对：borrow / lend、look / watch、say / tell、make / take。',
+  },
+    T('t1', '', 'AI 眼镜帮你整理了一份侦探笔记。可每一句都有一个词用错了——点出来，再选怎么改。'),
+    S('a', '点出用错的词', 'Mia |asked, |“Can |I |lend |the |panda |for |a |photo?”', [4], C('fix', '换成哪个词？', [
+      ['*borrow', '对：Mia 是向老师借，用 borrow。'],
+      ['give', 'give 是给，Mia 是想借。'],
+      ['steal', '她问了，不是偷。'],
+    ]), { 0: 'Mia 没问题，再找找。', 7: 'for a photo 是“为了拍照”，没问题。' }, { borrow: 'Mia asked, “Can I ~~lend~~ ++borrow++ the panda for a photo?”' }),
+    S('b', '点出用错的词', 'Mr |Liu |was |looking |the |football |match |on |his |phone.', [3], C('fix', '换成哪个词？', [
+      ['*watching', '对：看比赛、看电视，用 watch。'],
+      ['seeing', 'see 是看见，不说 seeing the match。'],
+      ['noticing', 'notice 是注意到。'],
+    ]), {}, { watching: 'Mr Liu was ~~looking~~ ++watching++ the football match on his phone.' }),
+    S('c', '点出用错的词', 'Ms |Green |just |told, |“Yes, |yes.”', [3], C('fix', '换成哪个词？', [
+      ['*said', '对：后面直接跟说的话，用 said。'],
+      ['spoke', 'speak 后面不直接跟说的话。'],
+      ['talked', 'talk 是交谈。'],
+    ]), {}, { said: 'Ms Green just ~~told~~ ++said++, “Yes, yes.”' }),
+    S('d', '点出用错的词', 'It’s |the |most |beautiful |photo |I’ve |ever |made!', [7], C('fix', '换成哪个词？', [
+      ['*taken', '对：拍照是 take a photo，过去分词是 taken。'],
+      ['done', '拍照不用 do。'],
+      ['took', 'I’ve ever 后面要用过去分词 taken。'],
+    ]), {}, { taken: 'It’s the most beautiful photo I’ve ever ~~made~~ ++taken++!' }),
+  ),
 ];

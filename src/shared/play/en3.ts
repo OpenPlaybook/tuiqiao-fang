@@ -49,7 +49,7 @@ export const PLAY_EN3: Play = {
     { shots: [['e3.cover', 1.2]], t: 'Ben looks down at your notebook. There is a small yellow note ⟦on the cover⟧: “⟦Thx for the pen⟧! — M”', read: 'Ben looks down at your notebook. There is a small yellow note on the cover. Thanks for the pen! M.', tr: 'Ben 低头看了看你的本子。{封面上}贴着一张黄色的小纸条：“{谢谢你的笔}！——M”', trHard: 'words', voice: 'en', ask: '这张纸条是谁什么时候贴的？' },
     { shots: [['e3.twoNotes']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '把两张纸条放在一起比一比：哪些地方一样？', task: ['e3-compare'] },
     { shots: [['e3.twoNotes']], id: 'must', who: 'Ben', voice: 'ben', t: '⟦The same⟧ yellow paper. The same M with a little curl. ⟦It must be Mia⟧!', tr: '{一样的}黄纸，一样的、带个小卷的 M。{一定是 Mia}！', trHard: 'frame', task: ['e3-must'], ask: 'must、might、can’t 有什么不一样？' },
-    { id: 'why', shots: [['e3.youAsk']], t: 'But ⟦why did she take⟧ the panda? You think about it.', tr: '可她{为什么要拿走}熊猫呢？你想了想。', trHard: 'frame', voice: 'en', task: ['e3-proof'] },
+    { side: ['e3-x-bring'], id: 'why', shots: [['e3.youAsk']], t: 'But ⟦why did she take⟧ the panda? You think about it.', tr: '可她{为什么要拿走}熊猫呢？你想了想。', trHard: 'frame', voice: 'en', task: ['e3-proof'] },
     { shots: [['e3.benIdea']], who: 'Ben', voice: 'ben', t: 'She’s from the school newspaper. She ⟦might want⟧ a photo of it for the front page!', tr: '她是校报的。她{也许想}给熊猫拍张照片，登在头版上！', trHard: 'words' },
     { shots: [['e3.benRun']], id: 'bet', who: 'Ben', voice: 'ben', t: 'She said the light in the garden was beautiful. ⟦I bet⟧ she’s there!', tr: '她说花园里的光特别好看。{我敢说}她就在那儿！', trHard: 'words', task: ['e3-guess'] },
     { shots: [['e3.write']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '把你的推理写进侦探笔记：M 是谁？为什么？用一句英语写下来。', task: ['e3-write'] },
@@ -370,4 +370,26 @@ export const PLAY_EN3_ITEMS: Item[] = [
     examples: ['M must be Mia because the two notes have the same curly M.', 'M must be Mia, because she mixes up borrow and lend and the notes look the same.'],
     words: ['M must be', 'Mia', 'because'], frame: 'M must be ______ because ______ .', ph: 'M must be …',
   })),
+  // ---------------- 支线任务：可做可不做（补词汇：词族、易混的词、挑错） ----------------
+  item({
+    id: 'e3-x-bring', st: 'en3', lv: 2, type: 'word', topic: 'bring / take', label: 'bring 还是 take', intro: '', ask: 'bring 和 take 怎么分？',
+    hints: ['看东西是往说话的人这边来，还是从这里带到别处去。'],
+    explain: 'take：把东西从这里带走、带到别处去；bring：把东西带到说话的人这里来。Mia took the panda to the garden；Green 老师在礼堂里会说：Please bring it back!',
+  },
+    T('t1', '', '“Why did she **take** the panda?”——**take**：拿走、带走，从这里带到别处去。**bring**：带来，带到说话的人这里来。', ['Mia took the panda to the garden.（从礼堂带到花园去）', 'Please bring it back to the hall!（Green 老师在礼堂：带回我这儿来）']),
+    C('a', 'Green 老师站在礼堂里，着急地说——', [
+      ['*Please bring it back here!', '对：带回她这里来，用 bring。'],
+      ['Please take it back here!', '往说话的人这边来，用 bring。'],
+    ], { keep: true }),
+    C('b', '你出门上学，妈妈在门口说：“别忘了带伞！”', [
+      ['*Don’t forget to take your umbrella!', '对：从家里带走，用 take。'],
+      ['Don’t forget to bring your umbrella!', '妈妈在家，伞是从她这儿带走的，用 take。'],
+    ], { keep: true }),
+    fill('c', '放进句子。', ['took', 'brought', 'take'], [
+      ['Mia ___ the panda to the garden to take photos.', 'took', '从礼堂带到花园去：took。'],
+      ['Grandma opened the door and smiled: “You ___ me flowers! Thank you!”', 'brought', '带到说话的人这里来：brought。'],
+      ['Please ___ this note to Ms Green in the office.', 'take', '从这里送到别处去：take。'],
+    ]),
+    T('t2', '', 'take 的用处特别多：**take** photos（拍照）、**take** a bus（坐公交车）、**take** a break（休息一下），还有第一章的 Someone has **taken** it!（拿走了）。'),
+  ),
 ];

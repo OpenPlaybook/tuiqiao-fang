@@ -8,7 +8,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "check:gloss": "node scripts/check-gloss.mjs",
-    "build": "pnpm check:gloss && pnpm typecheck && node scripts/build-platform.mjs",
+    "check:content": "node scripts/check-content.mjs",
+    "build": "pnpm check:gloss && pnpm check:content && pnpm typecheck && node scripts/build-platform.mjs",
     "start": "node dist-server/server.cjs",
     "answers": "node dist-server/answers.js",
     "test": "node tests/run.mjs"

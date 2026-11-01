@@ -235,7 +235,7 @@ export const SHOTS_LATE: Record<string, ShotDef> = {
     fg: (u, g, id) => {
       const k = seg(u, 0.1, 0.4);
       return glow(id, 700, 560, 300, g, 0, 0.35) + person({ x: 560, y: 700, s: 1.4, who: 'xiaohe', pose: P.mix({ ...P.sitRest(), lean: -10 }, { ...P.sitCross(), lean: 60, head: 30, aF: 40, eF: 30 }, k), g, face: 1, detail: true, mood: 'laugh' }) +
-        person({ x: 960, y: 800, s: 1.45, who: 'king', pose: P.stand(), g, face: -1, detail: true }) + `<g opacity="${f(seg(u, 0.4, 0.7))}">${vtext(1300, 300, '臣死不恨矣', 46, GOLD, 0.9)}</g>`;
+        person({ x: 960, y: 800, s: 1.45, who: 'king', pose: P.stand(), g, face: -1, detail: true }) + `<g opacity="${f(seg(u, 0.4, 0.7))}">${vtext(770, 330, '臣死不恨矣', 46, GOLD, 0.9)}</g>`;
     },
     cam: [[800, 560, 1400], [800, 580, 1250]],
   },

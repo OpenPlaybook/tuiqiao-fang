@@ -77,7 +77,7 @@ export const PLAY_EN2: Play = {
     { shots: [['e2.benAskMax']], id: 'were', who: 'Ben', voice: 'ben', t: '⟦What were you doing⟧ at 2:15, Max?', tr: 'Max，两点一刻的时候你{在做什么}？', trHard: 'frame', task: ['e2-was'], ask: '什么时候用 was，什么时候用 were？' },
     { shots: [['e2.tripFlash', 1.4]], id: 'trip', who: 'Max', voice: 'max', t: 'I ⟦was packing⟧ my drums ⟦behind the stage⟧. I ⟦tripped over⟧ a ⟦cable⟧ ⟦while I was carrying⟧ the big drum — and all the lights went out!', read: 'I was packing my drums behind the stage. I tripped over a cable while I was carrying the big drum, and all the lights went out!', tr: '我{正在}舞台后面{收拾}鼓。我{搬着}大鼓的时候，{被一根电线绊了一下}——所有的灯就全灭了！', trHard: 'frame', task: ['e2-while'], ask: 'when 和 while 有什么不一样？' },
     { shots: [['e2.plug', 1]], who: 'Max', voice: 'max', t: 'I ⟦plugged it back in⟧ ⟦straight away⟧. It was only a minute. Sorry!', tr: '我{马上}{把插头插回去了}，只灭了一分钟。{对不起}！', trHard: 'words', ask: '“灯灭”的真正原因找到了吗？' },
-    { shots: [['e2.benAskMax']], who: 'Ben', voice: 'ben', t: 'So you ⟦made the lights go out⟧! Did you see the panda?', tr: '原来是你{把灯弄灭的}！你看见熊猫了吗？', trHard: 'frame' },
+    { side: ['e2-x-make'], shots: [['e2.benAskMax']], who: 'Ben', voice: 'ben', t: 'So you ⟦made the lights go out⟧! Did you see the panda?', tr: '原来是你{把灯弄灭的}！你看见熊猫了吗？', trHard: 'frame' },
     { shots: [['e2.girlFlash', 1.2]], id: 'girl', who: 'Max', voice: 'max', t: 'I didn’t look at the table. But I saw a girl with a big camera ⟦backstage⟧. She was ⟦in a hurry⟧.', tr: '我没{看}桌子。不过我在{后台}看见一个拿着大相机的女孩，她{急急忙忙的}。', trHard: 'words', ask: '拿相机的女孩可能是谁？', task: ['e2-look'] },
     { shots: [['e2.corridor', 1.2]], t: 'In the ⟦corridor⟧, a small girl runs past you with a ⟦camera bag⟧.', tr: '{走廊}里，一个小个子女孩背着{相机包}从你们身边跑过去。', trHard: 'words', voice: 'en' },
     { shots: [['e2.miaCU']], who: 'Mia', voice: 'mia', t: 'Sorry, I’m in a hurry! I’m Mia, from the ⟦school newspaper⟧.', tr: '对不起，我{赶时间}！我是 Mia，{校报}的。', trHard: 'words' },
@@ -472,4 +472,30 @@ export const PLAY_EN2_ITEMS: Item[] = [
     examples: ['At 2:15, Max was carrying his drum behind the stage.', 'At 2:15, Max was packing his drums backstage, and he tripped over a cable.'],
     words: ['At 2:15', 'Max', 'was carrying', 'behind the stage'], frame: 'At 2:15, Max was ______ .', ph: 'At 2:15, Max …',
   })),
+  // ---------------- 支线任务：可做可不做（补词汇：词族、易混的词、挑错） ----------------
+  item({
+    id: 'e2-x-make', st: 'en2', lv: 2, type: 'word', topic: 'make / do / take', label: 'make、do，还有 take a photo', intro: '', ask: 'make 和 do 有什么不一样？',
+    hints: ['make 常常是“做出、弄出”一样东西；do 常常是“做”一件事。'],
+    explain: 'made the lights go out：弄得灯灭了（make + 东西 + 动词原形）。make 多是做出东西、弄出结果（make a mistake, make a noise）；do 多是做一件事（do homework, do your best）；拍照说 take a photo。',
+  },
+    T('t1', '', '“So you **made** the lights **go out**!”——**make + 人 / 东西 + 动词原形**：让……、弄得……。Max 搬鼓时被电线绊了一下，灯就灭了。'),
+    C('a', 'So you made the lights go out! 意思是——', [
+      ['*原来是你把灯弄灭的！', '对：make … go out，弄得……灭了。'],
+      ['原来是你做了一盏灯！', '这里的 make 是“使、让”。'],
+    ], { keep: true }),
+    C('b', '“这个笑话让大家都笑了。”', [
+      ['*The joke made everyone laugh.', '对：make + 人 + 动词原形，不加 to。'],
+      ['The joke made everyone to laugh.', 'make 后面的动词不加 to。'],
+    ], { keep: true }),
+    T('t2', '', '中文都说“做”，英语分 **make** 和 **do**：make 常常是做出、弄出一样东西或结果（make a cake, make a mistake, make a noise, make friends）；do 常常是做一件事、一项活儿（do homework, do the dishes, do sports, do your best）。'),
+    So('c', '这些搭配，用 make 还是 do？', ['make', 'do'], [
+      ['___ a mistake', 0, '犯错：弄出一个错误。'], ['___ a noise', 0, '弄出声音。'], ['___ friends', 0, '交朋友。'],
+      ['___ homework', 1, '做作业：一件事。'], ['___ your best', 1, '尽力。'], ['___ the dishes', 1, '洗碗：一项家务。'],
+    ]),
+    T('t3', '', '还有一个最容易说错的：拍照，英语说 **take a photo**，不说 make a photo。'),
+    C('d', '“Mia 在花园里给熊猫拍照。”', [
+      ['*Mia is taking photos of the panda in the garden.', '对：拍照是 take photos。'],
+      ['Mia is making photos of the panda in the garden.', '拍照不用 make。'],
+    ], { keep: true }),
+  ),
 ];
