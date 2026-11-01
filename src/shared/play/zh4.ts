@@ -90,7 +90,7 @@ export const PLAY_ZH4: Play = {
     { shots: [['g.lbjoy', 1]], t: '刘邦大喜，觉得自己得到韩信太晚了。从此，他照着韩信的计策安排各路将领。', wy: '于是汉王大喜，自以为得信晚。遂听信计，部署诸将所击。' },
     { shots: [['g.march', 1.3], ['g.plank', 1]], t: '这年八月，汉王出兵，向东从⟦陈仓⟧杀出去，平定了⟦三秦⟧。后来的戏里，把这件事编成了一句话——', wy: '八月，汉王举兵东出⟦陈仓⟧，定⟦三秦⟧。', ask: '陈仓在今天的什么地方？' },
     { shots: [['g.plank']], prompt: true, t: '明修___，暗度陈仓。', read: '明修什么，暗度陈仓？', task: ['p4-cc'] },
-    { shots: [['g.desk']], prompt: 'xiaojie', t: '晚上，AI 眼镜又给这一回写了一句小结——' },
+    { shots: [['g.desk']], prompt: 'xiaojie', t: '晚上，AI 眼镜给这一回写了一句小结——' },
     { shots: [['g.desk']], prompt: true, id: 'xiaojie', who: 'AI 眼镜', voice: 'ai', hide: true, t: '这一回告诉我们，谁也不能否认萧何不是韩信的伯乐。', task: ['p4-fd'] },
     { shots: [['g.army', 1.2]], t: '那个没人知道的郎中，成了汉军的大将。楚汉相争，从这里正式开始了。', ask: '韩信当上大将以后，打的第一场大仗是什么？' },
   ],

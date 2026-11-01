@@ -204,7 +204,7 @@ export const SHOTS7: Record<string, ShotDef> = {
       const roll2 = seg(u, 0.1, 0.6), lift = seg(u, 0.5, 0.9);
       return glow(id, 1280, 560, 140, g) + flame(1280, 600, 1.6, g) + `<rect x="1262" y="600" width="36" height="40" fill="#8A6A3A"/>` +
         (roll2 < 1 ? `<g opacity="${f(1 - roll2)}">${slips(lerp(420, 600, roll2), 470, Math.max(2, Math.round(18 - roll2 * 16)), 0.62, '淮阴侯韩信者淮阴人也')}</g>` : '') + `<g opacity="${f(roll2)}">${roll(760, 600, 2.2)}</g>` +
-        glasses(820, lerp(400, 160, lift), 0.8, g, 0, true) + `<rect x="-200" y="-200" width="2000" height="1400" fill="${PAPER}" opacity="${f(seg(u, 0.8, 1) * 0.8)}"/>`;
+        `<rect x="-200" y="-200" width="2000" height="1400" fill="${PAPER}" opacity="${f(seg(u, 0.8, 1) * 0.5 * lift)}"/>`;
     },
     cam: [[800, 520, 1300], [800, 500, 1200]],
   },
