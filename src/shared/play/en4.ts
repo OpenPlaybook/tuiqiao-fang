@@ -55,17 +55,17 @@ export const PLAY_EN4: Play = {
     { shots: [['e4.timeline']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '真相都齐了。把这件事从头到尾，按时间顺序排一排。', task: ['e4-order'] },
     { shots: [['e4.runHall', 1.2]], t: '**2:58 p.m.** You all run back to the hall. Ms Green sees the panda and ⟦drops the phone⟧.', read: '2:58 p.m. You all run back to the hall. Ms Green sees the panda and drops the phone.', tr: '两点五十八。你们一起跑回礼堂。Green 老师一看见熊猫，{手机都掉了}。', trHard: 'words', voice: 'en' },
     { shots: [['e4.greenJoy']], who: 'Ms Green', voice: 'green', t: 'The Golden Panda! ⟦Where was it⟧?', tr: '金熊猫！{它去哪儿了}？', trHard: 'frame' },
-    { shots: [['e4.sorry', 1.2]], who: 'Mia', voice: 'mia', t: '⟦I’m so sorry⟧, Ms Green. I asked you, but I ⟦didn’t ask clearly⟧.', tr: '{真对不起}，Green 老师。我问过您，可我{没问清楚}。', trHard: 'words', ask: '英语里道歉有哪些说法？' },
-    { shots: [['e4.greenSorry']], id: 'too', who: 'Ms Green', voice: 'green', t: 'No, Mia — it was ⟦my fault⟧ too. I was ⟦too busy to listen⟧.', read: 'No, Mia, it was my fault too. I was too busy to listen.', tr: '不，Mia——这也是{我的错}。我当时{太忙了，没顾上听}。', trHard: 'frame', task: ['e4-too'], ask: 'too … to 是什么意思？' },
+    { id: 'sorry', shots: [['e4.sorry', 1.2]], who: 'Mia', voice: 'mia', t: '⟦I’m so sorry⟧, Ms Green. I asked you, but I ⟦didn’t ask clearly⟧.', tr: '{真对不起}，Green 老师。我问过您，可我{没问清楚}。', trHard: 'words', ask: '英语里道歉有哪些说法？', task: ['e4-clearly'] },
+    { shots: [['e4.greenSorry']], id: 'too', who: 'Ms Green', voice: 'green', t: 'No, Mia — it was ⟦my fault⟧ too. I was ⟦too busy to listen⟧.', read: 'No, Mia, it was my fault too. I was too busy to listen.', tr: '不，Mia——这也是{我的错}。我当时{太忙了，没顾上听}。', trHard: 'frame', task: ['e4-too', 'e4-fault'], ask: 'too … to 是什么意思？' },
     { shots: [['e4.benClose']], who: 'Ben', voice: 'ben', t: 'And Max made the lights go out, and the note fell under the table. ⟦Case closed⟧!', read: 'And Max made the lights go out, and the note fell under the table. Case closed!', tr: 'Max 把灯弄灭了，纸条又掉到了桌子底下。{结案}！', trHard: 'words' },
     { shots: [['e4.hall', 1.2]], t: '**3:00 p.m.** The lights in the hall are on. ⟦Everyone is sitting down⟧.', read: '3:00 p.m. The lights in the hall are on. Everyone is sitting down.', tr: '三点整。礼堂的灯亮着，{大家都坐好了}。', trHard: 'frame', voice: 'en' },
     { shots: [['e4.stage', 1.2]], id: 'best', who: 'Ms Green', voice: 'green', t: 'And the Golden Panda for ⟦the best story⟧ ⟦goes to⟧…', read: 'And the Golden Panda for the best story goes to…', tr: '金熊猫——{最佳故事奖}——{颁给}……', trHard: 'frame', task: ['e4-best'], ask: 'good、better、best 怎么变？' },
     { shots: [['e4.winner', 1.4]], t: '…your story! Everyone ⟦claps⟧. Ben jumps up and shouts, “⟦Well done⟧, ⟦detective⟧!”', read: 'Your story! Everyone claps. Ben jumps up and shouts, well done, detective!', tr: '……你的故事！全场{鼓掌}。Ben 跳起来大喊：“{干得好}，{大侦探}！”', trHard: 'words', voice: 'en' },
-    { shots: [['e4.greenThanks']], who: 'Ms Green', voice: 'green', t: 'And thank you, our two detectives. You found our panda ⟦just in time⟧!', tr: '还要谢谢我们的两位侦探。你们{正好赶在颁奖前}找回了熊猫！', trHard: 'words' },
+    { id: 'intime', shots: [['e4.greenThanks']], who: 'Ms Green', voice: 'green', t: 'And thank you, our two detectives. You found our panda ⟦just in time⟧!', tr: '还要谢谢我们的两位侦探。你们{正好赶在颁奖前}找回了熊猫！', trHard: 'words', task: ['e4-intime'] },
     { shots: [['e4.photo', 1.2]], id: 'ever', who: 'Mia', voice: 'mia', t: 'And here’s my photo for the ⟦front page⟧. It’s ⟦the most beautiful photo I’ve ever taken⟧!', read: 'And here’s my photo for the front page. It’s the most beautiful photo I’ve ever taken!', tr: '这是我给{头版}拍的照片。这是{我拍过的最美的一张}！', trHard: 'frame', task: ['e4-ever'], ask: 'the most … I’ve ever … 怎么用？' },
     { shots: [['e4.write']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '侦探笔记的最后一行：用一两句英语，写下金熊猫到底是怎么“不见”的。', task: ['e4-write'] },
     { shots: [['e4.mooncake', 1.2]], who: 'Ben', voice: 'ben', t: 'Now, can I have a mooncake? ⟦I’ve only eaten nine⟧!', read: 'Now, can I have a mooncake? I’ve only eaten nine!', tr: '好啦，我能吃块月饼了吗？{我才吃了九块}！', trHard: 'frame', ask: 'Ben 为什么说 I’ve only eaten nine？' },
-    { shots: [['e4.endBoard', 1.4]], who: 'AI 眼镜', voice: 'ai', t: '案子破了。回头看看：has taken、was eating、borrow 和 lend、must be……每一个词，都是一条线索。', read: '案子破了。回头看看，has taken，was eating，borrow 和 lend，must be，每一个词，都是一条线索。', ask: '这四章里，你觉得哪个词是最关键的线索？' },
+    { id: 'review', shots: [['e4.endBoard', 1.4]], who: 'AI 眼镜', voice: 'ai', t: '案子破了。回头看看：has taken、was eating、borrow 和 lend、must be……每一个词，都是一条线索。', read: '案子破了。回头看看，has taken，was eating，borrow 和 lend，must be，每一个词，都是一条线索。', ask: '这四章里，你觉得哪个词是最关键的线索？', task: ['e4-review'] },
   ],
 };
 
@@ -181,7 +181,151 @@ const EXT_WRITE: Ext[] = [
   ] },
 ];
 
+
+// ---------------- 词汇：清楚地、谁的错、正好赶上，四章的词再见一次 ----------------
+const EXT_CLEARLY: Ext[] = [
+  { id: 'x1', title: '“怎么做”：-ly', need: 'always', steps: [
+    T('t1', '', '“I asked you, but I didn’t ask clearly.”——clear（清楚的）+ -ly → **clearly**（清楚地）。说一个动作“怎么做”，常在形容词后面加 -ly。第一章也见过：nervous → nervously。'),
+    C('a', '“I didn’t ask clearly.” 说的是 Mia——', [
+      ['*问得不够清楚', '对：clearly 说的是“怎么问”。'],
+      ['问得不够大声', '大声是 loudly。'],
+    ], { keep: true }),
+    Mt('b', '形容词和它的 -ly 连起来。', ['clear', 'quick', 'careful', 'happy'], ['happily', 'clearly', 'carefully', 'quickly'], [1, 3, 2, 0], '一般直接加 -ly；y 结尾的，把 y 变成 i 再加 -ly：happy → happily。', { lh: '形容词', rh: '-ly' }),
+    T('t2', '', '有一个不守规矩的：good（好的）→ **well**（好地）。She speaks English **well**.（不说 goodly）'),
+    fill('c', '放进句子。', ['clearly', 'carefully', 'well', 'quickly'], [
+      ['Please speak ___. I can’t understand you.', 'clearly', '说得清楚：clearly。'],
+      ['Mia ran ___ to the garden.', 'quickly', '跑得快：quickly。'],
+      ['Read the question ___ before you answer.', 'carefully', '仔细地读：carefully。'],
+      ['You did really ___ today, detective!', 'well', '做得好：well。'],
+    ]),
+    C('d', '找出用错的一句：', [
+      ['*Ben speaks Chinese very good.', '对，这句错了：说话说得好，用 well：speaks Chinese very well。'],
+      ['Ben is a good speaker.', '这句没错：good 修饰 speaker（人）。'],
+    ], { keep: true }),
+  ] },
+];
+
+const EXT_FAULT: Ext[] = [
+  { id: 'x1', title: '谁的错', need: 'always', steps: [
+    T('t1', '', '“It was my fault too.”——**fault**：（某人的）过错、责任。It’s my fault. = 怪我。'),
+    C('a', 'Green 老师说 It was my fault too，是——', [
+      ['*主动承认：这件事我也有责任', '对：她当时太忙，没好好听 Mia 说话。'],
+      ['怪 Mia 做错了', '她是在说自己也有错。'],
+    ], { keep: true }),
+    T('t2', '', '“错”还有两个词：**mistake**（做错的事、错误：make a mistake）；**wrong**（不对的：the wrong word）。fault 说的是“该怪谁”，mistake 说的是“错在哪儿”。'),
+    fill('b', '放进句子。', ['fault', 'mistake', 'wrong'], [
+      ['Mia made a ___: she wrote “Lent” instead of “Borrowed”.', 'mistake', '做错的地方：mistake。'],
+      ['“Lent” was the ___ word.', 'wrong', '不对的词：wrong。'],
+      ['Don’t be sad, Mia. It wasn’t only your ___.', 'fault', '不全怪你：fault。'],
+    ]),
+    C('c', '你不小心把同学的水杯碰倒了，最好说——', [
+      ['*Sorry, my fault! I’ll clean it up.', '对：先认错，再说怎么补救。'],
+      ['It’s your fault. Why did you put it here?', '先怪别人，事情会更糟。'],
+    ], { keep: true }),
+    C('d', '哪一句对？', [
+      ['*I made a mistake in my homework.', '对：犯错误是 make a mistake。'],
+      ['I did a fault in my homework.', '作业里的错误用 mistake，动词用 make。'],
+    ], { keep: true }),
+  ] },
+];
+
+const EXT_INTIME: Ext[] = [
+  { id: 'x1', title: 'in time 和 on time', need: 'always', steps: [
+    T('t1', '', '“You found our panda just in time!”——**in time**：及时，赶得上（再晚一点就来不及了）；**just in time**：正好赶上。'),
+    C('a', 'Green 老师说 just in time，是因为——', [
+      ['*三点就要颁奖，你们正好在颁奖前找到了熊猫', '对：再晚一点就来不及了。'],
+      ['你们准时到了礼堂', '“准时”是 on time。'],
+    ], { keep: true }),
+    T('t2', '', '**on time**：准时，按规定的时间（The bus came on time.）。in time 盯着“来不来得及”，on time 盯着“准不准”。'),
+    fill('b', '填 in time 或 on time。', ['in time', 'on time'], [
+      ['The train always leaves ___. Don’t be late!', 'on time', '准点：on time。'],
+      ['We got to the cinema just ___ to see the start.', 'in time', '正好赶上开头：in time。'],
+      ['The doctor came ___ to save him.', 'in time', '再晚就来不及了：in time。'],
+      ['Please hand in your homework ___.', 'on time', '按时交：on time。'],
+    ]),
+    C('c', '“We arrived just in time.” 是——', [
+      ['*我们正好赶上了', '对。'],
+      ['我们准时到了，一分不差', '准时是 on time。'],
+    ], { keep: true }),
+  ] },
+];
+
+const EXT_REVIEW: Ext[] = [
+  { id: 'x1', title: '四章里的词，再见一次', need: 'always', steps: [
+    T('t1', '', '这个案子里，每个词都是一条线索：borrow / lend（东西往哪边走）、look / see / notice（看、看见、注意到）、clue / evidence / proof（线索、证据、证明）、nervous / scared（紧张、害怕）、say / tell（说、告诉）。'),
+    So('a', '这些词，哪个是“东西往自己这边来”，哪个是“从自己这边出去”？', ['往自己这边来', '从自己这边出去'], [
+      ['borrow', 0, '借进来。'], ['bring', 0, '带到这边来。'], ['find', 0, '找到，到手了。'],
+      ['lend', 1, '借出去。'], ['take（带走）', 1, '带到别处去。'], ['lose', 1, '丢了。'],
+    ]),
+    fill('b', '放进句子。', ['noticed', 'evidence', 'nervous', 'told', 'lent'], [
+      ['Before the prize, my hands were cold. I was very ___.', 'nervous', '紧张：nervous。'],
+      ['Mr Liu didn’t see anyone, but later he ___ a boy with a drum case.', 'noticed', '注意到：noticed。'],
+      ['The two yellow notes were our best ___.', 'evidence', '证据：evidence。'],
+      ['Ms Green never ___ the panda to anyone.', 'lent', '借出去：lent。'],
+      ['Mia ___ us the whole story at last.', 'told', '告诉我们：told。'],
+    ]),
+    C('c', '最后一个问题：Mia 写的纸条，如果写对了，应该是——', [
+      ['*Borrowed the panda. Back at 3. — M', '对：她是借进来的，borrowed。'],
+      ['Lent the panda. Back at 3. — M', '这正是她写错的那张。'],
+    ], { keep: true }),
+    Wr('d', '用一两句英语，写一写：这个案子里，你最喜欢哪个词？为什么？', {
+      lang: 'en', role: 'en',
+      task: 'After finishing a detective story about borrow/lend, look/see/notice, clue/evidence and has taken/was eating, the student writes one or two English sentences: which word from the story they like best and why.',
+      criteria: ['names one word or phrase from the story', 'gives a short reason (it solved the case / it is easy to mix up / it is useful …)', 'complete sentences, correct spelling'],
+      examples: ['My favourite word is “borrow”, because Mia mixed it up with “lend” and that solved the case.', 'I like “notice”, because a good detective notices small things.'],
+      words: ['My favourite word is', 'because'], frame: 'My favourite word is “______”, because ______.', ph: 'My favourite word is …',
+    }),
+  ] },
+];
+
 export const PLAY_EN4_ITEMS: Item[] = [
+  item({
+    id: 'e4-clearly', st: 'en4', lv: 1, type: 'word', topic: 'clearly', label: 'I didn’t ask clearly', intro: '', ask: '形容词怎么变成“……地”？',
+    hints: ['点一点 didn’t ask clearly。'],
+    explain: 'clear（清楚的）→ clearly（清楚地）：说“怎么问”。Mia 问了，可没问清楚。',
+    back: [{ ch: 'en1', line: 'cold', label: '第一章：nervous → nervously' }],
+    lock: { words: ['didn’t ask clearly'] },
+    ext: EXT_CLEARLY,
+  }, C('a', '“I asked you, but I didn’t ask clearly.” 是说 Mia——', [
+    ['*问了，可是没问清楚', '对。'],
+    ['没有问', '她问了：I asked you。'],
+    ['问得很大声', 'clearly 是清楚地。'],
+    ['问了一个很清楚的问题', '她说的是“没问清楚”。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
+  item({
+    id: 'e4-fault', st: 'en4', lv: 1, type: 'word', topic: 'fault / mistake', label: 'It was my fault too', intro: '', ask: 'fault、mistake、wrong 怎么分？',
+    hints: ['点一点 my fault。'],
+    explain: 'fault：（谁的）过错、责任。It was my fault too：我也有责任——Green 老师当时太忙，没好好听。',
+    lock: { words: ['my fault'] },
+    ext: EXT_FAULT,
+  }, C('a', 'Green 老师说 It was my fault too，意思是——', [
+    ['*这件事我也有责任', '对。'],
+    ['这都是 Mia 的错', '她说的是自己也有错。'],
+    ['我的东西也丢了', 'fault 是过错，不是东西。'],
+    ['我也找到了熊猫', '说的是谁的错。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
+  item({
+    id: 'e4-intime', st: 'en4', lv: 1, type: 'word', topic: 'in time / on time', label: 'just in time', intro: '', ask: 'in time 和 on time 有什么不一样？',
+    hints: ['三点就要颁奖了。'],
+    explain: 'just in time：正好赶上——再晚一点就来不及了。准时是 on time。',
+    lock: { words: ['just in time'] },
+    ext: EXT_INTIME,
+  }, C('a', '“You found our panda just in time!” 是说——', [
+    ['*你们正好在颁奖前找到了熊猫，再晚就来不及了', '对。'],
+    ['你们准时到了礼堂', '准时是 on time。'],
+    ['你们花了很长时间才找到', 'just in time 说的是正好赶上。'],
+    ['你们来得太早了', '是正好，不是太早。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
+  item({
+    id: 'e4-review', st: 'en4', lv: 2, type: 'match', topic: 'words review', label: '四章的词', intro: '', ask: '这四章里，你觉得哪个词是最关键的线索？',
+    hints: ['四章里学过的词，一个一个想一想。'],
+    explain: 'borrow 借进来、lend 借出去；notice 注意到；evidence 证据；nervous 紧张；mix up 弄混。',
+    ext: EXT_REVIEW,
+  }, Mt('a', '这些词在案子里都出现过。连一连它们的意思。', ['borrow', 'lend', 'notice', 'evidence', 'nervous', 'mix up'], ['借出去', '注意到', '借进来', '紧张的', '证据', '弄混'], [2, 0, 1, 4, 3, 5], '这几个词，第一章到第四章都见过。', { lh: '英语', rh: '中文' })),
+
   item({
     id: 'e4-steal', st: 'en4', lv: 1, type: 'word', topic: 'steal / borrow', label: 'I didn’t steal it! I borrowed it.', intro: '', ask: 'steal、borrow、take 怎么分？',
     hints: ['偷和借，差在哪里？'],

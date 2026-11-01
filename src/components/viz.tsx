@@ -1,6 +1,9 @@
 // 讲解用的画面和小动画：时间线、借进借出的箭头、褒贬天平、礼貌刻度、句子主干、词性变化、文言词义、“看”的一家人。
 // 其余的（水墨、表情、眼睛……）交给 Art。
 import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { Film } from '../film/Film';
+import type { ShotSpec } from '../film/Film';
 import type { Art as ArtSpec } from '../shared/types';
 import { Art } from './ui';
 
@@ -202,7 +205,33 @@ const Contrast = ({ p }: { p: P }) => {
   );
 };
 
-const VIZ: Record<string, (props: { p: P }) => React.ReactElement> = { timeline: Timeline, give: Give, scale: Scale, meter: Meter, trunk: Trunk, morph: Morph, gloss: Gloss, eyesgrid: EyesGrid, lsw: LSW, contrast: Contrast };
+// ---------------- 小视频：同一个镜头把事情演一遍，下面的字幕跟着换时态（循环播放） ----------------
+// p.shots：[['镜头', 权重], …]；p.dur：一遍几秒；p.cap：[[从哪儿开始（0—1）, '字幕，**加粗**'], …]；p.marks：下面一条时间轴上的刻度名
+const Clip = ({ p }: { p: P }) => {
+  const shots = (p.shots as ShotSpec[]) ?? [], dur = Number(p.dur ?? 8), cap = (p.cap as [number, string][]) ?? [], marks = (p.marks as [number, string][]) ?? [];
+  const [u, setU] = useState(0);
+  useEffect(() => { const t0 = performance.now(); const h = setInterval(() => setU((((performance.now() - t0) / 1000) % dur) / dur), 120); return () => clearInterval(h); }, [dur]);
+  const ci = cap.reduce((k, c, i) => (u >= c[0] ? i : k), 0), line = cap[ci]?.[1] ?? '';
+  return (
+    <div>
+      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border-2 border-[#E6DCC6] bg-[#1E1A16]">
+        <Film shots={shots} prog={() => (((performance.now() / 1000) % dur) / dur)} fps={20} />
+      </div>
+      {marks.length > 0 && (
+        <div className="relative mx-3 mt-2 h-7">
+          <div className="absolute left-0 right-0 top-2 h-1 rounded bg-[#E6DCC6]" />
+          <div className="absolute left-0 top-2 h-1 rounded bg-[#D9A441]" style={{ width: `${u * 100}%` }} />
+          {marks.map(([m, t], i) => <div key={i} className={`absolute top-0 -translate-x-1/2 text-[11px] font-bold ${u >= m ? 'text-[#B8352A]' : 'text-[#7A7068]'}`} style={{ left: `${m * 100}%`, paddingTop: 14 }}><span className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white" style={{ background: u >= m ? ZHU : GRAY }} />{t}</div>)}
+        </div>
+      )}
+      <motion.div key={ci} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-xl bg-[#FBF7EA] px-3 py-2 text-center text-base font-semibold text-[#2B2722]">
+        {line.split(/\*\*(.+?)\*\*/).map((x, i) => (i % 2 ? <b key={i} className="text-[#B8352A]">{x}</b> : <span key={i}>{x}</span>))}
+      </motion.div>
+    </div>
+  );
+};
+
+const VIZ: Record<string, (props: { p: P }) => React.ReactElement> = { clip: Clip, timeline: Timeline, give: Give, scale: Scale, meter: Meter, trunk: Trunk, morph: Morph, gloss: Gloss, eyesgrid: EyesGrid, lsw: LSW, contrast: Contrast };
 export const isViz = (spec?: ArtSpec) => !!spec && typeof spec !== 'string' && !!VIZ[spec.k];
 export const Viz = ({ spec, className = '' }: { spec: ArtSpec; className?: string }) => {
   if (typeof spec !== 'string' && VIZ[spec.k]) { const C = VIZ[spec.k]; return <div className={className}><C p={(spec.p ?? {}) as P} /></div>; }

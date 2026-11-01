@@ -97,7 +97,7 @@ export const PLAY_EN1: Play = {
   lines: [
     { shots: [['e.hall', 1.2], ['e.clock240', 0.8]], t: '**Friday, 2:40 p.m.** The school hall is full of students.', tr: '星期五下午两点四十。学校{礼堂}里{坐满了}学生。', trHard: 'words', voice: 'en', ask: '英语节（English Festival）一般有哪些活动？' },
     { shots: [['e.stage'], ['e.panda', 0.9]], t: 'In twenty minutes, the English Festival will give out its top ⟦prize⟧ — the ⟦Golden Panda⟧.', tr: '再过二十分钟，英语节就要{颁发}{最高奖}——{金熊猫}。', trHard: 'frame', voice: 'en' },
-    { shots: [['e.finalists'], ['e.hands', 0.8]], t: 'Your story is one of the three ⟦finalists⟧. Your hands are cold.', tr: '你写的故事是三篇{决赛作品}之一。你的手{冰凉}。', trHard: 'words', voice: 'en' },
+    { shots: [['e.finalists'], ['e.hands', 0.8]], id: 'cold', t: 'Your story is one of the three ⟦finalists⟧. Your hands are cold.', tr: '你写的故事是三篇{决赛作品}之一。你的手{冰凉}。', trHard: 'words', voice: 'en', task: ['e1-nervous'] },
     { shots: [['e.benOffer']], who: 'Ben', voice: 'ben', t: '⟦Relax⟧! You’ll be fine. Want a ⟦mooncake⟧?', tr: '{放轻松}！你{没问题的}。来块{月饼}？', trHard: 'frame' },
     { shots: [['e.map'], ['e.benEats', 1.1]], id: 'ben', t: 'Ben is an ⟦exchange student⟧ from London. He has been in Beijing for two weeks, and he has already eaten nine mooncakes.', tr: 'Ben 是从伦敦来的{交换生}。他{!来北京已经两个星期了}，已经吃了九块{月饼}。', trHard: 'frame', voice: 'en', ask: '交换生是怎么回事？' },
     { shots: [['e.door'], ['e.greenRun']], id: 'door', t: 'Suddenly the door ⟦bursts open⟧. Ms Green, the teacher ⟦in charge⟧, runs in. Her face is white.', tr: '突然，门被{!猛地推开}。{!负责}英语节的 Green 老师{跑了进来}，{!脸色发白}。', trHard: 'words', voice: 'en' },
@@ -107,11 +107,11 @@ export const PLAY_EN1: Play = {
     { shots: [['e.lightsOut']], who: 'Ms Green', voice: 'green', t: 'Then at 2:15, the lights ⟦went out⟧ for a minute. Maybe someone took it in the dark!', tr: '后来两点一刻，灯{灭}了一分钟。{说不定}有人{趁黑}把它{拿走}了！', trHard: 'words' },
     { shots: [['e.greenAsk']], who: 'Ms Green', voice: 'green', t: 'What were you all doing when the lights went out?', tr: '灯灭的时候，{你们}都{在做}什么？', trHard: 'frame' },
     { shots: [['e.benDark']], id: 'eating', who: 'Ben', voice: 'ben', t: 'I was eating a mooncake, of course!', tr: '我{!在吃}月饼呀，{那还用说}！', trHard: 'frame', task: ['e1-eating'], ask: 'was eating 和 ate 有什么不一样？' },
-    { shots: [['e.benPockets']], who: 'Ben', voice: 'ben', t: 'We need to write down every ⟦clue⟧. Hmm… I haven’t got a notebook.', tr: '我们{得}把每条{线索}都{记下来}。嗯……我{没带}本子。', trHard: 'words' },
+    { shots: [['e.benPockets']], who: 'Ben', voice: 'ben', id: 'clue', t: 'We need to write down every ⟦clue⟧. Hmm… I haven’t got a notebook.', tr: '我们{得}把每条{线索}都{记下来}。嗯……我{没带}本子。', trHard: 'words', task: ['e1-clueword'] },
     { shots: [['e.notebook']], id: 'borrow', who: 'Ben', voice: 'ben', t: 'Can I borrow your notebook? I’ll ⟦give it back⟧ after the ⟦case⟧.', tr: '能{借}一下你的本子吗？{案子}破了我就{还}你。', trHard: 'words', task: ['e1-borrow', 'e1-borrow1'], ask: 'borrow 和 lend 怎么分？' },
     { shots: [['e.corridor'], ['e.gate', 1.2]], t: 'You both run to the school gate. The ⟦guard⟧, Mr Liu, is sitting in his room with his phone.', tr: '你们俩跑到学校{门口}。{门卫}刘师傅正{坐}在门卫室里看手机。', trHard: 'words', voice: 'en' },
     { shots: [['e.booth']], prompt: true, who: 'AI 眼镜', voice: 'ai', t: '你想请刘师傅说说：两点以后，有谁进过礼堂？用英语开口，第一句怎么说最好？', task: ['e1-polite'], ask: '英语里怎么客气地请人帮忙？' },
-    { shots: [['e.liuCU']], who: 'Mr Liu', voice: 'liu', t: 'Hmm? Sorry, I didn’t ⟦notice⟧ anyone.', tr: '嗯？{不好意思}，我没{注意到}有人。', trHard: 'words' },
+    { shots: [['e.liuCU']], id: 'notice', who: 'Mr Liu', voice: 'liu', t: 'Hmm? Sorry, I didn’t ⟦notice⟧ anyone.', tr: '嗯？{不好意思}，我没{注意到}有人。', trHard: 'words', task: ['e1-notice'] },
     { shots: [['e.phone']], id: 'watch', who: 'Mr Liu', voice: 'liu', t: 'At 2:15 I was watching the football ⟦match⟧ on my phone. China ⟦scored⟧!', tr: '两点一刻我{在}用手机{看球赛}。中国队{进球}了！', trHard: 'words', task: ['e1-watch'], ask: 'look、see、watch 有什么不一样？' },
     { shots: [['e.drumBoy']], who: 'Mr Liu', voice: 'liu', t: 'But wait… at about 2:20, I saw a boy with a big drum ⟦case⟧. He went towards the music room.', tr: '不过等等……{大概}两点二十，我看见一个男孩{拖着}一个{大鼓箱}，{往}音乐教室那边去了。', trHard: 'words' },
     { shots: [['e.benWow']], who: 'Ben', voice: 'ben', t: 'A drum case! That’s big ⟦enough⟧ for a panda!', tr: '{鼓箱}！装一只熊猫{足够}了！', trHard: 'frame' },
@@ -168,7 +168,16 @@ const EXT_MIS: Ext[] = [
 
 const EXT_TAKEN: Ext[] = [
   { id: 'x1', title: '过去的事，现在的结果', need: 'always', steps: [
-    T('t1', '', 'has taken 画出来是这样：拿走发生在过去，可是结果一直留到现在——现在还不在。', undefined, viz('timeline', { mode: 'perfect' })),
+    T('t0', '', '先在同一张桌子前，把事情从头看一遍：两点钟，金熊猫在桌上；两点一刻灯一灭，它被拿走了；现在灯亮了，桌上空空的。', undefined, viz('clip', { shots: [['tq.perfect', 1]], dur: 10, cap: [[0, '2:00　The Golden Panda **is** on the table.'], [0.3, '2:15　The lights went out. Someone **took** it.'], [0.6, 'Now　“Someone **has taken** it!” It’s gone.']], marks: [[0.05, '2:00'], [0.42, '2:15'], [0.8, 'now']] })),
+    C('t0a', '灯亮以后，Green 老师一看桌子，喊的是“Someone has taken it!”。她为什么用 has taken，不说 took？', [
+      ['*她说的是眼前的样子：熊猫现在不在桌上', '对。has taken 盯着的是“现在”：东西被拿走了，现在还没回来。'],
+      ['因为她知道是两点一刻被拿走的', '要说“两点一刻拿走的”，反而得用 took。'],
+    ], { keep: true }),
+    C('t0b', '要说“两点一刻的时候，有人把它拿走了”，用——', [
+      ['*Someone took it at 2:15.', '对。说的是过去那一刻：took。'],
+      ['Someone has taken it at 2:15.', 'has taken 不和 at 2:15 这样具体的过去时间放在一起。'],
+    ], { keep: true }),
+    T('t1', '', '把刚才那段画成时间线：拿走发生在过去，可是结果一直留到现在——现在还不在。', undefined, viz('timeline', { mode: 'perfect' })),
     C('a', 'Ben 站在宿舍门口，进不去。他会说——', [
       ['*I’ve lost my key.', '对。钥匙丢了，到现在还没找到——所以进不去。'],
       ['I lost my key last year.', '去年丢的钥匙，和他现在进不去门扯不上。'],
@@ -196,6 +205,17 @@ const EXT_TAKEN: Ext[] = [
       ['Ben has eaten nine mooncakes.', 0, '到现在为止，一共吃了九块。'],
       ['Ben ate a mooncake at 2:15.', 1, '两点一刻那时候吃的。'],
     ]),
+    T('t4', '', '再把三个时态放在一起比：同一个 Ben，同一块月饼，说法不一样，意思就不一样。', undefined, viz('clip', { shots: [['tq.every', 1], ['tq.once', 1], ['tq.sofar', 1]], dur: 13, cap: [[0, 'Ben **eats** mooncakes every day.（一般现在时：常常这样）'], [0.333, 'Ben **ate** a mooncake at 2:15.（一般过去时：过去那一刻）'], [0.666, 'Ben **has eaten** nine mooncakes.（现在完成时：到现在为止）']], marks: [[0.04, 'eats'], [0.37, 'ate'], [0.7, 'has eaten']] })),
+    C('t4a', '“Ben has eaten nine mooncakes.” 说的是——', [
+      ['*到现在为止，他一共吃了九块', '对：数到“现在”。'],
+      ['他每天都吃九块', '每天的习惯，用 eats。'],
+      ['两点一刻那一下，他吃了九块', '说过去那一刻，用 ate。'],
+    ], { keep: true }),
+    fill('t4b', '放进句子。', ['eats', 'ate', 'has eaten'], [
+      ['Ben ___ a mooncake every afternoon.', 'eats', '每天都这样：一般现在时。'],
+      ['Ben ___ a mooncake at 2:15 yesterday.', 'ate', '过去那一刻：一般过去时。'],
+      ['Look at all the plates! Ben ___ nine mooncakes!', 'has eaten', '到现在为止的结果：现在完成时。'],
+    ]),
     fill('d', 'has / have 后面跟过去分词。放进句子。', ['taken', 'lost', 'eaten', 'broken'], [
       ['Someone has ___ the Golden Panda!', 'taken', 'take → taken'],
       ['Oh no! I’ve ___ my key.', 'lost', 'lose → lost'],
@@ -219,7 +239,13 @@ const EXT_TAKEN: Ext[] = [
 
 const EXT_EATING: Ext[] = [
   { id: 'x1', title: '那一刻，正在做', need: 'always', steps: [
-    T('t1', '', 'was eating 画出来是一段时间（一直在吃），灯灭的那一刻，正好落在这段时间中间。', undefined, viz('timeline', { mode: 'cont' })),
+    T('t0', '', '先看两段小视频。第一段：', undefined, viz('clip', { shots: [['tq.cont', 1]], dur: 9, cap: [[0, '2:10　Ben **is eating** a mooncake.'], [0.45, '2:15　The lights went out. Ben **was eating** a mooncake.'], [0.85, '灯灭的那一刻，他已经吃了一会儿，还在吃。']], marks: [[0.05, '2:10'], [0.47, '2:15 灯灭']] })),
+    T('t0b', '', '第二段：', undefined, viz('clip', { shots: [['tq.ate', 1]], dur: 9, cap: [[0, '2:10　Ben has a mooncake in his hand.'], [0.3, '2:15　The lights went out…'], [0.45, '…and then Ben **ate** the mooncake.'], [0.85, '灯一灭，他才开始吃——是不是有点可疑？']], marks: [[0.05, '2:10'], [0.32, '2:15 灯灭']] })),
+    C('t0c', 'Ben 说的是 When the lights went out, I was eating a mooncake. 他说的是哪一段？', [
+      ['*第一段：灯灭之前他就在吃，灯灭的时候还在吃', '对。was eating：那一刻，正在做。'],
+      ['第二段：灯灭以后他才开始吃', '那要说 When the lights went out, I ate a mooncake.'],
+    ], { keep: true }),
+    T('t1', '', '把第一段画成时间线：was eating 是一段时间（一直在吃），灯灭的那一刻，正好落在这段时间中间。', undefined, viz('timeline', { mode: 'cont' })),
     C('a', '要是 Ben 说的是：When the lights went out, I **ate** a mooncake. 侦探会怎么想？', [
       ['*灯一灭他才开始吃——像是趁黑做了点什么', '对。ate 说的是一件接一件：灯先灭，他再吃。时态一换，嫌疑就来了。'],
       ['和 was eating 一样，没区别', '不一样：ate 是灯灭了以后才吃的。'],
@@ -442,7 +468,135 @@ const EXT_ORDER: Ext[] = [
 ];
 
 // ---------------- 题 ----------------
+
+// ---------------- 词汇：心情、注意到、线索（后面几章还会再见） ----------------
+const EXT_NERVOUS: Ext[] = [
+  { id: 'x1', title: '紧张、害怕、担心', need: 'always', steps: [
+    T('t1', '', '手心发凉，中文说“紧张”。英语里说心情的词有好几个，意思不一样：**nervous**（紧张：怕事情不顺利、怕表现不好）、**afraid / scared**（害怕：怕危险、怕某样东西）、**worried**（担心：一直惦记着一件事）。'),
+    C('a', '你马上要上台领奖，手心发凉。最合适的是——', [
+      ['*I’m so nervous!', '对：nervous 是怕表现不好、怕事情不顺利。'],
+      ['I’m so scared of you!', '这是“我好怕你”——你怕的不是人。'],
+    ], { keep: true }),
+    C('b', '晚上一个人走一条黑黑的小路，你会说——', [
+      ['*I’m scared.', '对：怕的是危险，用 scared / afraid。'],
+      ['I’m nervous.', 'nervous 更像考试、比赛、上台前的紧张。'],
+    ], { keep: true }),
+    T('t2', '', '后面跟的小词也不一样：afraid **of** / scared **of** + 怕的东西（afraid of the dark）；nervous **about** / worried **about** + 担心的事（nervous about the test）。'),
+    fill('c', '放进句子。', ['nervous', 'afraid', 'worried', 'scared'], [
+      ['I’m ___ about the English test tomorrow.', 'nervous', '考试前的紧张：nervous about。'],
+      ['My little brother is ___ of dogs.', 'afraid', '怕狗：afraid of（scared of 也可以）。'],
+      ['Mum is ___ because I’m late home.', 'worried', '妈妈一直惦记着：worried。'],
+      ['The film was so frightening that I was ___ and closed my eyes.', 'scared', '吓坏了：scared。'],
+    ]),
+    T('t3', '', '词还能变形：nervous（紧张的）→ **nervously**（紧张地）。形容词加 -ly，就能说“怎么做”：quick → quickly，quiet → quietly。'),
+    C('d', '“She smiled ___ at the judges.”（她紧张地朝评委笑了笑）', [
+      ['*nervously', '对：说“怎么笑”，用 -ly：nervously。'],
+      ['nervous', 'nervous 是“紧张的”，放在动作后面要说“紧张地”：nervously。'],
+    ], { keep: true }),
+    Wr('e', '写一句英语：你什么时候紧张过？（I was nervous when / before / about …）', {
+      lang: 'en', role: 'en',
+      task: 'The student writes one English sentence about a real time they felt nervous, using “nervous” correctly (nervous before / when / about …).',
+      criteria: ['uses “nervous” correctly (not confused with scared/afraid of a thing)', 'a real, sensible situation (a test, a match, a speech, meeting new people…)', 'a complete sentence with correct past tense and spelling'],
+      examples: ['I was nervous before my piano exam.', 'I was very nervous when I gave my first speech in English.', 'I was a bit nervous about meeting my new classmates.'],
+      words: ['I was nervous', 'before / when / about', 'my …'], frame: 'I was nervous when ______.', ph: 'I was nervous …',
+    }),
+  ] },
+];
+
+const EXT_NOTICE: Ext[] = [
+  { id: 'x1', title: '没注意到 ≠ 没去看', need: 'always', steps: [
+    T('t1', '', '刘师傅说：“Sorry, I didn’t notice anyone.”——**notice**：注意到。本来没特意去看，可是发现了；或者，没发现。'),
+    C('a', '“I didn’t notice anyone.” 是说刘师傅——', [
+      ['*没留意到有人经过（他在看手机）', '对：人从旁边过去，他没发现。'],
+      ['不认识任何人', '不认识是 I don’t know anyone.'],
+    ], { keep: true }),
+    C('b', '和 look、see 比一比：“I looked, but I didn’t see anything.” 是——', [
+      ['*我去看了，可什么也没看见', '对：look 是去看，see 是看见。notice 是“没特意去看，却发现了”。'],
+      ['我看见了，可是没去看', '顺序反了。'],
+    ], { keep: true }),
+    T('t2', '', '侦探最爱问的一句：**Did you notice anything strange?**（你注意到什么奇怪的地方吗？）回答时说出那个细节：I noticed that her shoes were wet.（我注意到她的鞋是湿的。）'),
+    C('c', '侦探问证人：“Did you notice anything strange?” 最好的回答是——', [
+      ['*Yes. I noticed that the back door was open.', '对：说出你注意到的那个细节。'],
+      ['Yes. I watched a boy.', 'watch 是盯着看一段时间；证人只是留意到。'],
+    ], { keep: true }),
+    fill('d', '放进句子。', ['notice', 'looked', 'watched', 'saw'], [
+      ['I ___ at the clock. It was 2:15.', 'looked', '把眼睛转过去看：looked at。'],
+      ['I didn’t ___ anyone. I was busy with my phone.', 'notice', '没留意到：didn’t notice。'],
+      ['Mr Liu ___ the football match on his phone.', 'watched', '盯着看比赛：watched。'],
+      ['Yesterday I ___ Ben in the library.', 'saw', '看见了：saw。'],
+    ]),
+    T('t3', '', 'notice 还能当名词：**通知、告示**——a notice on the wall（墙上贴的通知）。'),
+    C('e', '哪一句用错了？', [
+      ['*I noticed TV for two hours last night.', '对，这句错了：看电视要说 I watched TV。'],
+      ['Did you notice her new haircut?', '这句没错：你注意到她的新发型了吗？'],
+    ], { keep: true }),
+  ] },
+];
+
+const EXT_CLUEWORD: Ext[] = [
+  { id: 'x1', title: '线索、证据、证明', need: 'always', steps: [
+    T('t1', '', 'Ben 说：We need to write down every clue. **clue**：线索——一点一点的提示，帮你往下想。'),
+    C('a', '下面哪一个是“线索”？', [
+      ['*灯是两点一刻灭的，只灭了一分钟', '对：它不能直接告诉你答案，可是能帮你往下想——熊猫很可能就是那一分钟里不见的。'],
+      ['“小偷一定还在学校里”', '这是猜出来的结论，不是线索。'],
+    ], { keep: true }),
+    T('t2', '', '侦探故事里还有两个词：**evidence**（证据：能支持一个说法的东西）；**proof**（证明：足以让人相信的证据）。线索越攒越多，就成了证据；证据足够了，就成了证明。'),
+    C('b', '“There isn’t enough evidence.” 是——', [
+      ['*证据还不够', '对：还不能下结论。'],
+      ['线索太多了', 'not enough 是“不够”。'],
+    ], { keep: true }),
+    C('c', '哪一句对？', [
+      ['*We found some evidence.', '对：evidence 不可数，不说 an evidence，要说 some evidence 或 a piece of evidence。'],
+      ['We found an evidence.', 'evidence 不能直接加 an。'],
+    ], { keep: true }),
+    T('t3', '', '“一点头绪都没有”，英语说：**I have no clue!** 或 **I haven’t got a clue!**'),
+    C('d', '有人问 Ben“M 是谁？”，他耸耸肩：“I haven’t got a clue!” 意思是——', [
+      ['*我一点头绪都没有', '对。'],
+      ['我没有拿线索', '这是一句口语：完全不知道。'],
+    ], { keep: true }),
+  ] },
+];
+
 export const PLAY_EN1_ITEMS: Item[] = [
+  item({
+    id: 'e1-nervous', st: 'en1', lv: 1, type: 'word', topic: 'nervous / scared', label: 'Your hands are cold', intro: '', ask: 'nervous 和 scared 有什么不一样？',
+    hints: ['马上要宣布结果了：你怕的是危险，还是怕结果不好？'],
+    explain: 'nervous：紧张（怕事情不顺利、怕表现不好）；scared / afraid：害怕（怕危险、怕某样东西）。等着宣布结果，手心发凉，是 nervous。',
+    ext: EXT_NERVOUS,
+  }, C('a', '“Your hands are cold.” 等着宣布结果，手心发凉。你此刻的心情，用英语说最合适的是——', [
+    ['*nervous（紧张）', '对：怕结果不好、心里发紧，是 nervous。'],
+    ['scared of the hall（害怕礼堂）', '你怕的不是礼堂。'],
+    ['bored（无聊）', '手心发凉可不是无聊。'],
+    ['angry（生气）', '你在等结果，不是在生气。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
+  item({
+    id: 'e1-notice', st: 'en1', lv: 2, type: 'word', topic: 'notice', label: 'I didn’t notice anyone', intro: '', ask: 'notice 和 see 有什么不一样？',
+    hints: ['刘师傅当时在干什么？'],
+    explain: 'notice：注意到（没特意去看，却发现了）。刘师傅在看手机上的球赛，有人经过，他没留意。',
+    back: [{ ch: 'en1', line: 'watch', label: '回到刘师傅看球赛那一句：look / see / watch' }],
+    lock: { words: ['notice'] },
+    ext: EXT_NOTICE,
+  }, C('a', '刘师傅说 I didn’t notice anyone。他的意思是——', [
+    ['*他没留意到有人经过（他在看手机）', '对。'],
+    ['他不想看任何人', 'notice 是“注意到”，不是“想不想看”。'],
+    ['他不认识任何人', '不认识是 I don’t know anyone.'],
+    ['他没通知任何人', 'notice 作名词才是“通知”。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
+  item({
+    id: 'e1-clueword', st: 'en1', lv: 1, type: 'word', topic: 'clue / evidence', label: 'every clue', intro: '', ask: 'clue、evidence、proof 有什么不一样？',
+    hints: ['侦探要把什么都记下来？'],
+    explain: 'clue：线索——一点一点的提示，帮你往下想。线索攒多了成了 evidence（证据），证据足够了就是 proof（证明）。',
+    lock: { words: ['clue'] },
+    ext: EXT_CLUEWORD,
+  }, C('a', '“We need to write down every clue.” clue 是——', [
+    ['*线索', '对。'],
+    ['胶水', '那是 glue，只差一个字母。'],
+    ['答案', '线索只是提示，还不是答案。'],
+    ['钥匙', '钥匙是 key。'],
+  ], { cols: 1, reveal: 'chosen' })),
+
   item({
     id: 'e1-mis', st: 'en1', lv: 2, type: 'mis', topic: 'AI 误译', label: 'AI 眼镜译错了什么', intro: '', ask: 'burst open 到底是什么意思？',
     hints: ['点一点英文里的词（bursts open、in charge），看看它们在这句话里的意思。', '“has been in Beijing for two weeks”：Ben 现在还在不在北京？'],

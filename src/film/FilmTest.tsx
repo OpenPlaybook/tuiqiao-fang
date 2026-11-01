@@ -1,11 +1,13 @@
 // 分镜联系表（自己检查画面用）：#/filmtest?k=a. 列出所有镜头，每镜看开头、中间、结尾三帧；点一镜放大循环播放
+import { PLAY_ITEMS } from '../shared/play';
+import { Viz } from '../components/viz';
 import { useEffect, useRef, useState } from 'react';
 import { SHOTS } from './shots';
 import { FILM_OPT, Film, PACE, frameSvg } from './Film';
 
 export default function FilmTest() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-  return q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : <FilmSheet />;
+  return q.get('bench') ? <FilmBench /> : q.get('lab') ? <FpsLab /> : q.get('ext') ? <ExtTest /> : <FilmSheet />;
 }
 function FilmSheet() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
@@ -101,6 +103,18 @@ function FpsLab() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** 看某道题的拓展里的讲解画面（#/filmtest?ext=题号）：把拓展里所有带画面的“讲一段”依次排出来 */
+function ExtTest() {
+  const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const it = PLAY_ITEMS.find((x) => x.id === q.get('ext'));
+  const steps = (it?.ext ?? []).flatMap((x) => x.steps).filter((s) => s.kind === 'teach' && s.art);
+  return (
+    <div className="mx-auto max-w-xl space-y-6 p-4">
+      {steps.map((s, i) => s.kind === 'teach' && <div key={i} className="rounded-2xl bg-white p-3 shadow"><p className="mb-2 text-sm">{s.t}</p>{s.art && <Viz spec={s.art} />}</div>)}
     </div>
   );
 }
