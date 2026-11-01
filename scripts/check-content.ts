@@ -13,6 +13,8 @@ const plain = (t: string) => t.replace(/[⟦⟧*]/g, '');
 
 const checkStep = (s: Sub, where: string) => {
   const w = `${where} ${s.key}`;
+  for (const m of JSON.stringify(s).match(/〔[^〕]*〕/g) ?? []) if (!/^〔[^｜〕]+｜[^｜〕]+〕$/.test(m)) err(`${w}：“${m.slice(0, 20)}”要写成〔原文｜白话〕`);
+  if (s.kind === 'choice') for (const o of s.opts) if ((o.t.match(/\*\*/g) ?? []).length % 2) err(`${w}：选项“${o.t.slice(0, 20)}”的 ** 没配对（开头的 * 会被当成正确答案的记号，标红又是正确答案要写 ***字**）`);
   switch (s.kind) {
     case 'choice': {
       if (!s.ok.length) err(`${w}：没有正确答案`);
@@ -47,6 +49,8 @@ const checkStep = (s: Sub, where: string) => {
       if (s.pairs.length !== s.left.length || s.pairs.some((j) => j < 0 || j >= s.right.length)) err(`${w}：连线的配对不对`);
       // 连线是一对一；几项连到同一个，那是分类，应该做分类题
       if (new Set(s.pairs).size !== s.pairs.length) err(`${w}：有几项连到同一个——这是分类，应该做分类题`);
+      // 讲解分到每一对（做完显示在那一对下面），不堆成最后一大段（用户 2026-11-02）
+      if (!s.whys || s.whys.length !== s.left.length || s.whys.some((x) => !x)) err(`${w}：连线要给每一对写讲解（whys，和 left 一样多）`);
       break;
     case 'order':
       if (s.items.length < 2) err(`${w}：排序少于两项`);

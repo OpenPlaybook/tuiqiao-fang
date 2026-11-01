@@ -7,7 +7,8 @@ export const C = (key: string, q: string, opts: O[], x: Partial<ChoiceSub> = {})
   const ok: number[] = [], fine: number[] = [];
   const os: Opt[] = opts.map(([t, why, art], i) => {
     let s = t;
-    if (s.startsWith('*')) { ok.push(i); s = s.slice(1); } else if (s.startsWith('~')) { fine.push(i); s = s.slice(1); }
+    // 开头的 * 是正确答案；开头正好是 **（标红的字）不算——要标红又是正确答案，写 ***字**
+    if (s.startsWith('*') && !/^\*\*(?!\*)/.test(s)) { ok.push(i); s = s.slice(1); } else if (s.startsWith('~')) { fine.push(i); s = s.slice(1); }
     return art ? { t: s, why, art } : { t: s, why };
   });
   return { kind: 'choice', key, q, opts: os, ok, ...(fine.length ? { fine } : {}), ...x };
@@ -18,7 +19,7 @@ export const S = (key: string, q: string, segs: string, bad: number[], fix?: Cho
 /** AI 误译：段落是字符串（译对了）或 [AI 的译法, 原文里的字, 选项（* 是对的）, 为什么] */
 export const M = (key: string, q: string, src: string, segs: (string | [string, string, string[], string, string?])[], title?: string): MisSub => ({
   kind: 'mis', key, q, src, ...(title ? { title } : {}),
-  segs: segs.map((s): MisSeg => typeof s === 'string' ? { t: s } : { t: s[0], bad: { word: s[1], opts: s[2].map((o) => o.replace(/^\*/, '')), ok: s[2].findIndex((o) => o.startsWith('*')), why: s[3], ...(s[4] ? { fixed: s[4] } : {}) } }),
+  segs: segs.map((s): MisSeg => typeof s === 'string' ? { t: s } : { t: s[0], bad: { word: s[1], opts: s[2].map((o) => (/^\*(?!\*(?!\*))/.test(o) ? o.slice(1) : o)), ok: s[2].findIndex((o) => /^\*(?!\*(?!\*))/.test(o)), why: s[3], ...(s[4] ? { fixed: s[4] } : {}) } }),
 });
 export const Mt = (key: string, q: string, left: string[], right: string[], pairs: number[], why: string, x: Partial<MatchSub> = {}): MatchSub => ({ kind: 'match', key, q, left, right, pairs, why, ...x });
 export const Od = (key: string, q: string, items: string[], why: string, tags?: string[], rank?: number[]): OrderSub => ({ kind: 'order', key, q, items, why, ...(tags ? { tags } : {}), ...(rank ? { rank } : {}) });

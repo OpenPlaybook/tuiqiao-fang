@@ -95,7 +95,12 @@ const EXT_TEN: Ext[] = [
       ['3:15', '那是 quarter past three。'],
       ['3:45', 'to three 是差几分到三点。'],
     ], { keep: true }),
-    Mt('b', '连一连。', ['2:15', '2:20', '2:30', '2:40'], ['quarter past two', 'twenty past two', 'half past two', 'twenty to three'], [0, 1, 2, 3], '前半小时 past，后半小时 to；15 分是 quarter，30 分是 half。', { lh: 'Time', rh: 'British way' }),
+    Mt('b', '连一连。', ['2:15', '2:20', '2:30', '2:40'], ['quarter past two', 'twenty past two', 'half past two', 'twenty to three'], [0, 1, 2, 3], '前半小时说“过了几分”（past），后半小时说“差几分”（to）。', { lh: 'Time', rh: 'British way', whys: [
+      '15 分是一刻钟 quarter；前半小时用 past：quarter past two。',
+      '前半小时用 past：两点过了二十分，twenty past two。',
+      '正好半小时是 half：half past two。',
+      '过了半小时，改用 to：离三点还差二十分，twenty to three。别和 twenty past two（2:20）弄混。',
+    ] }),
   ] },
   { id: 'x2', title: '这个故事的时间表', need: 'opt', steps: [
     fill('a', '用英式说法填，有的词用不上。', ['ten past two', 'quarter past two', 'twenty past two', 'twenty to three', 'ten to two', 'twenty to two'], [
@@ -132,7 +137,11 @@ const EXT_TOO: Ext[] = [
   ] },
   { id: 'x2', title: '道歉和回应', need: 'opt', steps: [
     T('t1', '', '道歉：**I’m so sorry.** / **It was my fault.** / **I didn’t mean to …**（我不是故意的）。回应：**That’s all right.** / **Never mind.** / **It was my fault too.**'),
-    Mt('a', '道歉和回应连一连。', ['I’m so sorry I’m late.', 'Sorry, I broke your pencil.', 'I didn’t mean to take your seat.'], ['That’s all right. The class hasn’t started.', 'Never mind. I have another one.', 'No problem. You can sit here.'], [0, 1, 2], '对方道歉时，常用 That’s all right / Never mind / No problem 回应。', { lh: 'Sorry', rh: 'Reply' }),
+    Mt('a', '道歉和回应连一连。', ['I’m so sorry I’m late.', 'Sorry, I broke your pencil.', 'I didn’t mean to take your seat.'], ['That’s all right. The class hasn’t started.', 'Never mind. I have another one.', 'No problem. You can sit here.'], [0, 1, 2], '回应道歉：先说 That’s all right / Never mind / No problem，再接一句和他道歉的事对得上的话。', { lh: 'Sorry', rh: 'Reply', whys: [
+      '对方迟到了——That’s all right（没关系），再说“还没上课呢”，正好接得上。',
+      '对方弄断了你的铅笔——Never mind（别在意），我还有一支。',
+      '对方占了你的座位——No problem（没事），你就坐这儿吧。',
+    ] }),
   ] },
 ];
 
@@ -140,9 +149,9 @@ const EXT_BEST: Ext[] = [
   { id: 'x1', title: 'good — better — best', need: 'always', steps: [
     T('t1', '', '比较：两个比用 **-er / more**（better、more beautiful），三个以上挑一个用 **the -est / the most**（the best、the most beautiful）。有几个词不规则：good — better — best；bad — worse — worst。'),
     C('a', '三篇决赛作品里挑一篇，所以是——', [
-      ['*the best story', '对：三篇以上挑最好的，用最高级。'],
-      ['the better story', '两个比较才用 better。'],
-      ['the goodest story', 'good 不能加 -est，要用 best。'],
+      ['*the **best** story', '对：三篇以上挑最好的，用最高级。'],
+      ['the **better** story', '两个比较才用 better。'],
+      ['the **goodest** story', 'good 不能加 -est，要用 best。'],
     ], { keep: true }),
     fill('b', '填对的形式，有的词用不上。', ['better', 'best', 'worse', 'most', 'more'], [
       ['Your story is ___ than mine.', 'better', '线索：than——两个比：better than。more 后面还要跟一个长形容词（more exciting），不能单独放在这里。'],
@@ -176,7 +185,7 @@ const EXT_WRITE: Ext[] = [
       ['has taken：现在还不在', 0, '第一章：熊猫被拿走了，到现在还不在。'],
       ['was eating：那一刻正在吃', 0, '第一章：灯灭时 Ben 在吃月饼。'],
       ['while I was carrying：搬鼓时被绊倒', 1, '第二章：Max 让灯灭了。'],
-      ['Can you borrow me your pen?', 1, '第二章：Mia 把 borrow 和 lend 用反了。'],
+      ['Can you **borrow** me your pen?', 1, '第二章：Mia 把 borrow 和 lend 用反了。'],
       ['must be：很有把握的推断', 2, '第三章：It must be Mia!'],
       ['ten past two：两点十分', 3, '第四章：Mia 问 Green 老师的时间。'],
     ]),
@@ -192,7 +201,12 @@ const EXT_CLEARLY: Ext[] = [
       ['*问得不够清楚', '对：clearly 说的是“怎么问”。'],
       ['问得不够大声', '大声是 loudly。'],
     ], { keep: true }),
-    Mt('b', '形容词和它的 -ly 连起来。', ['clear', 'quick', 'careful', 'happy'], ['happily', 'clearly', 'carefully', 'quickly'], [1, 3, 2, 0], '一般直接加 -ly；y 结尾的，把 y 变成 i 再加 -ly：happy → happily。', { lh: '形容词', rh: '-ly' }),
+    Mt('b', '形容词和它的 -ly 连起来。', ['clear', 'quick', 'careful', 'happy'], ['happily', 'clearly', 'carefully', 'quickly'], [1, 3, 2, 0], '形容词加 -ly，就能说“怎么做”。', { lh: '形容词', rh: '-ly', whys: [
+      'clear + -ly → clearly（清楚地）。',
+      'quick + -ly → quickly（很快地）。',
+      'careful 本来就以 l 结尾，再加 -ly，就有两个 l：carefully（仔细地）。',
+      'happy 是 y 结尾：把 y 变成 i，再加 -ly：happily（高兴地）。',
+    ] }),
     T('t2', '', '有一个不守规矩的：good（好的）→ **well**（好地）。She speaks English **well**.（不说 goodly）'),
     fill('c', '放进句子，有的词用不上。', ['clearly', 'carefully', 'well', 'quickly', 'careful'], [
       ['Please speak ___. I can’t understand you.', 'clearly', '线索：I can’t understand you——要说得清楚：clearly。'],
@@ -201,8 +215,8 @@ const EXT_CLEARLY: Ext[] = [
       ['You did really ___ today, detective!', 'well', '线索：夸人做得好——good 的副词是 well，不说 goodly。'],
     ]),
     C('d', '找出用错的一句：', [
-      ['*Ben speaks Chinese very good.', '对，这句错了：说话说得好，用 well：speaks Chinese very well。'],
-      ['Ben is a good speaker.', '这句没错：good 修饰 speaker（人）。'],
+      ['*Ben speaks Chinese very **good**.', '对，这句错了：说话说得好，用 well：speaks Chinese very well。'],
+      ['Ben is a **good** speaker.', '这句没错：good 修饰 speaker（人）。'],
     ], { keep: true }),
   ] },
 ];
@@ -225,8 +239,8 @@ const EXT_FAULT: Ext[] = [
       ['It’s your fault. Why did you put it here?', '先怪别人，事情会更糟。'],
     ], { keep: true }),
     C('d', '哪一句对？', [
-      ['*I made a mistake in my homework.', '对：犯错误是 make a mistake。'],
-      ['I did a fault in my homework.', '作业里的错误用 mistake，动词用 make。'],
+      ['*I **made a mistake** in my homework.', '对：犯错误是 make a mistake。'],
+      ['I **did a fault** in my homework.', '作业里的错误用 mistake，动词用 make。'],
     ], { keep: true }),
   ] },
 ];
@@ -235,8 +249,8 @@ const EXT_INTIME: Ext[] = [
   { id: 'x1', title: 'in time 和 on time', need: 'always', steps: [
     T('t1', '', '“You found our panda just in time!”——**in time**：及时，赶得上（再晚一点就来不及了）；**just in time**：正好赶上。'),
     C('a', '要是三点零五分才找到熊猫，Green 老师会说——', [
-      ['*Oh no, you’re too late!', '对：三点就开始颁奖，晚了五分钟，就来不及了——不是 in time。'],
-      ['You found it just in time!', 'just in time 是正好赶上，三点零五分已经晚了。'],
+      ['*Oh no, you’re **too late**!', '对：三点就开始颁奖，晚了五分钟，就来不及了——不是 in time。'],
+      ['You found it **just in time**!', 'just in time 是正好赶上，三点零五分已经晚了。'],
     ], { keep: true }),
     T('t2', '', '**on time**：准时，按规定的时间（The bus came on time.）。in time 盯着“来不来得及”，on time 盯着“准不准”。'),
     fill('b', '填 in time 或 on time，有的词用不上。', ['in time', 'on time', 'in the time'], [
@@ -262,12 +276,12 @@ const EXT_REVIEW: Ext[] = [
       '2:55　“We’ve **found** it!”（现在找到了）',
     ]),
     C('a', 'Mia 来借熊猫的时候，Green 老师在做什么？哪一句对？', [
-      ['*When Mia asked, Ms Green was talking on the phone.', '对：打电话是一段正在进行的背景，Mia 一问，正好落在这段时间中间。'],
-      ['When Mia asked, Ms Green talked on the phone.', '这样说，像是 Mia 问了以后，她才拿起电话。'],
+      ['*When Mia asked, Ms Green **was talking** on the phone.', '对：打电话是一段正在进行的背景，Mia 一问，正好落在这段时间中间。'],
+      ['When Mia asked, Ms Green **talked** on the phone.', '这样说，像是 Mia 问了以后，她才拿起电话。'],
     ], { keep: true }),
     C('b', '两点四十，Green 老师冲进礼堂，看着空桌子喊——', [
-      ['*Someone has taken it!', '对：她说的是眼前的样子：熊猫现在不在了。'],
-      ['Someone was taking it!', 'was taking 是“那时正在拿”；她进来的时候，并没有人正在拿。'],
+      ['*Someone **has taken** it!', '对：她说的是眼前的样子：熊猫现在不在了。'],
+      ['Someone **was taking** it!', 'was taking 是“那时正在拿”；她进来的时候，并没有人正在拿。'],
     ], { keep: true }),
     fill('c', '放进句子，有的词用不上。', ['was eating', 'tripped', 'has taken', 'must be', 'eating', 'trips'], [
       ['When the lights went out, Ben ___ a mooncake.', 'was eating', '线索：灯灭的那一刻，他正在吃——was eating。只填 eating 不行：前面少了 was。'],
@@ -353,7 +367,14 @@ export const PLAY_EN4_ITEMS: Item[] = [
     hints: ['四章里学过的词，一个一个想一想。'],
     explain: 'borrow 借进来、lend 借出去；notice 注意到；evidence 证据；nervous 紧张；mix up 弄混。',
     ext: EXT_REVIEW,
-  }, Mt('a', '这些词在案子里都出现过。连一连它们的意思。', ['borrow', 'lend', 'notice', 'evidence', 'nervous', 'mix up'], ['借出去', '注意到', '借进来', '紧张的', '证据', '弄混'], [2, 0, 1, 4, 3, 5], '这几个词，第一章到第四章都见过。', { lh: '英语', rh: '中文' })),
+  }, Mt('a', '这些词在案子里都出现过。连一连它们的意思。', ['borrow', 'lend', 'notice', 'evidence', 'nervous', 'mix up'], ['借出去', '注意到', '借进来', '紧张的', '证据', '弄混'], [2, 0, 1, 4, 3, 5], '这几个词，第一章到第四章都见过。', { lh: '英语', rh: '中文', whys: [
+      'borrow：借进来，东西到自己这边——Can I borrow your notebook?',
+      'lend：借出去，东西从自己手里出去。它和 borrow 最容易连反：看东西往哪边走。',
+      'notice：没特意去看，却察觉到了。',
+      'evidence：支持一个说法的东西。线索一条条对上了，就成了证据。',
+      'nervous：怕表现不好、心里发紧——考试、上台以前常这样。',
+      'mix up：把两样东西弄混——Mia 就总把 borrow 和 lend 弄混。',
+    ] })),
 
   item({
     id: 'e4-steal', st: 'en4', lv: 1, type: 'word', topic: 'steal / borrow', label: 'I didn’t steal it! I borrowed it.', intro: '', ask: 'steal、borrow、take 怎么分？',
@@ -475,12 +496,12 @@ export const PLAY_EN4_ITEMS: Item[] = [
   },
     T('t1', '', '“I didn’t **steal** it!”——steal 后面跟**东西**：steal the panda, steal a phone。还有一个词 **rob**，后面跟**人或地方**：rob a bank（抢银行），rob a shop，rob someone（抢某人）。rob 常常带着暴力。'),
     C('a', '哪一句对？', [
-      ['*Someone stole my bike.', '对：steal + 东西。'],
-      ['Someone robbed my bike.', 'rob 后面跟人或地方，不跟东西。'],
+      ['*Someone **stole** my bike.', '对：steal + 东西。'],
+      ['Someone **robbed** my bike.', 'rob 后面跟人或地方，不跟东西。'],
     ], { keep: true }),
     C('b', '“两个人冲进银行，抢走了钱。”', [
-      ['*Two men robbed a bank.', '对：rob + 地方。'],
-      ['Two men stole a bank.', '银行不能被“偷走”：用 rob。'],
+      ['*Two men **robbed** a bank.', '对：rob + 地方。'],
+      ['Two men **stole** a bank.', '银行不能被“偷走”：用 rob。'],
     ], { keep: true }),
     T('t2', '', '做这些事的人：**thief**（小偷，复数 thieves），**robber**（抢劫的人）。Mia 急着说自己不是 thief：她是借的，还打算还。'),
     fill('c', '放进句子，有的词用不上。', ['thief', 'robber', 'stole', 'robbed', 'rob'], [

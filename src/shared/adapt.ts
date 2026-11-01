@@ -9,10 +9,18 @@ export interface StationMeta { id: StationId; name: string; sub: string; n: numb
 export const slotsOf = (st: StationId): string[][] => PLAY_BY_ID[st]?.lines.filter((l) => l.task).map((l) => l.task!) ?? [];
 export const STATIONS: StationMeta[] = PLAYS.map((c) => c.lang === 'en'
   ? { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'en' as Track, emoji: '🔎', color: c.color, part: 'English · The Golden Panda' }
-  : { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 楚汉' });
+  : { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 逐鹿天下' });
 export const ST: Record<StationId, StationMeta> = Object.fromEntries(STATIONS.map((s) => [s.id, s]));
 export const TRACKS: { id: Track; name: string }[] = [{ id: 'zh', name: '中文' }, { id: 'en', name: '英语' }];
 export const trackOf = (st: StationId): Track => ST[st]?.track ?? (/^e/.test(st) ? 'en' : 'zh');
+/** 老师给每个关卡（中文 zh、英文 en）分开设开放方式：closed 不开放；progress 按进度（读完一站，下一站才打开）；all 全部开放（哪一站都能点开）。
+ *  存在 config.open 里：zh / en 是开不开，zhAll / enAll 是不是全部开放。旧设置里没有这些键时照旧推：某一回开着 = 这个关卡开着，all = 任意看 */
+export type OpenMode = 'closed' | 'progress' | 'all';
+export const openMode = (o: Record<string, boolean>, t: Track): OpenMode => {
+  const on = o[t] ?? Object.entries(o).some(([k, v]) => v && new RegExp('^' + t + '\\d').test(k));
+  return !on ? 'closed' : (o[t + 'All'] ?? !!o.all) ? 'all' : 'progress';
+};
+export const openPatch = (t: Track, m: OpenMode): Record<string, boolean> => ({ [t]: m !== 'closed', [t + 'All']: m === 'all' });
 /** 一道题属于哪条线：看它所在的回 */
 export const lineOf = (it: Item): Track => trackOf(it.st);
 

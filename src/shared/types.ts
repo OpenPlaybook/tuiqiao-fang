@@ -20,7 +20,8 @@ export interface SpotSub extends SubBase { kind: 'spot'; segs: string[]; bad: nu
 /** scale：画成一条从贬到褒的色带，格子从左到右排（贬 → 中 → 褒），把词放到色带上的位置 */
 export interface SortSub extends SubBase { kind: 'sort'; bins: string[]; cards: { t: string; bin: number; why: string }[]; scale?: boolean }
 /** 连线：左边每一项配右边一项 */
-export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right: string[]; pairs: number[]; why: string; lh?: string; rh?: string }
+/** whys：每一对的讲解（和 left 一一对应），做完显示在那一对下面；why 只写一句总的（可以空） */
+export interface MatchSub extends SubBase { kind: 'match'; left: string[]; right: string[]; pairs: number[]; why: string; whys?: string[]; lh?: string; rh?: string }
 /** 排序：items 按正确顺序写；tags 是排好以后显示的年份等 */
 /** rank：每一项的名次（不写就是写的顺序）；名次一样的，谁先谁后都算对（同时发生、互不相干的几步） */
 export interface OrderSub extends SubBase { kind: 'order'; items: string[]; tags?: string[]; why: string; rank?: number[] }
@@ -162,5 +163,5 @@ export interface GameConfig {
   aiReady?: boolean;
   aiLeft?: number;
 }
-/** 老师按两条大线开放：中文（楚汉五条线）、英文（Golden Panda）；all：任意看（不按进度，哪一站都能点开）。后面是旧的按回开放的键：已经存下的设置里还有它们，要能通过校验 */
-export const STATION_IDS: StationId[] = ['zh', 'en', 'all', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];
+/** 老师按关卡开放：中文（逐鹿天下）、英文（Golden Panda）各设一种方式（见 adapt.ts 的 openMode）：zh / en 开不开，zhAll / enAll 全部开放。all 和后面按回的键是旧设置里的，要能通过校验 */
+export const STATION_IDS: StationId[] = ['zh', 'en', 'zhAll', 'enAll', 'all', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];

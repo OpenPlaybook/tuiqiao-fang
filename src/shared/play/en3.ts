@@ -72,7 +72,12 @@ const EXT_GREEN: Ext[] = [
       ['I did', 'did 不缩写成 ’d。'],
       ['I had', 'I’d 有时是 I had，可后面跟的是动词原形 lend，所以是 I would。'],
     ], { keep: true }),
-    Mt('b', '把缩写还原。', ['I’ll', 'I’ve', 'She’s taking photos.', 'She’s taken it.'], ['I will', 'I have', 'She is', 'She has'], [0, 1, 2, 3], 'she’s 看后面：taking（-ing）是 she is，taken（过去分词）是 she has。', { lh: '缩写', rh: '还原' }),
+    Mt('b', '把缩写还原。', ['I’ll', 'I’ve', '**She’s** taking photos.', '**She’s** taken it.'], ['I will', 'I have', 'She is', 'She has'], [0, 1, 2, 3], '', { lh: '缩写', rh: '还原', whys: [
+      '’ll 是 will 缩成的：I’ll be back at three.',
+      '’ve 是 have 缩成的：I’ve lost my key.',
+      '后面跟的是 taking（-ing），说正在做：She is taking photos.',
+      '后面跟的是 taken（过去分词），是现在完成时：She has taken it. she’s 两种都可能，看后面跟 -ing 还是过去分词。',
+    ] }),
   ] },
 ];
 
@@ -120,9 +125,9 @@ const EXT_MUST: Ext[] = [
   { id: 'x1', title: '推理的三档：must、might、can’t', need: 'always', steps: [
     T('t1', '', '侦探说话要分清有几成把握：**must be**（一定是，九成把握）；**might be / may be**（也许是，没多大把握）；**can’t be**（不可能是）。', ['It must be Mia.（证据很多）', 'It might be Max.（只是有可能）', 'It can’t be Ms Green.（她没借，也没写纸条）']),
     C('a', 'Green 老师说她绝不会把熊猫借出去，她的签名也不是带卷的 M。所以——', [
-      ['*M can’t be Ms Green.', '对：有证据说明不是她，用 can’t be。'],
-      ['M must be Ms Green.', '证据恰恰说明不是她。'],
-      ['M might be Ms Green.', '证据已经排除了她。'],
+      ['*M **can’t be** Ms Green.', '对：有证据说明不是她，用 can’t be。'],
+      ['M **must be** Ms Green.', '证据恰恰说明不是她。'],
+      ['M **might be** Ms Green.', '证据已经排除了她。'],
     ], { keep: true }),
     fill('b', '填 must、might 或 can’t，有的词用不上。', ['must', 'might', 'can’t', 'mustn’t'], [
       ['Max’s drum case had only a drum in it. The panda ___ be in his case.', 'can’t', '线索：亲眼看过，箱子里只有鼓——不可能在里面：can’t be。must 是“一定是”，mustn’t 是“不许、禁止”（You mustn’t run here.），都不是“不可能”。'],
@@ -132,9 +137,9 @@ const EXT_MUST: Ext[] = [
   ] },
   { id: 'x2', title: '中文里的“一定”“也许”“不可能”', need: 'opt', steps: [
     So('a', '把这些说法按把握大小分一分。', ['一定是（must）', '也许是（might）', '不可能是（can’t）'], [
-      ['肯定是她', 0, '很有把握。'], ['十有八九是她', 0, '很有把握。'],
-      ['说不定是她', 1, '没多大把握。'], ['可能是她', 1, '没多大把握。'],
-      ['绝对不是她', 2, '排除了。'],
+      ['**肯定**是她', 0, '很有把握。'], ['**十有八九**是她', 0, '很有把握。'],
+      ['**说不定**是她', 1, '没多大把握。'], ['**可能**是她', 1, '没多大把握。'],
+      ['**绝对不**是她', 2, '排除了。'],
     ]),
   ] },
 ];
@@ -172,8 +177,8 @@ const EXT_MIX: Ext[] = [
       ['Dad ___ us to the zoo last Sunday.', 'took', '线索：us to the zoo——带我们去别处：took。bring 不行：有 last Sunday，要用过去式；而且 bring 是带过来，去动物园是去别处。'],
     ]),
     C('d', '找出用错的一句：', [
-      ['*I lost the bus this morning.', '对，这句错了：没赶上车是 missed the bus。'],
-      ['We lost the football match.', '这句没错：比赛输了，用 lost。'],
+      ['*I **lost** the bus this morning.', '对，这句错了：没赶上车是 missed the bus。'],
+      ['We **lost** the football match.', '这句没错：比赛输了，用 lost。'],
     ], { keep: true }),
   ] },
 ];
@@ -197,8 +202,8 @@ const EXT_PROOF: Ext[] = [
       ['A photo with the time on it is ___ that she was there.', 'proof', '线索：带时间的照片——足以证明她当时在场：proof。说 evidence 也对，只是没那么肯定。prove、proves 是动词，is 后面要跟名词。', ['evidence']],
     ]),
     C('d', '哪一句对？', [
-      ['*There is not enough evidence.', '对：evidence 不可数，不加 s，也不说 an evidence。'],
-      ['There are not enough evidences.', 'evidence 一般不加 s。'],
+      ['*There is not enough **evidence**.', '对：evidence 不可数，不加 s，也不说 an evidence。'],
+      ['There are not enough **evidences**.', 'evidence 一般不加 s。'],
     ], { keep: true }),
   ] },
 ];
@@ -211,20 +216,20 @@ const EXT_GUESS: Ext[] = [
       ['他看见 Mia 去了花园', '他没看见。是推出来的。'],
     ], { keep: true }),
     C('b', '你只有一点点把握，最合适的是——', [
-      ['*I guess she’s in the garden.', '对：I guess：我猜（不太确定）。'],
-      ['I’m sure she’s in the garden.', 'I’m sure 是十拿九稳。'],
+      ['*I **guess** she’s in the garden.', '对：I guess：我猜（不太确定）。'],
+      ['I’m **sure** she’s in the garden.', 'I’m sure 是十拿九稳。'],
     ], { keep: true }),
     T('t2', '', '别人问你，你拿不准，也可以答：**I suppose so.**（大概是吧）/ **I’m not sure.**（我不确定）。'),
     { ...So('c', '把这些话放到色带上：没把握的在左边，很有把握的在右边。', ['没什么把握', '有点把握', '很有把握'], [
-      ['Maybe she’s in the library.', 0, 'maybe：也许。'],
-      ['I guess she’s busy.', 0, 'I guess：我猜。'],
-      ['I think it’s Mia.', 1, 'I think：我认为。'],
-      ['I bet she’s in the garden!', 2, 'I bet：我敢说。'],
-      ['It must be Mia.', 2, 'must be：一定是。'],
+      ['**Maybe** she’s in the library.', 0, 'maybe：也许。'],
+      ['**I guess** she’s busy.', 0, 'I guess：我猜。'],
+      ['**I think** it’s Mia.', 1, 'I think：我认为。'],
+      ['**I bet** she’s in the garden!', 2, 'I bet：我敢说。'],
+      ['It **must be** Mia.', 2, 'must be：一定是。'],
     ]), scale: true },
     C('d', '“Will Ben eat another mooncake?” “___ He loves them!”', [
-      ['*I bet he will!', '对：他那么爱吃，你很有把握。'],
-      ['I guess not.', '他吃了九块还要吃，可不是“我猜不会”。'],
+      ['*I **bet** he will!', '对：他那么爱吃，你很有把握。'],
+      ['I **guess** not.', '他吃了九块还要吃，可不是“我猜不会”。'],
     ], { keep: true }),
   ] },
 ];
@@ -237,8 +242,8 @@ const EXT_FIND: Ext[] = [
       ['我们到处都找到了熊猫', 'looked for 只是在找。'],
     ], { keep: true }),
     C('b', '要说“我们查明了是谁写的纸条”，用——', [
-      ['*We found out who wrote the note.', '对：弄清楚一件事，用 find out。'],
-      ['We found who wrote the note.', '找到一个人用 find；弄清楚“是谁”这件事，用 find out。'],
+      ['*We **found out** who wrote the note.', '对：弄清楚一件事，用 find out。'],
+      ['We **found** who wrote the note.', '找到一个人用 find；弄清楚“是谁”这件事，用 find out。'],
     ], { keep: true }),
     T('t2', '', '刚找到、东西就在眼前，英国人会喊：**We’ve found it!**——第一章的 has taken 又来了：过去的事，现在的结果（东西现在就在这儿）。'),
     fill('c', '放进句子，有的词用不上。', ['looking for', 'found', 'find out', 'have found', 'looking'], [
@@ -248,8 +253,8 @@ const EXT_FIND: Ext[] = [
       ['Look! We ___ the Golden Panda!', 'have found', '线索：Look!——刚找到，熊猫就在眼前：have found。填 found 也算对：美国人常这样说；英国人更爱用 have found，强调东西现在就在眼前。', ['found']],
     ]),
     C('d', '找出用错的一句：', [
-      ['*I’m finding my keys. Can you help me?', '对，这句错了：正在找要说 I’m looking for my keys.'],
-      ['Did you find your keys?', '这句没错：找到钥匙了吗？'],
+      ['*I’m **finding** my keys. Can you help me?', '对，这句错了：正在找要说 I’m looking for my keys.'],
+      ['Did you **find** your keys?', '这句没错：找到钥匙了吗？'],
     ], { keep: true }),
   ] },
 ];
@@ -301,10 +306,10 @@ export const PLAY_EN3_ITEMS: Item[] = [
     explain: '熊猫就在眼前：We’ve found it!（找到了，现在就在这儿）。look for 是在找，find out 是查明一件事。',
     ext: EXT_FIND,
   }, C('a', '你们终于看见了熊猫。你想喊“我们找到它了！”，英语最自然的是——', [
-    ['*We’ve found it!', '对：刚找到，东西就在眼前。'],
-    ['We’ve looked for it!', 'look for 只是在找。'],
-    ['We found out it!', 'find out 是查明一件事，不说 found out it。'],
-    ['We’re finding it!', '找到是一下子的事，不说 finding。'],
+    ['*We’ve **found** it!', '对：刚找到，东西就在眼前。'],
+    ['We’ve **looked for** it!', 'look for 只是在找。'],
+    ['We **found out** it!', 'find out 是查明一件事，不说 found out it。'],
+    ['We’re **finding** it!', '找到是一下子的事，不说 finding。'],
   ], { cols: 1, reveal: 'chosen' })),
 
   item({
@@ -379,12 +384,12 @@ export const PLAY_EN3_ITEMS: Item[] = [
   },
     T('t1', '', '“Why did she **take** the panda?”——**take**：拿走、带走，从这里带到别处去。**bring**：带来，带到说话的人这里来。', ['Mia took the panda to the garden.（从礼堂带到花园去）', 'Please bring it back to the hall!（Green 老师在礼堂：带回我这儿来）']),
     C('a', 'Green 老师站在礼堂里，着急地说——', [
-      ['*Please bring it back here!', '对：带回她这里来，用 bring。'],
-      ['Please take it back here!', '往说话的人这边来，用 bring。'],
+      ['*Please **bring** it back here!', '对：带回她这里来，用 bring。'],
+      ['Please **take** it back here!', '往说话的人这边来，用 bring。'],
     ], { keep: true }),
     C('b', '你出门上学，妈妈在门口说：“别忘了带伞！”', [
-      ['*Don’t forget to take your umbrella!', '对：从家里带走，用 take。'],
-      ['Don’t forget to bring your umbrella!', '妈妈在家，伞是从她这儿带走的，用 take。'],
+      ['*Don’t forget to **take** your umbrella!', '对：从家里带走，用 take。'],
+      ['Don’t forget to **bring** your umbrella!', '妈妈在家，伞是从她这儿带走的，用 take。'],
     ], { keep: true }),
     fill('c', '放进句子，有的词用不上。', ['took', 'brought', 'take', 'taken'], [
       ['Mia ___ the panda to the garden to take photos.', 'took', '线索：从礼堂带到花园（离开原来的地方）——took。take 是原形，taken 要跟在 has / have 后面，都不能单独说过去发生的事。'],

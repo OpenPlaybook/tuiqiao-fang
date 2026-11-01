@@ -9,8 +9,8 @@ sys.path.insert(0, HOME)
 import polycheck as pc
 from pypinyin import pinyin, Style
 
-pc.COMMON.update({'食': 'shi2 si4', '王': 'wang2 wang4', '中': 'zhong1 zhong4', '见': 'jian4 xian4', '将': 'jiang1 jiang4', '父': 'fu4 fu3', '少': 'shao3 shao4'})
-RISKY = pc.RISKY | set('食王中见将父少和着重数处称转当还长好为只冲')
+pc.COMMON.update({'食': 'shi2 si4', '王': 'wang2 wang4', '中': 'zhong1 zhong4', '见': 'jian4 xian4', '将': 'jiang1 jiang4', '父': 'fu4 fu3', '少': 'shao3 shao4', '予': 'yu3 yu2'})
+RISKY = pc.RISKY | set('食王中见将父少和着重数处称转当还长好为只冲予')
 SKIP = set('了的地得')
 
 lines = json.load(open('build/voice-lines.json', encoding='utf-8'))

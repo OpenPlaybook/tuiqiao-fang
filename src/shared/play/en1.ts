@@ -140,7 +140,11 @@ const EXT_MIS: Ext[] = [
       ['负责', '手机没电了（dead），后面要做的是充电。'],
     ], { keep: true }),
     T('t2', '', 'case 也是这样：after the case 是“案子”，a drum case 是“鼓箱”，a pencil case 是“笔袋”。'),
-    Mt('c', '这三个 match，各是什么意思？', ['We watched a football match.', 'I need a match to light the candle.', 'Your hat matches your scarf.'], ['比赛', '火柴', '相配'], [0, 1, 2], '看它和谁在一起：football match 是比赛；light the candle（点蜡烛）用的是火柴；hat matches scarf 是帽子和围巾相配。', { lh: '句子', rh: '意思' }),
+    Mt('c', '这三个 match，各是什么意思？', ['We watched a football **match**.', 'I need a **match** to light the candle.', 'Your hat **matches** your scarf.'], ['比赛', '火柴', '相配'], [0, 1, 2], '', { lh: '句子', rh: '意思', whys: [
+      '前面是 football，又是 watched（看）——看的是一场足球赛：比赛。',
+      '要用它 light the candle（点蜡烛）——能点火的，是火柴。',
+      'matches 在这里是动词：帽子和围巾颜色、样子搭得好——相配。',
+    ] }),
     C('d', '那 AI 眼镜该怎么做，才能少译错？', [
       ['*先看这个词前后跟着什么，再定它在这句话里的意思', '对。先看上下文，再定意思——你自己读英语时也是这样。'],
       ['每个词都用最常见的那个意思', '刚才的“正在充电”“门爆炸了”，就是这么错的。'],
@@ -175,17 +179,17 @@ const EXT_TAKEN: Ext[] = [
       ['因为她知道是两点一刻被拿走的', '要说“两点一刻拿走的”，反而得用 took。'],
     ], { keep: true }),
     C('t0b', '要说“两点一刻的时候，有人把它拿走了”，用——', [
-      ['*Someone took it at 2:15.', '对。说的是过去那一刻：took。'],
-      ['Someone has taken it at 2:15.', 'has taken 不和 at 2:15 这样具体的过去时间放在一起。'],
+      ['*Someone **took** it at 2:15.', '对。说的是过去那一刻：took。'],
+      ['Someone **has taken** it at 2:15.', 'has taken 不和 at 2:15 这样具体的过去时间放在一起。'],
     ], { keep: true }),
     T('t1', '', '把刚才那段画成时间线：拿走发生在过去，可是结果一直留到现在——现在还不在。', undefined, viz('timeline', { mode: 'perfect' })),
     C('a', 'Ben 站在宿舍门口，进不去。他会说——', [
-      ['*I’ve lost my key.', '对。钥匙丢了，到现在还没找到——所以进不去。'],
-      ['I lost my key last year.', '去年丢的钥匙，和他现在进不去门扯不上。'],
+      ['*I**’ve lost** my key.', '对。钥匙丢了，到现在还没找到——所以进不去。'],
+      ['I **lost** my key last year.', '去年丢的钥匙，和他现在进不去门扯不上。'],
     ], { keep: true }),
     C('b', '要说清楚“是两点一刻拿走的”，哪句对？', [
-      ['*Someone took it at 2:15.', '对。说出了过去的具体时间，就用 took。'],
-      ['Someone has taken it at 2:15.', 'has taken 说的是“现在的结果”，不和 at 2:15、yesterday 这样的过去时间放在一起。'],
+      ['*Someone **took** it at 2:15.', '对。说出了过去的具体时间，就用 took。'],
+      ['Someone **has taken** it at 2:15.', 'has taken 说的是“现在的结果”，不和 at 2:15、yesterday 这样的过去时间放在一起。'],
     ], { keep: true }),
     T('t2', '', '一会儿你会听到 Green 老师说：Maybe someone took it in the dark!——她说的是“趁黑的那个时候”，所以用 took。'),
     T('t3', '', '英国人和美国人在这儿习惯不一样：刚发生、结果还在的事，英国人一般用现在完成时（I’ve lost my key! Someone has taken it!），美国人也常说 I lost my key! Someone took it! 两种都是地道的英语。Ben 和 Green 老师是英国人，**这个故事按英式英语来答**。', ['🇬🇧 I’ve lost my key. Someone has taken my bike!', '🇺🇸 I lost my key. Someone took my bike!']),
@@ -194,17 +198,17 @@ const EXT_TAKEN: Ext[] = [
       ['错了，必须说 I’ve lost my key.', '美国英语里 I lost my key! 很自然。这个故事按英式答，可别人这么说不算错。'],
     ], { keep: true }),
     C('t3b', '哪一句不管英式还是美式，都是错的？', [
-      ['*I’ve lost my key yesterday.', '对。带了具体的过去时间（yesterday），英美都只能用一般过去时：I lost my key yesterday.'],
-      ['I lost my key yesterday.', '这句英美都对：说的是昨天发生的事。'],
-      ['I’ve lost my key.', '这句是英式最常见的说法。'],
+      ['*I**’ve lost** my key yesterday.', '对。带了具体的过去时间（yesterday），英美都只能用一般过去时：I lost my key yesterday.'],
+      ['I **lost** my key yesterday.', '这句英美都对：说的是昨天发生的事。'],
+      ['I**’ve lost** my key.', '这句是英式最常见的说法。'],
     ]),
     So('c', '这些句子，说的是“现在的样子”，还是“过去那时候发生了什么”？', ['现在的样子（结果还在）', '过去那时候发生了什么'], [
-      ['Look! Someone has broken the window.', 0, '玻璃现在还碎着。'],
-      ['Someone broke the window last week. It’s fixed now.', 1, 'last week 的事，窗户早修好了。'],
-      ['I’ve finished my homework. Can I go out now?', 0, '作业写完了，所以现在可以出去。'],
-      ['I finished my homework at nine last night.', 1, '说的是昨晚九点那时候。'],
-      ['Ben has eaten nine mooncakes.', 0, '到现在为止，一共吃了九块。'],
-      ['Ben ate a mooncake at 2:15.', 1, '两点一刻那时候吃的。'],
+      ['Look! Someone **has broken** the window.', 0, '玻璃现在还碎着。'],
+      ['Someone **broke** the window last week. It’s fixed now.', 1, 'last week 的事，窗户早修好了。'],
+      ['**I’ve finished** my homework. Can I go out now?', 0, '作业写完了，所以现在可以出去。'],
+      ['I **finished** my homework at nine last night.', 1, '说的是昨晚九点那时候。'],
+      ['Ben **has eaten** nine mooncakes.', 0, '到现在为止，一共吃了九块。'],
+      ['Ben **ate** a mooncake at 2:15.', 1, '两点一刻那时候吃的。'],
     ]),
     T('t4', '', '再把三个时态放在一起比：同一个 Ben，同一块月饼，说法不一样，意思就不一样。', undefined, viz('clip', { shots: [['tq.every', 1], ['tq.once', 1], ['tq.sofar', 1]], dur: 13, cap: [[0, 'Ben **eats** mooncakes every day.（一般现在时：常常这样）'], [0.333, 'Ben **ate** a mooncake at 2:15.（一般过去时：过去那一刻）'], [0.666, 'Ben **has eaten** nine mooncakes.（现在完成时：到现在为止）']], marks: [[0.04, 'eats'], [0.37, 'ate'], [0.7, 'has eaten']] })),
     C('t4a', '“Ben has eaten nine mooncakes.” 说的是——', [
@@ -256,12 +260,12 @@ const EXT_EATING: Ext[] = [
       ['电话响了，我才去洗澡', '那要说 When the phone rang, I had a shower.'],
     ], { keep: true }),
     So('c', '哪个是“那一刻正在做”，哪个是“那之后才做”？', ['那一刻正在做', '那之后才做'], [
-      ['When the bell rang, I was reading.', 0, '铃响时，已经在看书了。'],
-      ['When the bell rang, I ran out of the classroom.', 1, '铃一响，才跑出去。'],
-      ['When Mum came in, we were watching TV.', 0, '妈妈进来时，电视已经在看了。'],
-      ['When Mum came in, we turned off the TV.', 1, '妈妈进来以后才关的电视。'],
-      ['When the lights went out, Ben was eating a mooncake.', 0, '灯灭时他嘴里正嚼着。'],
-      ['When the lights went out, everyone screamed.', 1, '灯一灭，大家才叫起来。'],
+      ['When the bell rang, I **was reading**.', 0, '铃响时，已经在看书了。'],
+      ['When the bell rang, I **ran out** of the classroom.', 1, '铃一响，才跑出去。'],
+      ['When Mum came in, we **were watching** TV.', 0, '妈妈进来时，电视已经在看了。'],
+      ['When Mum came in, we **turned off** the TV.', 1, '妈妈进来以后才关的电视。'],
+      ['When the lights went out, Ben **was eating** a mooncake.', 0, '灯灭时他嘴里正嚼着。'],
+      ['When the lights went out, everyone **screamed**.', 1, '灯一灭，大家才叫起来。'],
     ]),
     type('d', 'Green 老师问：“What ___ you all doing when the lights went out?” 空里填什么？', ['were'], 'you all 是“你们”，复数：were + doing。', { was: 'you（你们）后面用 were，不用 was。', are: '问的是过去（灯灭的时候），用过去式。' }),
     Wr('e', '你也回答 Green 老师：两点一刻你在做什么？用 At 2:15 I was … 写一句。', {
@@ -274,7 +278,12 @@ const EXT_EATING: Ext[] = [
   ] },
   { id: 'x2', title: '侦探的问话', need: 'opt', steps: [
     T('t1', '', '问“当时在做什么”：What were you doing at 2:15? 问“当时在哪儿”：Where were you at 2:15?——下一章的题目就是这一句。'),
-    Mt('a', '问话和回答连起来。', ['What were you doing at 2:15?', 'Where were you at 2:15?', 'Who were you with?', 'Did you see anyone?'], ['I was eating a mooncake.', 'I was in the hall.', 'I was with Ben.', 'No, I didn’t.'], [0, 1, 2, 3], '问什么，答什么：doing 问做什么，where 问在哪儿，who 问和谁，Did 问有没有。', { lh: '问', rh: '答' }),
+    Mt('a', '问话和回答连起来。', ['What were you doing at 2:15?', 'Where were you at 2:15?', 'Who were you with?', 'Did you see anyone?'], ['I was eating a mooncake.', 'I was in the hall.', 'I was with Ben.', 'No, I didn’t.'], [0, 1, 2, 3], '问什么，答什么。', { lh: '问', rh: '答', whys: [
+      'doing 问那时在做什么——答一个正在做的动作：I was eating …',
+      'Where 问在哪儿——答一个地方：in the hall。它和上一句的回答都以 I was 开头：一个说动作，一个说地方，别连反。',
+      'Who … with 问和谁在一起——答 with + 人：I was with Ben.',
+      'Did you …? 问有没有——用 did 来答：No, I didn’t.',
+    ] }),
     C('b', '“Where were you at 2:15?” 回答“I was eating a mooncake.”，好不好？', [
       ['*不好，答非所问：问的是“在哪儿”，要说地方', '对。要答 I was in the hall. 再补一句在做什么也行。'],
       ['可以，意思差不多', '侦探问的是地方。答非所问，最容易让人起疑心。'],
@@ -286,12 +295,12 @@ const EXT_BORROW: Ext[] = [
   { id: 'x1', title: '东西往哪边走', need: 'always', steps: [
     T('t1', '', 'borrow 和 lend 是同一件事，看谁是主语：你把本子借出去——You lend Ben your notebook；Ben 借进来——Ben borrows your notebook.', undefined, viz('give', { mode: 'both' })),
     C('a', '你把尺子借给同桌 Tom。你说——', [
-      ['*I lent my ruler to Tom.', '对。你是借出的一方：lend → lent。'],
-      ['I borrowed my ruler to Tom.', '你是借出去，不是借进来。'],
+      ['*I **lent** my ruler to Tom.', '对。你是借出的一方：lend → lent。'],
+      ['I **borrowed** my ruler to Tom.', '你是借出去，不是借进来。'],
     ], { keep: true }),
     C('b', '反过来，Tom 说——', [
-      ['*I borrowed a ruler from you.', '对。Tom 是借进来：borrow … from 某人。'],
-      ['I lent a ruler from you.', 'lend 后面跟 to（借给谁），不跟 from。'],
+      ['*I **borrowed** a ruler from you.', '对。Tom 是借进来：borrow … from 某人。'],
+      ['I **lent** a ruler from you.', 'lend 后面跟 to（借给谁），不跟 from。'],
     ], { keep: true }),
     fill('c', '放进句子，有的词用不上。', ['borrow', 'lend', 'lent', 'borrowed', 'borrows'], [
       ['Can I ___ your pen, please?', 'borrow', '线索：Can I——我从你那里借进来：borrow。'],
@@ -307,7 +316,13 @@ const EXT_BORROW: Ext[] = [
   ] },
   { id: 'x2', title: 'lend – lent – lent', need: 'opt', steps: [
     T('t1', '', 'lend 的过去式不是 lended，是 lent。好些常用的词都这么“不守规矩”，要一个一个记。'),
-    Mt('a', '原形和过去式连起来。', ['lend', 'take', 'see', 'eat', 'lose'], ['lost', 'ate', 'lent', 'saw', 'took'], [2, 4, 3, 1, 0], '这些都是不规则动词：lend → lent，take → took，see → saw，eat → ate，lose → lost。', { lh: '原形', rh: '过去式' }),
+    Mt('a', '原形和过去式连起来。', ['lend', 'take', 'see', 'eat', 'lose'], ['lost', 'ate', 'lent', 'saw', 'took'], [2, 4, 3, 1, 0], '', { lh: '原形', rh: '过去式', whys: [
+      'lend → lent：d 换成 t，不说 lended。lost 也是 l 开头、t 结尾，可它是 lose 的过去式。',
+      'take → took：中间的 a 变成 oo。',
+      'see → saw。',
+      'eat → ate：还是这三个字母，换了个顺序。',
+      'lose（丢）→ lost：把最后的 e 换成 t。',
+    ] }),
     C('b', '“Can you lend me a hand?” 是——', [
       ['*能帮我一把吗？', '对。lend a hand：帮个忙。'],
       ['能借我一只手吗？', '字面是借一只手，其实是请人帮忙。'],
@@ -349,10 +364,15 @@ const EXT_POLITE: Ext[] = [
   ] },
   { id: 'x2', title: '最容易说生硬的几句', need: 'opt', steps: [
     T('t1', '', '中文里很自然的说法，直接翻成英语，常常听起来不客气。'),
-    Mt('a', '左边是生硬的说法，配上客气的说法。', ['I want a cola.', 'Give me the menu.', 'You must help me.', 'What’s your name?（对长辈）'], ['Could you help me, please?', 'May I ask your name?', 'Could I have a cola, please?', 'Could I see the menu, please?'], [2, 3, 0, 1], '把“我要”“给我”“你必须”换成 Could I … / Could you …，再加上 please。', { lh: '生硬', rh: '客气' }),
+    Mt('a', '左边是生硬的说法，配上客气的说法。', ['I want a cola.', 'Give me the menu.', 'You must help me.', 'What’s your name?（对长辈）'], ['Could you help me, please?', 'May I ask your name?', 'Could I have a cola, please?', 'Could I see the menu, please?'], [2, 3, 0, 1], '命令、要求换成请求：Could I … / Could you … / May I …，再加 please。', { lh: '生硬', rh: '客气', whys: [
+      '“我要”是在提要求；Could I have …, please? 是请对方给。',
+      '“给我”是命令；换成 Could I see …, please? 它和 cola 那句都是 Could I …，看后面要的是 cola 还是 menu。',
+      'must 是在命令别人；请人帮忙，用 Could you help me, please?',
+      '对长辈直接问 What’s your name? 有点冲；May I ask … 先请对方允许，更礼貌。',
+    ] }),
     C('b', '在饭馆点菜，最自然的是——', [
-      ['*I’d like the noodles, please.', '对。I’d like … 比 I want … 客气。'],
-      ['I want the noodles.', '意思懂，可是听起来很冲。'],
+      ['*I’d **like** the noodles, please.', '对。I’d like … 比 I want … 客气。'],
+      ['I **want** the noodles.', '意思懂，可是听起来很冲。'],
     ], { keep: true }),
   ] },
 ];
@@ -371,7 +391,12 @@ const EXT_WATCH: Ext[] = [
       ['I ___ Ben in the hall this morning.', 'saw', '线索：this morning 在礼堂碰见了 Ben——看见了，过去式 saw。look、looked 后面都要跟 at，而且是特意去看，不是碰见。'],
     ]),
     T('t2', '', '还记得中文《淮阴少年》里的“五种看”吗？瞥、瞪、凝视……英语也分得一样细：glance（瞥一眼）、stare（盯着看）、glare（生气地瞪）、gaze（久久地凝视）。'),
-    Mt('c', '这几种“看”，各是什么样子？', ['glance at the clock', 'stare at the empty table', 'glare at the noisy boy', 'gaze at the moon'], ['生气地瞪', '久久地凝视', '瞥一眼', '盯着看（愣住了）'], [2, 3, 0, 1], 'glance 一眼带过；stare 盯着看、愣住了；glare 生气地瞪；gaze 带着感情、久久地看。', { lh: '英语', rh: '怎么看' }),
+    Mt('c', '这几种“看”，各是什么样子？', ['**glance** at the clock', '**stare** at the empty table', '**glare** at the noisy boy', '**gaze** at the moon'], ['生气地瞪', '久久地凝视', '瞥一眼', '盯着看（愣住了）'], [2, 3, 0, 1], '', { lh: '英语', rh: '怎么看', whys: [
+      'glance：很快地看一眼——看钟，扫一眼就够了。',
+      'stare：眼睛一动不动地盯着，常常是吃惊、愣住了——桌上的熊猫没了，你愣在那儿。',
+      'glare：生气地瞪——那个男孩太吵了。glare 和 glance 长得像，一个是瞪，一个是随便瞥一眼。',
+      'gaze：带着感情、久久地看——看月亮看出了神。它和 stare 都看得很久：stare 是愣住，gaze 是入神。',
+    ] }),
   ] },
   { id: 'x2', title: '听也分两种', need: 'opt', steps: [
     T('t1', '', '“看”分 look 和 see，“听”也分：listen（用心去听，像 look）、hear（听见，像 see）。'),
@@ -394,7 +419,12 @@ const EXT_LENT: Ext[] = [
       ['M 三点回来', '也可能是熊猫三点被送回来。'],
       ['*都说得通——纸条把“谁”省掉了', '对。主语一省，就留下了两种可能——破案时要小心的就是这种地方。'],
     ], { keep: true }),
-    Mt('b', '把纸条上的话，补成完整的句子。', ['Gone to the library.', 'Back soon.', 'Lunch in the fridge.', 'Can’t come. Sorry!'], ['I can’t come. I’m sorry!', 'Your lunch is in the fridge.', 'I have gone to the library.', 'I will be back soon.'], [2, 3, 1, 0], '纸条上省掉的，多半是 I、It、Your 和 am / is / will be。', { lh: '纸条', rh: '完整的句子' }),
+    Mt('b', '把纸条上的话，补成完整的句子。', ['Gone to the library.', 'Back soon.', 'Lunch in the fridge.', 'Can’t come. Sorry!'], ['I can’t come. I’m sorry!', 'Your lunch is in the fridge.', 'I have gone to the library.', 'I will be back soon.'], [2, 3, 1, 0], '纸条为了快，常把开头的“谁”和 am、is、will be、have 这些小词省掉。', { lh: '纸条', rh: '完整的句子', whys: [
+      'Gone to … 省掉了 I have：I have gone to the library.（我去图书馆了，现在在那儿）',
+      'Back soon 省掉了 I will be：I will be back soon.（我很快回来）',
+      'Lunch in the fridge 省掉了 Your 和 is：Your lunch is in the fridge.',
+      'Can’t come 省掉了 I，Sorry 省掉了 I’m：I can’t come. I’m sorry!',
+    ] }),
     C('c', '要是纸条上写的是 Borrowed the panda，熊猫现在在谁手里？', [
       ['*在 M 手里（M 借来的）', '对。borrowed：M 借进来了。'],
       ['在别人手里（M 借出去的）', '借出去才是 lent。'],
@@ -418,8 +448,8 @@ const EXT_LENT: Ext[] = [
       ['Mr Jianguo', 'Jianguo 是名。'],
     ], { keep: true }),
     C('c', '用英语说“我姓王”——', [
-      ['*My family name is Wang.', '对。姓是 family name（也叫 surname）。'],
-      ['My first name is Wang.', 'first name 是名，不是姓。'],
+      ['*My **family name** is Wang.', '对。姓是 family name（也叫 surname）。'],
+      ['My **first name** is Wang.', 'first name 是名，不是姓。'],
     ], { keep: true }),
   ] },
 ];
@@ -474,12 +504,12 @@ const EXT_NERVOUS: Ext[] = [
   { id: 'x1', title: '紧张、害怕、担心', need: 'always', steps: [
     T('t1', '', '手心发凉，中文说“紧张”。英语里说心情的词有好几个，意思不一样：**nervous**（紧张：怕事情不顺利、怕表现不好）、**afraid / scared**（害怕：怕危险、怕某样东西）、**worried**（担心：一直惦记着一件事）。'),
     C('a', '你马上要上台领奖，手心发凉。最合适的是——', [
-      ['*I’m so nervous!', '对：nervous 是怕表现不好、怕事情不顺利。'],
-      ['I’m so scared of you!', '这是“我好怕你”——你怕的不是人。'],
+      ['*I’m so **nervous**!', '对：nervous 是怕表现不好、怕事情不顺利。'],
+      ['I’m so **scared** of you!', '这是“我好怕你”——你怕的不是人。'],
     ], { keep: true }),
     C('b', '晚上一个人走一条黑黑的小路，你会说——', [
-      ['*I’m scared.', '对：怕的是危险，用 scared / afraid。'],
-      ['I’m nervous.', 'nervous 更像考试、比赛、上台前的紧张。'],
+      ['*I’m **scared**.', '对：怕的是危险，用 scared / afraid。'],
+      ['I’m **nervous**.', 'nervous 更像考试、比赛、上台前的紧张。'],
     ], { keep: true }),
     T('t2', '', '后面跟的小词也不一样：afraid **of** / scared **of** + 怕的东西（afraid of the dark）；nervous **about** / worried **about** + 担心的事（nervous about the test）。'),
     fill('c', '放进句子，有的词用不上。', ['nervous', 'afraid', 'worried', 'scared', 'worry'], [
@@ -507,8 +537,8 @@ const EXT_NOTICE: Ext[] = [
   { id: 'x1', title: '没注意到 ≠ 没去看', need: 'always', steps: [
     T('t1', '', '刘师傅说：“Sorry, I didn’t notice anyone.”——**notice**：注意到。本来没特意去看，可是发现了；或者，没发现。'),
     C('a', '换一个场景：你在专心写作业，妈妈进了房间你都不知道。你会说——', [
-      ['*Sorry, Mum. I didn’t notice you.', '对：专心做别的事，没察觉到——notice。'],
-      ['Sorry, Mum. I didn’t look you.', 'look 后面要加 at，而且说的是“特意去看”。'],
+      ['*Sorry, Mum. I didn’t **notice** you.', '对：专心做别的事，没察觉到——notice。'],
+      ['Sorry, Mum. I didn’t **look** you.', 'look 后面要加 at，而且说的是“特意去看”。'],
     ], { keep: true }),
     C('b', '和 look、see 比一比：“I looked, but I didn’t see anything.” 是——', [
       ['*我去看了，可什么也没看见', '对：look 是去看，see 是看见。notice 是“没特意去看，却发现了”。'],
@@ -516,8 +546,8 @@ const EXT_NOTICE: Ext[] = [
     ], { keep: true }),
     T('t2', '', '侦探最爱问的一句：**Did you notice anything strange?**（你注意到什么奇怪的地方吗？）回答时说出那个细节：I noticed that her shoes were wet.（我注意到她的鞋是湿的。）'),
     C('c', '侦探问证人：“Did you notice anything strange?” 最好的回答是——', [
-      ['*Yes. I noticed that the back door was open.', '对：说出你注意到的那个细节。'],
-      ['Yes. I watched a boy.', 'watch 是盯着看一段时间；证人只是留意到。'],
+      ['*Yes. I **noticed** that the back door was open.', '对：说出你注意到的那个细节。'],
+      ['Yes. I **watched** a boy.', 'watch 是盯着看一段时间；证人只是留意到。'],
     ], { keep: true }),
     fill('d', '放进句子，有的词用不上。', ['notice', 'looked', 'watched', 'saw', 'look', 'seen'], [
       ['I ___ at the clock. It was 2:15.', 'looked', '线索：后面有 at the clock——特意把眼睛转过去看：looked at。look 不行：后面 It was 2:15 说的是过去，要用过去式。'],
@@ -527,8 +557,8 @@ const EXT_NOTICE: Ext[] = [
     ]),
     T('t3', '', 'notice 还能当名词：**通知、告示**——a notice on the wall（墙上贴的通知）。'),
     C('e', '哪一句用错了？', [
-      ['*I noticed TV for two hours last night.', '对，这句错了：看电视要说 I watched TV。'],
-      ['Did you notice her new haircut?', '这句没错：你注意到她的新发型了吗？'],
+      ['*I **noticed** TV for two hours last night.', '对，这句错了：看电视要说 I watched TV。'],
+      ['Did you **notice** her new haircut?', '这句没错：你注意到她的新发型了吗？'],
     ], { keep: true }),
   ] },
 ];
@@ -546,8 +576,8 @@ const EXT_CLUEWORD: Ext[] = [
       ['线索太多了', 'not enough 是“不够”。'],
     ], { keep: true }),
     C('c', '哪一句对？', [
-      ['*We found some evidence.', '对：evidence 不可数，不说 an evidence，要说 some evidence 或 a piece of evidence。'],
-      ['We found an evidence.', 'evidence 不能直接加 an。'],
+      ['*We found **some evidence**.', '对：evidence 不可数，不说 an evidence，要说 some evidence 或 a piece of evidence。'],
+      ['We found **an evidence**.', 'evidence 不能直接加 an。'],
     ], { keep: true }),
     T('t3', '', '“一点头绪都没有”，英语说：**I have no clue!** 或 **I haven’t got a clue!**'),
     C('d', '有人问 Ben“M 是谁？”，他耸耸肩：“I haven’t got a clue!” 意思是——', [
@@ -658,10 +688,10 @@ export const PLAY_EN1_ITEMS: Item[] = [
     lock: { words: ['borrow'] },
     ext: EXT_BORROW,
   }, C('a', 'Ben 说 Can I borrow your notebook? 要是换成 lend，这句话该怎么说？', [
-    ['*Can you lend me your notebook?', '对。lend 是借出：你把本子借给 Ben，所以主语换成了 you。'],
-    ['Can I lend your notebook?', '方向反了：lend 是借出去，可 Ben 是借进来的那个。'],
-    ['Can you borrow me your notebook?', 'borrow 后面不跟“借给谁”。'],
-    ['Can I lend you my notebook?', '这成了 Ben 要把他的本子借给你——可他根本没带本子。'],
+    ['*Can you **lend** me your notebook?', '对。lend 是借出：你把本子借给 Ben，所以主语换成了 you。'],
+    ['Can I **lend** your notebook?', '方向反了：lend 是借出去，可 Ben 是借进来的那个。'],
+    ['Can you **borrow** me your notebook?', 'borrow 后面不跟“借给谁”。'],
+    ['Can I **lend** you my notebook?', '这成了 Ben 要把他的本子借给你——可他根本没带本子。'],
   ], { cols: 1, reveal: 'chosen' })),
   item({
     id: 'e1-borrow1', st: 'en1', lv: 1, type: 'word', topic: 'borrow lend', label: 'borrow：借进来', intro: '', ask: 'borrow 和 lend 怎么分？',
@@ -771,8 +801,8 @@ export const PLAY_EN1_ITEMS: Item[] = [
   },
     T('t1', '', '金熊猫不见了。英语可以说：The Golden Panda is **missing**!（不见了、找不到）也可以说 It’s **gone**!（没了）。这一章的题目就是 Gone!'),
     C('a', 'Green 老师并没有把熊猫弄丢，是有人拿走了。哪一句说得最准确？', [
-      ['*The Golden Panda is missing!', '对：只说“不见了”，不说是谁弄的。'],
-      ['Ms Green lost the Golden Panda.', 'lost 是“她自己弄丢了”，可熊猫是被人拿走的。'],
+      ['*The Golden Panda is **missing**!', '对：只说“不见了”，不说是谁弄的。'],
+      ['Ms Green **lost** the Golden Panda.', 'lost 是“她自己弄丢了”，可熊猫是被人拿走的。'],
     ], { keep: true }),
     T('t2', '', '**lose**（lost, lost）：把自己的东西弄丢、找不到了（I lost my key.），也是“输”（We lost the match.）。**miss**：错过（miss the bus）、没打中（He missed the ball.），还有“想念”（I miss my family.）。'),
     C('b', 'Ben 来北京两个星期了。他给妈妈打电话：“I ___ you, Mum!”', [
@@ -780,8 +810,8 @@ export const PLAY_EN1_ITEMS: Item[] = [
       ['lose', 'lose 是弄丢，不是想念。'],
     ], { keep: true }),
     C('c', '“快点！还有二十分钟就颁奖了，可不能错过！”', [
-      ['*Hurry! We can’t miss the prize-giving!', '对：错过一件事，用 miss。'],
-      ['Hurry! We can’t lose the prize-giving!', 'lose 没有“错过”的意思。'],
+      ['*Hurry! We can’t **miss** the prize-giving!', '对：错过一件事，用 miss。'],
+      ['Hurry! We can’t **lose** the prize-giving!', 'lose 没有“错过”的意思。'],
     ], { keep: true }),
     fill('d', '放进句子，有的词用不上。', ['lost', 'missing', 'miss', 'gone', 'lose'], [
       ['I ___ my pen yesterday. Can I borrow yours?', 'lost', '线索：自己的笔，所以要借别人的——把自己的东西弄丢了：lost。lose 是原形，有 yesterday 要用过去式。'],

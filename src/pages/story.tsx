@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import { Lock, Star } from 'lucide-react';
 import { PLAYS, PLAY_BY_ID } from '../shared/play';
 import { LANES, NODES, ROWS, laneHas, type Lane, type MapNode } from '../shared/play/storymap';
-import { maxStarsOf, needFirst, playComplete, stationSide, stationStars } from '../shared/adapt';
+import { maxStarsOf, needFirst, openMode, playComplete, stationSide, stationStars } from '../shared/adapt';
 import { frameSvg } from '../film/Film';
 import { isOpen, lockReason, useGame } from '../game/store';
 import { sfx } from '../game/sound';
@@ -17,17 +17,18 @@ const readTab = () => { try { return localStorage.getItem(tabKey) === 'en' ? 'en
 
 export function StoryMap() {
   const [tab, setTab] = useState<'zh' | 'en'>(readTab);
+  const st = useGame((s) => s);
   const pick = (t: 'zh' | 'en') => { sfx('click'); setTab(t); try { localStorage.setItem(tabKey, t); } catch { /* 无痕模式 */ } };
   return (
     <div className="mx-auto max-w-[1320px] px-4 py-5">
       {DEMO && <div className="mb-4 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-3 text-amber-900">这是演示版：不用登录，也不保存记录（刷新页面就从头开始）。课堂版里，AI 会回答学生的提问、给写的句子评分；演示版里这些不连 AI。</div>}
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        {([['zh', '楚汉', '五个人的故事'], ['en', 'The Golden Panda', 'English']] as const).map(([t, a, b]) => (
+        {([['zh', '逐鹿天下', '《史记》里的秦末汉初'], ['en', 'The Golden Panda', 'English']] as const).map(([t, a, b]) => (
           <button key={t} onClick={() => pick(t)} className={`rounded-2xl border-2 px-5 py-2 text-left ${tab === t ? 'border-[#2B2722] bg-white shadow' : 'border-[#E6DCC6] bg-white/60 text-ink2'}`}>
             <div className={t === 'zh' ? 'kai text-3xl' : 'font-serif text-2xl font-black'}>{a}</div><div className="text-sm font-bold">{b}</div>
           </button>
         ))}
-        <div className="pb-1 text-ink2">{tab === 'zh' ? '戴上 AI 读书眼镜走进《史记》。选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。读完一站，下一站才打开。' : '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。'}</div>
+        <div className="pb-1 text-ink2">{tab === 'zh' ? '“秦失其鹿，天下共逐之。”戴上 AI 读书眼镜走进《史记》：选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。' : '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。'}{{ closed: '老师还没开放这一关。', progress: '读完一站，下一站才打开。', all: '哪一站都可以直接点开。' }[openMode(st.config.open, tab)]}</div>
       </div>
       <Tally tab={tab} />
       {tab === 'zh' ? <ZhMap /> : <EnList />}

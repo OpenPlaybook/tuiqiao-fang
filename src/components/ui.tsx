@@ -8,14 +8,25 @@ import { renderArt } from '../art/ink';
 import type { Art as ArtSpec } from '../shared/types';
 import { DEMO } from '../game/demo';
 
-// ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置 ----------------
+// ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置、〔原文｜白话〕点一下看白话 ----------------
 import { createContext, useContext } from 'react';
 import type { Gloss } from '../shared/types';
 import type { GlossAt } from '../shared/gloss';
 /** onGloss 的 at：被点的那一处在哪段文字里、是第几个——句中解释按它找（不同句子里的同一个字，解释不一样） */
 export interface GlossCtx { gloss: Record<string, Gloss>; onGloss?: (w: string, g: Gloss, el: HTMLElement, at?: GlossAt) => void; marker?: (n: string, text?: string) => ReactNode }
 export const GlossContext = createContext<GlossCtx>({ gloss: {} });
-const TOK = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_{3,}|⟦[^⟧]+⟧|⟪[^⟫]+⟫|⟨[^⟩]+⟩)/;
+const TOK = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_{3,}|⟦[^⟧]+⟧|⟪[^⟫]+⟫|⟨[^⟩]+⟩|〔[^〕]+〕)/;
+/** 讲解里引的文言：原文后面一个小“译”字，点开在后面接着显示白话（学生需要才看） */
+const Yi = ({ wy, bh }: { wy: string; bh: string }) => {
+  const [on, setOn] = useState(false);
+  return (
+    <span>
+      <Rich text={wy} />
+      <button onClick={(e) => { e.stopPropagation(); sfx('click'); setOn(!on); }} className="mx-0.5 inline-block rounded border border-[#9A5B2E]/50 px-1 align-[1px] text-[0.72em] font-bold leading-[1.35] text-[#9A5B2E] hover:bg-[#9A5B2E]/10">{on ? '收起' : '译'}</button>
+      {on && <span className="rounded bg-[#9A5B2E]/10 px-1 font-normal text-[#5B4636]">（<Rich text={bh} />）</span>}
+    </span>
+  );
+};
 export const Rich = ({ text, className = '', fill, fills }: { text: string; className?: string; fill?: string; fills?: string[] }) => {
   const ctx = useContext(GlossContext);
   const lines = text.split('\n');
@@ -33,6 +44,7 @@ export const Rich = ({ text, className = '', fill, fills }: { text: string; clas
       return <span key={j} className="gloss" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); ctx.onGloss?.(w, g, e.currentTarget, { text, n }); }}>{w}</span>;
     }
     if (part.startsWith('⟪')) { const w = part.slice(1, -1), py = ctx.gloss[w]?.py; return py ? <ruby key={j}>{w}<rt>{py}</rt></ruby> : <span key={j}>{w}</span>; }
+    if (part.startsWith('〔')) { const [wy, bh] = part.slice(1, -1).split('｜'); return bh ? <Yi key={j} wy={wy} bh={bh} /> : <span key={j}>{wy}</span>; }
     if (part.startsWith('⟨')) { const [n, ...t] = part.slice(1, -1).split('|'); return <span key={j}>{ctx.marker ? ctx.marker(n, t.length ? t.join('|') : undefined) : t.length ? <Rich text={t.join('|')} /> : null}</span>; }
     return <span key={j}>{part}</span>;
   };

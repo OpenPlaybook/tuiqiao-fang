@@ -25,7 +25,7 @@ export function JoinPage() {
           <div className="relative flex h-full flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-8 text-white">
             <div className="kai text-5xl tracking-widest">字里行间</div>
             <div className="mt-2 text-lg opacity-90">一个字、一个词，都是线索。</div>
-            <div className="mt-3 text-sm opacity-75">楚汉五人 · 《史记》 · English</div>
+            <div className="mt-3 text-sm opacity-75">《史记》· 逐鹿天下 · The Golden Panda</div>
           </div>
         </div>
         <div className="p-10">

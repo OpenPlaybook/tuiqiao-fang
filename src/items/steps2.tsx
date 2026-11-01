@@ -671,14 +671,15 @@ export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & 
   // 量每一项的位置（线从左边一项的右边缘，连到右边一项的左边缘）
   useLayoutEffect(() => {
     const el = box.current; if (!el) return;
+    // 用 offsetLeft / offsetTop 量（相对这个框，不受外面弹窗缩放动画的影响——用 getBoundingClientRect 在弹窗放大的那一下量，回来看时线就错位了）
     const measure = () => {
-      const b = el.getBoundingClientRect();
-      const at = (e: HTMLDivElement | null, side: 'l' | 'r') => { if (!e) return { x: 0, y: 0 }; const r = e.getBoundingClientRect(); return { x: (side === 'l' ? r.right : r.left) - b.left, y: r.top + r.height / 2 - b.top }; };
-      setGeo({ w: b.width, h: b.height, l: s.left.map((_, i) => at(lRef.current[i], 'l')), r: s.right.map((_, j) => at(rRef.current[j], 'r')) });
+      const at = (e: HTMLDivElement | null, side: 'l' | 'r') => { if (!e) return { x: 0, y: 0 }; return { x: e.offsetLeft + (side === 'l' ? e.offsetWidth : 0), y: e.offsetTop + e.offsetHeight / 2 }; };
+      setGeo({ w: el.offsetWidth, h: el.offsetHeight, l: s.left.map((_, i) => at(lRef.current[i], 'l')), r: s.right.map((_, j) => at(rRef.current[j], 'r')) });
     };
     measure();
-    const ro = new ResizeObserver(measure); ro.observe(el); return () => ro.disconnect();
-  }, [s]);
+    const ro = new ResizeObserver(measure); ro.observe(el); [...lRef.current, ...rRef.current].forEach((e) => e && ro.observe(e));
+    return () => ro.disconnect();
+  }, [s, solved]);
   const link = (i: number, j: number) => { if (solved) return; sfx('click'); setSel((p) => ({ ...p, [i]: j })); setBad((x) => x.filter((y) => y !== i)); setPickL(null); setPickR(null); };
   const tapL = (i: number) => { if (solved) return; if (pickR !== null) return link(i, pickR); sfx('click'); setPickL(pickL === i ? null : i); };
   const tapR = (j: number) => { if (solved) return; if (pickL !== null) return link(pickL, j); sfx('click'); setPickR(pickR === j ? null : j); };
@@ -711,6 +712,7 @@ export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & 
     </div>
   );
   const toneL = (i: number) => (solved ? '#059669' : bad.includes(i) ? '#E11D48' : LINE_C[i % LINE_C.length]);
+  if (solved) return <div><Q text={s.q} /><MatchDone s={s} /></div>;
   return (
     <div>
       <Q text={s.q} />
@@ -730,7 +732,28 @@ export const MatchPlay = ({ it, s, onDone, color, init }: StepProps<MatchSub> & 
         </svg>
       </div>
       {!solved && <div className="mt-2 flex items-center gap-3"><Btn size="sm" color={color} disabled={!all} onClick={check}>检查</Btn>{bad.length > 0 ? <span className="text-sm font-bold text-rose-700">有 {bad.length} 条线连错了（红色虚线），改一改。</span> : <span className="text-sm text-ink2">点左边一项，再点右边一项，就连上了；也可以直接拖过去。</span>}</div>}
-      {solved && <div className="mt-1.5"><Why tone="ok"><Rich text={s.why} /></Why></div>}
+    </div>
+  );
+};
+/** 连线做完的样子：一对一行，中间一条直线，这一对的讲解写在下面（不再把所有讲解堆在最后一段） */
+const MatchDone = ({ s }: { s: MatchSub }) => {
+  const box = 'rounded-lg border-2 border-emerald-300 bg-white px-2.5 py-1.5 text-[15px] font-bold leading-snug';
+  const extra = s.right.filter((_, j) => !s.pairs.includes(j));
+  return (
+    <div className="space-y-1.5">
+      {(s.lh || s.rh) && <div className="grid grid-cols-[1fr_28px_1fr] text-[12px] font-black text-ink2"><div>{s.lh}</div><div /><div>{s.rh}</div></div>}
+      {s.left.map((l, i) => (
+        <div key={i}>
+          <div className="grid grid-cols-[1fr_28px_1fr] items-center">
+            <div className={box}><Rich text={l} /></div>
+            <div className="h-[3px] bg-emerald-500" />
+            <div className={box}><Rich text={s.right[s.pairs[i]]} /></div>
+          </div>
+          {s.whys?.[i] && <Why tone="ok"><Rich text={s.whys[i]} /></Why>}
+        </div>
+      ))}
+      {extra.length > 0 && <div className="text-[13px] text-ink2">没用上的：{extra.map((x, k) => <span key={k} className="mx-1 rounded border border-[#E6DCC6] bg-white px-1.5 py-0.5"><Rich text={x} /></span>)}</div>}
+      {s.why && <Why tone="ok"><Rich text={s.why} /></Why>}
     </div>
   );
 };

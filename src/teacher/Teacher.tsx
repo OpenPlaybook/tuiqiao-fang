@@ -1,7 +1,7 @@
 // 教师后台：学生（星星、加权分、三条线的能力）、题目（错得最多的选项）、好句子、AI、设置。
 import { useState } from 'react';
 import { api,base, type TeacherState } from '../game/api';
-import { STATIONS, TRACKS, LV_NAME } from '../shared/adapt';
+import { STATIONS, TRACKS, LV_NAME, openMode, openPatch } from '../shared/adapt';
 import { STATION_IDS, type Lv } from '../shared/types';
 import { Avatar, Btn, Modal } from '../components/ui';
 
@@ -30,10 +30,15 @@ function TeacherBody({st}:{st:TeacherState}){
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white/70 px-4 py-2">
         <span className="font-black">开放关卡：</span>
-        {([['zh', '📜 楚汉（五条故事线）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8']] as const).map(([k, t, col]) => <button key={k} onClick={() => setCfg({ open: { ...c.open, [k]: !c.open[k] } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open[k] ? 'text-white' : 'bg-white text-ink2'}`} style={c.open[k] ? { background: col, borderColor: col } : { borderColor: '#E6DCC6' }}>{t}</button>)}
-        <button onClick={() => setCfg({ open: { ...c.open, zh: true, en: true } })} className="text-sm underline">全部开放</button>
-        <span className="mx-1 h-5 w-px bg-[#E6DCC6]" />
-        <button onClick={() => setCfg({ open: { ...c.open, all: !c.open.all } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open.all ? 'border-[#2B2722] bg-[#2B2722] text-white' : 'border-[#E6DCC6] bg-white text-ink2'}`}>{c.open.all ? '🔓 任意看：哪一站都能点开' : '🔒 按进度：读完一站，下一站才打开'}</button>
+        {([['zh', '📜 逐鹿天下（《史记》）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8']] as const).map(([k, t, col]) => { const m = openMode(c.open, k); return (
+          <div key={k} className="flex items-center gap-1.5">
+            <span className="text-sm font-black" style={{ color: col }}>{t}</span>
+            <div className="flex overflow-hidden rounded-full border-2" style={{ borderColor: col }}>
+              {([['closed', '不开放'], ['progress', '按进度'], ['all', '全部开放']] as const).map(([v, lab]) => <button key={v} onClick={() => setCfg({ open: { ...c.open, ...openPatch(k, v) } })} className={`px-3 py-1 text-sm font-black ${m === v ? 'text-white' : 'bg-white text-ink2 hover:bg-[#F6EFDF]'}`} style={m === v ? { background: col } : {}}>{lab}</button>)}
+            </div>
+          </div>
+        ); })}
+        <span className="text-[13px] text-ink2">按进度：读完一站，下一站才打开；全部开放：哪一站都能点开</span>
       </div>
 
       {tab === 'players' && (

@@ -2,7 +2,7 @@ import {DEMO} from './demo';
 import { useSyncExternalStore } from 'react';
 import { RequestError } from '@/src/shared/http';
 import {STATION_IDS,type Player,type GameConfig,type Item,type LogEntry,type Rec,type StationId} from '../shared/types';
-import {newPlayer,progressOpen} from '../shared/adapt';
+import {newPlayer,progressOpen,openMode,trackOf} from '../shared/adapt';
 import { api,ApiError,lessonId,flow,setParticipant } from './api';
 import { mergeProgress } from '../shared/sync';
 import { playerSchema,configSchema } from '../../server/schema';
@@ -35,14 +35,11 @@ export const getState = () => state;
 // 离线 30 秒以上：所有关卡自动开放，进度先存在本机，连上后再同步
 export const OFFLINE_MS = 30000;
 export const isOfflineTeaching=()=>{const read=flow.view('tuiqiao.classroom').getSnapshot();return !!read.networkRecoveringSince&&Date.now()-read.networkRecoveringSince>OFFLINE_MS;};
-// 按两条大线开放（zh、en）；旧的设置里没有这两个键时，中文哪一回开着就算整个中文开着，英文同理
-const trackOpen=(o:Record<string,boolean>,t:'zh'|'en')=>o[t]??Object.entries(o).some(([k,v])=>v&&new RegExp('^'+t+'\\d').test(k));
-const trackOf=(lv:StationId)=>/^en\d/.test(lv)?'en':'zh';
-/** 老师开了这条线（中文 / 英文）没有 */
-export const trackIsOpen=(s:State,lv:StationId)=>trackOpen(s.config.open,trackOf(lv));
+/** 老师开了这个关卡（中文 / 英文）没有：不开放、按进度、全部开放三种，各关卡分开设（openMode） */
+export const trackIsOpen=(s:State,lv:StationId)=>openMode(s.config.open,trackOf(lv))!=='closed';
 /** 学生能不能看这一站：老师开了这条线，再看是不是“任意看”；不是的话按学生自己的进度一站一站往下（progressOpen）。
  *  旧设置里没有 zh / en 两个键时，按回开着的那一回照旧能看 */
-export const isOpen=(s:State,lv:StationId)=>{const o=s.config.open;if(isOfflineTeaching())return true;if(o[trackOf(lv)]===undefined&&o[lv])return true;return trackOpen(o,trackOf(lv))&&(!!o.all||progressOpen(s.player,lv));};
+export const isOpen=(s:State,lv:StationId)=>{const o=s.config.open;if(isOfflineTeaching())return true;if(o[trackOf(lv)]===undefined&&o[lv])return true;const m=openMode(o,trackOf(lv));return m==='all'||(m==='progress'&&progressOpen(s.player,lv));};
 /** 锁着的原因：teacher 老师还没开这条线；progress 要先读完前一站 */
 export const lockReason=(s:State,lv:StationId):'teacher'|'progress'|null=>isOpen(s,lv)?null:trackIsOpen(s,lv)?'progress':'teacher';
 

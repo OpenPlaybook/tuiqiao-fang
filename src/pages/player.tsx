@@ -68,7 +68,10 @@ export default function PlayerPage({ id }: { id: string }) {
   // 讲解方式：中文默认“白话”，英文默认“英文字幕”（中间那一档）
   const [mode, setMode] = useState<Mode>(() => { const ms = MODES[lang].map((x) => x.m), d: Mode = en ? 'en2' : 'bh'; try { const m = localStorage.getItem(modeKey(lang)) as Mode; return ms.includes(m) ? m : d; } catch { return d; } });
   useEffect(() => { setEnS({}); }, [mode]);
-  const lineDur = (l: Line) => { const v = voiceLine(l, mode); return (dur[voiceFile(v)] ?? EST(v.read ?? v.t)) + (l.pause ?? 0.35); };
+  // 这一句有题、是原文、题还没做完：白话模式也念原文、显示原文（题就是考读懂这句文言，先说白话就等于把答案说了）
+  const modeAt = (k: number): Mode => (mode === 'bh' && !en && !!lines[k]?.wy && lineLock(k) ? 'wy' : mode);
+  const vline = (l: Line) => voiceLine(l, modeAt(lines.indexOf(l)));
+  const lineDur = (l: Line) => { const v = vline(l); return (dur[voiceFile(v)] ?? EST(v.read ?? v.t)) + (l.pause ?? 0.35); };
   // 出题句（AI 眼镜的错译、“___ 填什么”这类问句）：题做完以后再播就跳过，进度条上也不占时间
   const promptDone = (k: number) => { const l = lines[k]; if (!l?.prompt) return false; const tk = l.prompt === true ? k : lines.findIndex((x) => x.id === l.prompt); return tk >= 0 && !!items[tk] && done(tk) && extOk(tk); };
   // 只为出支线题才有的句子（问句、AI 眼镜的错译、小结）：播放时也跳过，这句话放进支线任务的弹窗里
@@ -150,7 +153,7 @@ export default function PlayerPage({ id }: { id: string }) {
     if (phase !== 'play') return;
     if (skip(idx)) { const tm = window.setTimeout(endLine, 0); return () => clearTimeout(tm); } // 做完了的出题句、只为支线题才有的句子：直接跳过
     let alive = true, iv = 0;
-    const l = lines[idx], file = voiceFile(voiceLine(l, mode));
+    const l = lines[idx], file = voiceFile(vline(l));
     const start = (src?: string) => {
       if (!alive) return;
       waiting.current = false; setWait(null);
@@ -183,7 +186,7 @@ export default function PlayerPage({ id }: { id: string }) {
   // 预先取：从这一句往后，眼前几句马上取，其余后台慢慢取（换讲解方式就按新的方式重排）
   useEffect(() => {
     if (!durMap || muted || noVoice) return;
-    planVoices(lines.slice(idx).map((l) => voiceFile(voiceLine(l, mode))).filter((f) => durMap[f]));
+    planVoices(lines.slice(idx).map((l) => voiceFile(vline(l))).filter((f) => durMap[f]));
   }, [idx, mode, durMap, muted, noVoice]);
   const wordAudio = useRef<HTMLAudioElement | null>(null);
   const sayWord = (w: string) => { const file = voiceFile(wordVoice(w)); loadVoice(file, 0).then((u) => { const a = (wordAudio.current ??= new Audio()); a.src = u; a.play().catch(() => {}); }, () => {}); };
@@ -277,7 +280,7 @@ export default function PlayerPage({ id }: { id: string }) {
                 </motion.div>
               )}
             </AnimatePresence>
-            {atTask && <TaskView key={item!.id} en={en} it={item!} line={line} prev={cardBefore(lines, idx)} stem={stem} mode={mode} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
+            {atTask && <TaskView key={item!.id} en={en} it={item!} line={line} prev={cardBefore(lines, idx)} stem={stem} mode={modeAt(idx)} color={play.color} bh={bs.h - CTRL} bottomEl={bottomEl} onCont={cont} onExt={(ext) => setExtOpen({ it: item!, ext })} onBack={jump} onHint={(h) => { setHint(h); markUnsure(item!); }} />}
             {hint && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="absolute right-3 top-3 z-20 flex max-w-[44%] gap-2 rounded-2xl bg-white/95 px-3.5 py-2.5 shadow-xl">
                 <Glasses size={20} className="mt-0.5 shrink-0 text-sky-600" /><div className="text-[15px] font-bold leading-relaxed"><Rich text={hint} /></div>
@@ -297,7 +300,7 @@ export default function PlayerPage({ id }: { id: string }) {
             {showSub && !stem && (
               <div className="subline absolute inset-x-0 bg-gradient-to-t from-black/70 to-black/0 px-6 pb-1.5 pt-6 text-center font-bold leading-relaxed text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]" style={{ fontSize: subSize, bottom: Math.max(0, CTRL - vy) }}>
                 {line.who && <span className={`mr-2 rounded-md px-2 py-0.5 align-middle text-[0.62em] ${line.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{line.voice === 'ai' ? <Glasses size={16} className="inline" /> : <Rich text={line.who} />}</span>}
-                <LineText key={idx} l={line} mode={mode} lock={lineLock(idx)} k={idx} />
+                <LineText key={idx} l={line} mode={modeAt(idx)} lock={lineLock(idx)} k={idx} />
               </div>
             )}
             {/* 等配音：加载中（过 0.35 秒还没好才显示，免得一闪）；取不到就让学生选 */}
@@ -517,8 +520,8 @@ function LineText({ l, mode, lock, min = 0, max = 2, k }: { l: Line; mode: Mode;
   return (
     <>
       <span className="kai text-[1.08em]"><Rich text={l.wy} /></span>
-      {mode === 'wy' && <button onClick={(e) => { e.stopPropagation(); setShow(!show); }} className="morebtn ml-1.5 rounded-md border border-current px-1.5 align-middle font-sans text-[13px] font-bold leading-[1.5]">{show ? '收起' : '白话'}</button>}
-      {(mode === 'dz' || show) && <span className="mt-0.5 block text-[0.9em] font-normal opacity-90"><Rich text={l.t} /></span>}
+      {mode === 'wy' && !lock && <button onClick={(e) => { e.stopPropagation(); setShow(!show); }} className="morebtn ml-1.5 rounded-md border border-current px-1.5 align-middle font-sans text-[13px] font-bold leading-[1.5]">{show ? '收起' : '白话'}</button>}
+      {(mode === 'dz' || show) && !lock && <span className="mt-0.5 block text-[0.9em] font-normal opacity-90"><Rich text={l.t} /></span>}
     </>
   );
 }
@@ -643,7 +646,7 @@ function Script({ play, mode, items, sides, far, idx, phase, maxIdx, onSeek, onT
                 {l.voice === 'ai' && <Glasses size={15} className="mr-1 inline align-[-2px] text-sky-600" />}
                 {l.who && l.voice !== 'ai' && <span className="mr-1 font-sans text-[13px] font-black text-[#9A5B2E]"><Rich text={l.who} />：</span>}
                 {!l.who && yuan && l.card?.by && <span className="mr-1 font-sans text-[12px] font-black text-[#8A6A2F]">{l.card.by}</span>}
-                <LineText l={l} mode={mode} lock={lineLock(k)} k={k} />
+                <LineText l={l} mode={mode === 'bh' && l.wy && lineLock(k) ? 'wy' : mode} lock={lineLock(k)} k={k} />
                 {l.tr !== undefined && <><EnMore l={l} k={k} lock={lineLock(k)} /><ZhText l={l} k={k} lock={lineLock(k)} /></>}
               </div>
               {showTask && (

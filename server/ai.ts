@@ -10,6 +10,7 @@ import type {Classroom} from './schema';
 import type {WriteSub} from '../src/shared/types';
 import {ITEM_BY_ID} from '../src/shared/bank';
 import {PLAY_BY_ID,plainText} from '../src/shared/play';
+import {openMode,trackOf} from '../src/shared/adapt';
 import {askSystem,askUser,cleanAsk,EN_SYSTEM,ZH_SYSTEM,judgeUser,cleanZh,cleanEn,type AskOut} from '../src/shared/ai';
 export const aiReady=()=>process.env.RDFZ_MODEL_ACCESS==='1';
 export const aiLeft=(s:Classroom,pid:string)=>Math.max(0,s.ai.quota+(s.ai.extra[pid]??0)-(s.ai.usage[pid]??0));
@@ -32,8 +33,9 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
   if(s.roundId!==b.roundId)throw new ToolError(410,'课堂已清空，请重新加入');
   const p=authenticate(s,b.pid,b.token);
   if(!s.config.ai)throw new ToolError(403,'老师暂时关闭了 AI');
-  if(it&&!s.config.open[it.st])throw new ToolError(403,'老师尚未开放这一回');
-  if(play&&!s.config.open[play.id])throw new ToolError(403,'老师尚未开放这一回');
+  // 按关卡开放（中文 / 英文）：关卡关着、也没有单独开这一回（旧设置）才拦
+  if(it&&openMode(s.config.open,trackOf(it.st))==='closed'&&!s.config.open[it.st])throw new ToolError(403,'老师尚未开放这一关');
+  if(play&&openMode(s.config.open,trackOf(play.id))==='closed'&&!s.config.open[play.id])throw new ToolError(403,'老师尚未开放这一关');
   s.ai.leases=Object.fromEntries(Object.entries(s.ai.leases).filter(([,l])=>l.expires>Date.now()));
   if(Object.values(s.ai.leases).some(l=>l.pid===b.pid))throw new ToolError(429,'上一个问题还在回答中');
   if(Object.keys(s.ai.leases).length>=30)throw new ToolError(429,'同时提问人数较多，请稍后再试');

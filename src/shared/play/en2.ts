@@ -100,9 +100,9 @@ const EXT_ASK: Ext[] = [
   { id: 'x1', title: '问过去：be 动词搬到前面', need: 'always', steps: [
     T('t1', '', '问“那时候在哪儿”，用 **Where + was / were + 主语**：Where **were** you at 2:15? Where **was** Max?', ['You were in the office. → Where were you?', 'Max was backstage. → Where was Max?']),
     C('a', '想问 Mia 两点一刻在哪儿，哪一句对？', [
-      ['*Where was Mia at 2:15?', '对：主语 Mia 是一个人，用 was。'],
-      ['Where were Mia at 2:15?', 'Mia 是一个人，用 was。'],
-      ['Where did Mia at 2:15?', 'did 后面要跟动作，“在哪儿”用 was。'],
+      ['*Where **was** Mia at 2:15?', '对：主语 Mia 是一个人，用 was。'],
+      ['Where **were** Mia at 2:15?', 'Mia 是一个人，用 was。'],
+      ['Where **did** Mia at 2:15?', 'did 后面要跟动作，“在哪儿”用 was。'],
     ], { keep: true }),
     fill('b', '把问句补全，有的词用不上。', ['were', 'was', 'did', 'does'], [
       ['Where ___ you and Ben at 2:15?', 'were', '线索：主语是 you and Ben（两个人），后面没有别的动作——用 were。'],
@@ -112,7 +112,12 @@ const EXT_ASK: Ext[] = [
   ] },
   { id: 'x2', title: '侦探的问话', need: 'opt', steps: [
     T('t1', '', '问不在场证明，侦探常问这几句：Where were you at …? / What were you doing at …? / Who was with you? / Can anyone prove it?（有人能证明吗？）'),
-    Mt('a', '问题和回答连一连。', ['Where were you at 2:15?', 'What were you doing?', 'Who was with you?', 'Can anyone prove it?'], ['I was in the office.', 'I was printing certificates.', 'Nobody. I was alone.', 'Yes — look at this half-printed certificate.'], [0, 1, 2, 3], 'where 问地方，what … doing 问在做什么，who 问和谁在一起，prove 问证据。', { lh: 'Question', rh: 'Answer' }),
+    Mt('a', '问题和回答连一连。', ['Where were you at 2:15?', 'What were you doing?', 'Who was with you?', 'Can anyone prove it?'], ['I was in the office.', 'I was printing certificates.', 'Nobody. I was alone.', 'Yes — look at this half-printed certificate.'], [0, 1, 2, 3], '侦探问不在场证明：在哪儿、在做什么、和谁、能不能证明，一样一样问。', { lh: 'Question', rh: 'Answer', whys: [
+      'Where 问地方——答 in the office（在办公室）。',
+      'What … doing 问那时在做什么——答一个正在做的动作：was printing。它和上一句的回答都以 I was 开头：一个说地方，一个说动作。',
+      'Who 问和谁在一起——Nobody. I was alone.（没有人，我一个人）',
+      'prove 是“证明”——拿出证据来：这张只印了一半的证书。',
+    ] }),
   ] },
 ];
 
@@ -125,8 +130,8 @@ const EXT_WHEN: Ext[] = [
     ], { keep: true }),
     T('t1', '', '灯“一下子”灭了，打印机“一下子”停了——这是突然发生的事，用一般过去时：went out、stopped。正在进行的背景，才用 was / were doing：I was printing.', undefined, viz('timeline', { mode: 'bg', bar: 'was printing（一直在打印）', dot: '⚡ 2:15 the lights went out / the printer stopped', note: '打印是背景；灯灭、打印机停，是一下子发生的事' })),
     C('a', '“灯灭的时候，我正在打印证书。”哪一句对？', [
-      ['*When the lights went out, I was printing the certificates.', '对：灭灯是一下子（went out），打印是一直在做的背景（was printing）。'],
-      ['When the lights were going out, I printed the certificates.', '反了：灭灯是一下子发生的，打印才是背景。'],
+      ['*When the lights **went out**, I **was printing** the certificates.', '对：灭灯是一下子（went out），打印是一直在做的背景（was printing）。'],
+      ['When the lights **were going out**, I **printed** the certificates.', '反了：灭灯是一下子发生的，打印才是背景。'],
     ], { keep: true }),
     fill('b', '用对的形式填空，有的词用不上。', ['stopped', 'was printing', 'went out', 'was eating', 'printing', 'were eating'], [
       ['Ms Green ___ certificates at 2:15.', 'was printing', '线索：at 2:15 这一刻——正在做的事：was printing。只填 printing 不行：前面少了 was。'],
@@ -160,9 +165,9 @@ const EXT_WAS: Ext[] = [
   ] },
   { id: 'x2', title: '回答要配上问题', need: 'opt', steps: [
     C('a', 'Ben 问：What were you doing at 2:15? 哪个回答最好？', [
-      ['*I was packing my drums.', '对：问“那一刻在做什么”，就用 was doing 回答。'],
-      ['I pack my drums.', '这是平常的习惯，不是那一刻。'],
-      ['I packed my drums.', '只说做了这件事，没说出“那一刻正在做”。'],
+      ['*I **was packing** my drums.', '对：问“那一刻在做什么”，就用 was doing 回答。'],
+      ['I **pack** my drums.', '这是平常的习惯，不是那一刻。'],
+      ['I **packed** my drums.', '只说做了这件事，没说出“那一刻正在做”。'],
     ]),
   ] },
 ];
@@ -184,9 +189,9 @@ const EXT_WHILE: Ext[] = [
   { id: 'x2', title: 'while 和 during', need: 'opt', steps: [
     T('t1', '', 'while 后面跟一句话（主语 + 动作）；**during** 后面只跟一个名词：during the festival、during the blackout（停电期间）。'),
     C('a', '哪一句对？', [
-      ['*The panda disappeared during the festival.', '对：during + 名词。'],
-      ['The panda disappeared during I was eating.', 'during 后面不能跟一句话，要用 while。'],
-      ['The panda disappeared while the festival.', 'while 后面要跟一句话。'],
+      ['*The panda disappeared **during** the festival.', '对：during + 名词。'],
+      ['The panda disappeared **during** I was eating.', 'during 后面不能跟一句话，要用 while。'],
+      ['The panda disappeared **while** the festival.', 'while 后面要跟一句话。'],
     ]),
   ] },
 ];
@@ -195,9 +200,9 @@ const EXT_MIA: Ext[] = [
   { id: 'x1', title: '东西往哪边走', need: 'always', steps: [
     T('t1', '', '还记得第一章吗？**borrow**：东西往自己这边来（借进来）；**lend**：东西从自己手里出去（借出去）。中文都说“借”，所以最容易用反。', ['Can I borrow your pen?（我借你的笔）', 'Can you lend me your pen?（你把笔借给我）']),
     C('a', 'Mia 想要 Ben 的笔。她可以说——', [
-      ['*Can I borrow your pen? 或 Can you lend me your pen?', '对：两句都行，主语不一样，动词就不一样。'],
-      ['Can you borrow me your pen?', '这是 Mia 说错的句子：borrow 后面不能跟“借给谁”。'],
-      ['Can I lend your pen?', 'lend 是借出去，Mia 是要借进来。'],
+      ['*Can I **borrow** your pen? 或 Can you **lend** me your pen?', '对：两句都行，主语不一样，动词就不一样。'],
+      ['Can you **borrow** me your pen?', '这是 Mia 说错的句子：borrow 后面不能跟“借给谁”。'],
+      ['Can I **lend** your pen?', 'lend 是借出去，Mia 是要借进来。'],
     ], { keep: true }),
     fill('b', '填 borrow 或 lend（注意形式），有的词用不上。', ['borrow', 'lend', 'lent', 'borrowed', 'lends'], [
       ['Could you ___ me your notebook? I’ll give it back.', 'lend', '线索：Could you ___ me——你借给我：lend。'],
@@ -230,12 +235,12 @@ const EXT_ALIBI: Ext[] = [
     ]),
     T('t2', '', 'Ben 刚才说：“We’ve **talked** to all three.”——问的事发生在过去，结果留到现在：三个人现在都问过了。第一章 Green 老师喊的 Someone **has taken** it! 也是这样：拿走发生在过去，现在桌上空着。'),
     C('c', '要说清楚“两点四十五分，我们和 Max 谈过”，哪一句对？', [
-      ['*We talked to Max at 2:45.', '对：说出了具体的时间点（at 2:45），用一般过去时。'],
-      ['We’ve talked to Max at 2:45.', '现在完成时说的是到现在的结果，不和 at 2:45 这样具体的过去时间连用。'],
+      ['*We **talked** to Max at 2:45.', '对：说出了具体的时间点（at 2:45），用一般过去时。'],
+      ['We**’ve talked** to Max at 2:45.', '现在完成时说的是到现在的结果，不和 at 2:45 这样具体的过去时间连用。'],
     ], { keep: true }),
     C('d', '“三个人我们都问过了。下一步，看纸条。”Ben 会说——', [
-      ['*We’ve talked to all three. Now let’s look at the note.', '对：问完了，结果留到现在，接着做下一步。'],
-      ['We were talking to all three. Now let’s look at the note.', 'were talking 是“那时正在谈”，说的不是“已经问完了”。'],
+      ['***We’ve talked** to all three. Now let’s look at the note.', '对：问完了，结果留到现在，接着做下一步。'],
+      ['We **were talking** to all three. Now let’s look at the note.', 'were talking 是“那时正在谈”，说的不是“已经问完了”。'],
     ], { keep: true }),
   ] },
 ];
@@ -265,7 +270,12 @@ const EXT_SUSPECT: Ext[] = [
       ['*我怀疑那个鼓箱太小了（装不下）', '对：这里是动词，“怀疑、猜想”。'],
       ['我是那个鼓箱的嫌疑人', 'suspect 后面跟着一句话，是动词。'],
     ], { keep: true }),
-    Mt('c', '侦探故事里的人和词，连一连。', ['suspect', 'witness', 'detective', 'alibi'], ['嫌疑人', '目击者、证人', '侦探', '不在场证明'], [0, 1, 2, 3], '刘师傅看见了拿鼓箱的男孩：他是 witness；你和 Ben 是 detectives；Max 说自己在搬鼓，是他的 alibi。', { lh: '英语', rh: '中文' }),
+    Mt('c', '侦探故事里的人和词，连一连。', ['suspect', 'witness', 'detective', 'alibi'], ['嫌疑人', '目击者、证人', '侦探', '不在场证明'], [0, 1, 2, 3], '', { lh: '英语', rh: '中文', whys: [
+      'suspect：有可能做了这件事、还没查清楚的人。有嫌疑，不等于就是坏人。',
+      'witness：亲眼看见事情经过的人，可以出来作证。别和 suspect 弄混：witness 是看见的人，suspect 是被怀疑的人。',
+      'detective：查案、找线索的人。',
+      'alibi：“那时我在别处”的证明——能说明这件事不可能是他做的。',
+    ] }),
     fill('d', '放进句子，有的词用不上。', ['suspect', 'witness', 'alibi', 'detectives', 'thief'], [
       ['Mr Liu saw a boy with a drum case. He is a ___.', 'witness', '线索：他“看见了”事情——目击者：witness，不是嫌疑人。'],
       ['Max was near the stage at 2:15, so he is a ___.', 'suspect', '线索：当时在现场附近——有嫌疑的人：suspect。thief 是确定偷了东西的人；只是在现场附近，还不能叫他 thief。'],
@@ -283,7 +293,12 @@ const EXT_LOOK: Ext[] = [
       ['look 和 see 意思一样，换着用', '不一样：look 是动作，see 是结果。'],
     ], { keep: true }),
     T('t2', '', 'look 后面加不同的小词，意思就变了：**look at**（看着）、**look for**（找）、**look inside**（往里看）、**look after**（照顾）、**look like**（看起来像）。'),
-    Mt('b', '连一连。', ['look for', 'look inside', 'look after', 'look like'], ['照顾', '看起来像', '找', '往里面看'], [2, 3, 0, 1], 'look 是“看”，后面的小词定方向：for 找、inside 往里、after 照顾、like 像。', { lh: '英语', rh: '中文' }),
+    Mt('b', '连一连。', ['look for', 'look inside', 'look after', 'look like'], ['照顾', '看起来像', '找', '往里面看'], [2, 3, 0, 1], 'look 后面的小词一换，意思就变了。', { lh: '英语', rh: '中文', whys: [
+      'for 有“为了得到”的意思：look for 是到处看、想找到它——look for a pen。',
+      'inside 是“里面”：look inside 是往里面看——look inside the box。',
+      'look after 是照看、照顾——look after the baby。这个意思从字面猜不出来，要记住。',
+      'like 是“像”：look like 是看起来像——It looks like a cat.',
+    ] }),
     fill('c', '放进句子，有的词用不上。', ['look for', 'look inside', 'look after', 'looks like', 'looking for', 'look like'], [
       ['We must ___ the Golden Panda before three!', 'look for', '线索：熊猫还没找到，三点前要——去找：look for。looking for 不行：must 后面要用动词原形。'],
       ['“Do you want to ___?” Max opened the drum case.', 'look inside', '线索：Max 打开了鼓箱——往里面看：look inside。'],
@@ -291,8 +306,8 @@ const EXT_LOOK: Ext[] = [
       ['Look at those dark clouds. It ___ rain.', 'looks like', '线索：看见乌云——看起来像要下雨：looks like。look like 不行：主语 It 是单数，动词要加 s。'],
     ]),
     C('d', '找出用错的一句：', [
-      ['*I’m looking my key. Have you seen it?', '对，这句错了：找东西要说 looking for my key。'],
-      ['I looked everywhere, but I didn’t see it.', '这句没错：到处找了，可没看见。'],
+      ['*I’m **looking** my key. Have you seen it?', '对，这句错了：找东西要说 looking for my key。'],
+      ['I **looked** everywhere, but I didn’t see it.', '这句没错：到处找了，可没看见。'],
     ], { keep: true }),
   ] },
 ];
@@ -305,8 +320,8 @@ const EXT_SAY: Ext[] = [
       ['said 和 told 完全一样', '后面跟的东西不一样。'],
     ], { keep: true }),
     C('b', '哪一句对？', [
-      ['*Mia told Ms Green about the photo.', '对：tell + 人 + about 事。'],
-      ['Mia said Ms Green about the photo.', 'say 后面不能直接跟人；要说 said to Ms Green。'],
+      ['*Mia **told** Ms Green about the photo.', '对：tell + 人 + about 事。'],
+      ['Mia **said** Ms Green about the photo.', 'say 后面不能直接跟人；要说 said to Ms Green。'],
     ], { keep: true }),
     T('t2', '', 'speak 常跟语言、正式的讲话：Ben speaks English and a little Chinese. talk 是两个人你一句我一句：Ms Green was talking to the headmaster on the phone.'),
     fill('c', '放进句子，有的词用不上。', ['said', 'told', 'speak', 'talking', 'say', 'telling'], [
@@ -316,8 +331,8 @@ const EXT_SAY: Ext[] = [
       ['Ms Green was ___ to the headmaster on the phone.', 'talking', '线索：to the headmaster，在电话上你一句我一句——talking to。telling 不行：tell 后面直接跟人（tell him），不加 to。'],
     ]),
     C('d', '找出用错的一句：', [
-      ['*Please say me the answer.', '对，这句错了：要说 Please tell me the answer.'],
-      ['What did you say?', '这句没错：你刚才说什么？'],
+      ['*Please **say** me the answer.', '对，这句错了：要说 Please tell me the answer.'],
+      ['What did you **say**?', '这句没错：你刚才说什么？'],
     ], { keep: true }),
   ] },
 ];
@@ -331,8 +346,8 @@ const EXT_MEAN: Ext[] = [
     ], { keep: true }),
     T('t2', '', 'mean 还有几种常见用法：**What does “lend” mean?**（lend 是什么意思？）；**I didn’t mean it.**（我不是故意的。）mean 的过去式是 **meant**（读 /ment/）。'),
     C('b', '问“这个词是什么意思”，哪一句对？', [
-      ['*What does this word mean?', '对：does … mean。'],
-      ['What is this word mean?', 'is 和 mean 不能放在一起；要用 does。'],
+      ['*What **does** this word mean?', '对：does … mean。'],
+      ['What **is** this word mean?', 'is 和 mean 不能放在一起；要用 does。'],
     ], { keep: true }),
     C('c', '你不小心碰掉了同学的书，赶紧说：“Sorry, I ___ to do that!”', [
       ['*didn’t mean', '对：I didn’t mean to …：我不是故意的。'],
@@ -380,10 +395,10 @@ export const PLAY_EN2_ITEMS: Item[] = [
     explain: 'say 后面直接跟说的话（said “Yes, yes”）；tell 后面先跟人（told them）。',
     ext: EXT_SAY,
   }, C('a', '要说“Max 告诉我们，他当时在搬鼓”，哪一句对？', [
-    ['*Max told us he was carrying a drum.', '对：tell + 人 + 事。'],
-    ['Max said us he was carrying a drum.', 'say 后面不能直接跟人；要说 Max said (that) he was …'],
-    ['Max spoke us he was carrying a drum.', 'speak 是讲话、说某种语言。'],
-    ['Max talked us he was carrying a drum.', 'talk 是交谈：talk to someone。'],
+    ['*Max **told** us he was carrying a drum.', '对：tell + 人 + 事。'],
+    ['Max **said** us he was carrying a drum.', 'say 后面不能直接跟人；要说 Max said (that) he was …'],
+    ['Max **spoke** us he was carrying a drum.', 'speak 是讲话、说某种语言。'],
+    ['Max **talked** us he was carrying a drum.', 'talk 是交谈：talk to someone。'],
   ], { cols: 1, reveal: 'chosen' })),
 
   item({
@@ -405,10 +420,10 @@ export const PLAY_EN2_ITEMS: Item[] = [
     explain: 'Where were you at 2:15? —— 问过去某一刻在哪儿：Where + were + you。主语是 you，用 were。',
     ext: EXT_ASK,
   }, C('a', '哪一句问得对？', [
-    ['*Excuse me, Ms Green. Where were you at 2:15?', '对：问过去某一刻在哪儿，Where were you …？前面加 Excuse me 更客气。'],
-    ['Excuse me, Ms Green. Where are you at 2:15?', 'are 是现在，问的是已经过去的两点一刻。'],
-    ['Excuse me, Ms Green. Where you were at 2:15?', '问句里 were 要放到 you 前面。'],
-    ['Excuse me, Ms Green. Where did you at 2:15?', 'did 后面要跟动作；问“在哪儿”用 were。'],
+    ['*Excuse me, Ms Green. Where **were you** at 2:15?', '对：问过去某一刻在哪儿，Where were you …？前面加 Excuse me 更客气。'],
+    ['Excuse me, Ms Green. Where **are you** at 2:15?', 'are 是现在，问的是已经过去的两点一刻。'],
+    ['Excuse me, Ms Green. Where **you were** at 2:15?', '问句里 were 要放到 you 前面。'],
+    ['Excuse me, Ms Green. Where **did you** at 2:15?', 'did 后面要跟动作；问“在哪儿”用 were。'],
   ], { cols: 1, reveal: 'chosen' })),
 
   item({
@@ -458,10 +473,10 @@ export const PLAY_EN2_ITEMS: Item[] = [
     lock: { words: ['borrow'], lines: ['mia'] },
     ext: EXT_MIA,
   }, C('a', 'Mia 说 Can you borrow me your pen? 她应该怎么说？', [
-    ['*Can you lend me your pen?', '对：笔从 Ben 手里借出去，用 lend。也可以说 Can I borrow your pen?'],
-    ['Can you borrowed me your pen?', 'can 后面跟动词原形；而且 borrow 用错了。'],
-    ['Can I lend your pen?', '“我借出去你的笔”说不通。'],
-    ['Can you borrow your pen to me?', '还是 borrow：borrow 是借进来。'],
+    ['*Can you **lend** me your pen?', '对：笔从 Ben 手里借出去，用 lend。也可以说 Can I borrow your pen?'],
+    ['Can you **borrowed** me your pen?', 'can 后面跟动词原形；而且 borrow 用错了。'],
+    ['Can I **lend** your pen?', '“我借出去你的笔”说不通。'],
+    ['Can you **borrow** your pen to me?', '还是 borrow：borrow 是借进来。'],
   ], { cols: 1, reveal: 'chosen' })),
 
   item({
@@ -469,7 +484,11 @@ export const PLAY_EN2_ITEMS: Item[] = [
     hints: ['Green 老师在办公室；Max 在舞台后面；Mia 说她在花园。'],
     explain: 'Ms Green was printing certificates in the office. Max was carrying his drum behind the stage. Mia was taking photos in the garden.',
     ext: EXT_ALIBI,
-  }, Mt('m', '两点一刻，谁在做什么？连起来。', ['Ms Green', 'Max', 'Mia'], ['was printing certificates in the office.', 'was carrying his drum behind the stage.', 'was taking photos in the garden.'], [0, 1, 2], '三个人都说自己当时在别处：Green 老师在办公室打印，Max 在后台搬鼓，Mia 在花园拍照。', { lh: 'Who', rh: 'At 2:15 …' })),
+  }, Mt('m', '两点一刻，谁在做什么？连起来。', ['Ms Green', 'Max', 'Mia'], ['was printing certificates in the office.', 'was carrying his drum behind the stage.', 'was taking photos in the garden.'], [0, 1, 2], '三个人都说自己当时在别处；说“那一刻正在做”，都用 was + -ing。', { lh: 'Who', rh: 'At 2:15 …', whys: [
+      'Green 老师说她就在办公室，正在给获奖的人打印证书。',
+      'Max 说他在舞台后面收拾鼓，搬大鼓时还被电线绊了一下。',
+      'Mia 说她在花园拍照：那时花园里的光线特别好。',
+    ] })),
 
   item({
     id: 'e2-write', st: 'en2', lv: 2, type: 'write', topic: 'Max’s alibi', label: '记下 Max 的不在场证明', intro: '', ask: '侦探笔记怎么写？',
@@ -495,8 +514,8 @@ export const PLAY_EN2_ITEMS: Item[] = [
       ['原来是你做了一盏灯！', '这里的 make 是“使、让”。'],
     ], { keep: true }),
     C('b', '“这个笑话让大家都笑了。”', [
-      ['*The joke made everyone laugh.', '对：make + 人 + 动词原形，不加 to。'],
-      ['The joke made everyone to laugh.', 'make 后面的动词不加 to。'],
+      ['*The joke made everyone **laugh**.', '对：make + 人 + 动词原形，不加 to。'],
+      ['The joke made everyone **to laugh**.', 'make 后面的动词不加 to。'],
     ], { keep: true }),
     T('t2', '', '中文都说“做”，英语分 **make** 和 **do**：make 常常是做出、弄出一样东西或结果（make a cake, make a mistake, make a noise, make friends）；do 常常是做一件事、一项活儿（do homework, do the dishes, do sports, do your best）。'),
     So('c', '这些搭配，用 make 还是 do？', ['make', 'do'], [
@@ -505,8 +524,8 @@ export const PLAY_EN2_ITEMS: Item[] = [
     ]),
     T('t3', '', '还有一个最容易说错的：拍照，英语说 **take a photo**，不说 make a photo。'),
     C('d', '“Mia 在花园里给熊猫拍照。”', [
-      ['*Mia is taking photos of the panda in the garden.', '对：拍照是 take photos。'],
-      ['Mia is making photos of the panda in the garden.', '拍照不用 make。'],
+      ['*Mia is **taking** photos of the panda in the garden.', '对：拍照是 take photos。'],
+      ['Mia is **making** photos of the panda in the garden.', '拍照不用 make。'],
     ], { keep: true }),
   ),
 ];
