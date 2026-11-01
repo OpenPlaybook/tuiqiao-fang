@@ -1,22 +1,57 @@
-import type { AskOut } from '../shared/ai';
-import type { Player, GameConfig } from '../shared/types';
-import type { EnJudge, ZhJudge } from '../shared/ai';
+import {DEMO} from './demo';
+import {localErrorMessage} from '@/src/shared/server-error';
+import type {AskOut,ZhJudge,EnJudge} from '../shared/ai';
+import type {Player,GameConfig} from '../shared/types';
+import {createGrainFlow} from '@/src/shared/grain-flow/runtime';
+import {defineData,defineSource} from '@/src/shared/grain-flow/schema';
+import {defineMutation} from '@/src/shared/grain-flow/mutation';
+import {RequestError} from '@/src/shared/http';
+import {AuthRequiredError} from '@/src/account/auth/auth-required';
+import {apiFetch} from '@/src/account/auth/client';
+import {z} from 'zod';
+import {playerSchema,configSchema} from '../../server/schema';
+const match=location.pathname.match(/^\/(?:api\/ensemble\/lesson|lesson|lesson-app)\/([^/]+)(?:\/|$)/);
+if(!match&&!DEMO)throw Error('请从 Lesson 打开此课件');
+export const lessonId=decodeURIComponent(match?.[1]??'demo'),base='/lesson-app/'+encodeURIComponent(lessonId)+'/api/';
+export class ApiError extends RequestError{constructor(public statusCode:number,public payload:{error?:string;player?:Player}){super('http',payload.error||`请求失败（${statusCode}）`,statusCode);}}
+let participant:Player|null=null;
+export function setParticipant(player:Player|null){const changed=participant?.pid!==player?.pid||participant?.roundId!==player?.roundId;participant=player;if(changed)flow.store.invalidate(['tuiqiao.classroom']);}
+async function requestRaw<T>(route:string,body?:unknown,signal?:AbortSignal,onText?:(s:string)=>void):Promise<T>{
+ const headers:Record<string,string>={'Content-Type':'application/json'};if(participant)headers['x-participant']=participant.token;
+ const response=await apiFetch(base+route,{method:body===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.any([AbortSignal.timeout(onText||route.startsWith('ai/')?100000:10000),...(signal?[signal]:[])])},true);
+ if(!response.ok){const data=await response.json().catch(()=>({}));throw new ApiError(response.status,data);}
+ return response.json();
+}
 
-// 所有接口都用相对路径：网站挂在哪个子路径下都能用。
-const req = async <T,>(path: string, body?: unknown, headers: Record<string, string> = {}, timeout = 8000): Promise<T> => {
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), timeout);
-  try {
-    const r = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: body === undefined ? undefined : JSON.stringify(body), signal: ctl.signal, cache: 'no-store' });
-    if (!r.ok) throw new Error((await r.text()) || `HTTP ${r.status}`);
-    return (await r.json()) as T;
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') throw new Error('连接超时');
-    throw e;
-  } finally { clearTimeout(timer); }
+async function request<T>(route:string,body?:unknown,signal?:AbortSignal,onText?:(s:string)=>void):Promise<T>{
+ try{return await requestRaw<T>(route,body,signal,onText);}
+ catch(error){
+  if(signal?.aborted)throw signal.reason;
+  if(error instanceof RequestError)throw error;
+  if(error instanceof AuthRequiredError)throw new RequestError('http',error.message,error.status,error.code);
+  if(error instanceof SyntaxError)throw new RequestError('parse','返回的数据格式不正确');
+  throw new RequestError('network','网络请求失败或超时');
+ }
+}
+export const flow=createGrainFlow('tuiqiao-fang:'+lessonId);
+export type ToolContext={tool:'tuiqiao-fang';isTeacher:boolean};
+export type ClassroomConfig={config:GameConfig;roundId:string;player?:Player};
+const reads=[['context','context'],['teacher','teacher/state']] as const;
+flow.register({
+ data:[defineData('tuiqiao.classroom',z.unknown()),...reads.map(([k])=>defineData('tuiqiao.'+k,z.unknown()))],
+ sources:[defineSource('tuiqiao.classroom',{load:async({signal})=>{const p=participant;const value=await request<ClassroomConfig>('config'+(p?'?pid='+encodeURIComponent(p.pid):''),undefined,signal);configSchema.passthrough().parse(value.config);z.string().uuid().parse(value.roundId);if(p&&p.roundId===value.roundId){const r=await request<{player:Player}>('player?'+new URLSearchParams({pid:p.pid,roundId:p.roundId}),undefined,signal);value.player=playerSchema.parse(r.player);}return {value,state:undefined};},provides:{'tuiqiao.classroom':c=>c.value},observation:()=>3000}),...reads.map(([k,route])=>defineSource('tuiqiao.'+k,{load:async({signal})=>({value:await request(route,undefined,signal),state:undefined}),provides:{['tuiqiao.'+k]:c=>c.value},...(k==='context'?{}:{observation:()=>4000})}))],
+ mutations:['join','sync','teacher/config','teacher/delete','teacher/reset','teacher/ai/settings','ai/ask','ai/judge'].map(route=>defineMutation('tuiqiao.'+route,{path:'tuiqiao.'+route.replaceAll('/','.'),targets:()=>[],execute:({input,signal})=>request(route,input,signal),receipt:()=>route.startsWith('teacher/')?[{kind:'invalidate' as const,path:'tuiqiao.teacher'},{kind:'invalidate' as const,path:'tuiqiao.classroom'}]:[]})),
+});
+function write<T>(route:string,body:unknown){return flow.operation<unknown,T>('tuiqiao.'+route.replaceAll('/','.')).run(body);}
+export const visibleError=(e:unknown)=>localErrorMessage(e,'操作失败，请重试');
+export const api={
+ join:(name:string,sid:string,avatar:number,roundId?:string)=>write<{player:Player}>('join',{name,sid,avatar,roundId}),
+ sync:(player:Player)=>write<{player:Player}>('sync',{player}),
+ ask:(b:{pid:string;token:string;play:string;item:string;line:string;before:string[];q:string})=>write<AskOut&{left:number}>('ai/ask',{...b,roundId:participant?.roundId}),
+ judge:(b:{pid:string;token:string;item:string;step:string;text:string})=>write<{out:ZhJudge|EnJudge;left:number}>('ai/judge',{...b,roundId:participant?.roundId}),
+ teacher:{setConfig:(c:Partial<GameConfig>)=>write('teacher/config',c),del:(pid:string)=>write('teacher/delete',{pid}),reset:()=>write('teacher/reset',{confirm:'RESET'}),aiSettings:(b:unknown)=>write('teacher/ai/settings',b)},
 };
-
-export interface AiStatus { ready: boolean; mock: boolean; hasKey: boolean; keyTail: string; model: string; models: string[]; quota: number; lastTest: { ok: boolean; msg: string; t: number } | null; active: number; used: number }
+export interface AiStatus { ready: boolean; mock: boolean; model: string; quota: number; active: number; used: number }
 export interface AiLog { t: number; pid: string; name: string; item: string; step: string; role: string; text: string; out: ZhJudge | EnJudge | { a: string } | null; ms: number; ok: boolean; err?: string }
 export interface PlayerSummary {
   pid: string; name: string; sid: string; avatar: number; stars: number; weighted: number; bonus: number; unsure: number; done: number; avgLv: number; side?: number; gloss?: number; gloss2?: number; asks?: number;
@@ -26,21 +61,3 @@ export interface ItemStat { id: string; st: string; lv: number; label: string; n
 export interface AskRow { name: string; play: string; q: string; a: string; fb: string; t: number }
 export interface GlossRow { play: string; w: string; n1: number; n2: number }
 export interface TeacherState { config: GameConfig; players: PlayerSummary[]; items: ItemStat[]; good: AiLog[]; asks?: AskRow[]; glosses?: GlossRow[]; now: number; ai: AiStatus }
-
-export const api = {
-  join: (name: string, sid: string, avatar: number) => req<{ player: Player }>('api/join', { name, sid, avatar }),
-  sync: (p: Player) => req<{ ok: true }>('api/sync', { player: p }),
-  config: (pid?: string) => req<GameConfig>(`api/config${pid ? `?pid=${encodeURIComponent(pid)}` : ''}`),
-  ask: (b: { pid: string; token: string; play: string; item: string; line: string; before: string[]; q: string }) => req<AskOut & { left: number }>('api/ai/ask', b, {}, 45000),
-  judge: (b: { pid: string; token: string; item: string; step: string; text: string }) => req<{ out: ZhJudge | EnJudge; left: number }>('api/ai/judge', b, {}, 45000),
-  teacher: {
-    state: (pin: string) => req<TeacherState>('api/teacher/state', undefined, { 'x-pin': pin }),
-    player: (pin: string, pid: string) => req<Player>(`api/teacher/player?pid=${encodeURIComponent(pid)}`, undefined, { 'x-pin': pin }),
-    setConfig: (pin: string, c: Partial<GameConfig>) => req<GameConfig>('api/teacher/config', c, { 'x-pin': pin }),
-    del: (pin: string, pid: string) => req<{ ok: true }>('api/teacher/delete', { pid }, { 'x-pin': pin }),
-    reset: (pin: string) => req<{ ok: true }>('api/teacher/reset', { confirm: 'RESET' }, { 'x-pin': pin }),
-    aiLogs: (pin: string) => req<AiLog[]>('api/teacher/ai/logs', undefined, { 'x-pin': pin }),
-    aiSettings: (pin: string, b: Record<string, unknown>) => req<AiStatus>('api/teacher/ai/settings', b, { 'x-pin': pin }),
-    aiTest: (pin: string) => req<AiStatus>('api/teacher/ai/test', {}, { 'x-pin': pin }, 60000),
-  },
-};

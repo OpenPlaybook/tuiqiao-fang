@@ -1,0 +1,2 @@
+import * as hostReact from 'react';import * as hostReactDOM from 'react-dom';import * as hostJSX from 'react/jsx-runtime';import * as hostReactClient from 'react-dom/client';const require=(name)=>{const peers={'react':hostReact,'react-dom':hostReactDOM,'react/jsx-runtime':hostJSX,'react-dom/client':hostReactClient};if(!Object.hasOwn(peers,name))throw Error('Unknown browser peer: '+name);return peers[name];};
+import{a}from"../../../chunk-KBKLI2RW.mjs";import"../../../chunk-6IUGOMCJ.mjs";export{a as sameOriginHost};

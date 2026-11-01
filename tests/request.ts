@@ -1,0 +1,1 @@
+import {withLessonRequest} from '../sdk/server.cjs';import {handleApplicationApi as handle} from '../api';export const handleApplicationApi=(input:any)=>withLessonRequest(input.context.opusRootDir,input.request.signal,()=>handle(input));

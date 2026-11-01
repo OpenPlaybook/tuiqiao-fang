@@ -1,0 +1,2 @@
+# Bundled SDK retains whitespace inside generated CSS template strings.
+sdk/*.mjs whitespace=-blank-at-eol

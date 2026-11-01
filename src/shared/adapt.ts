@@ -73,5 +73,5 @@ export const stationStars = (p: Player, st: StationId) => stationRecs(p, st).red
 export const unsureOf = (p: Player) => Object.values(p.recs).reduce((s, r) => s + (r.unsure || 0), 0);
 export const avgLvOf = (p: Player, tr?: Track) => { const d = doneRecs(p, (r) => !r.prac && (!tr || trackOf(r.st) === tr)); return d.length ? d.reduce((s, r) => s + ITEM_BY_ID[r.id].lv, 0) / d.length : 0; };
 export const maxStars = () => STATIONS.reduce((s, x) => s + 3 * x.n, 0);
-export const newPlayer = (pid: string, token: string, name: string, sid: string, avatar: number): Player => ({ pid, token, name, sid, avatar, createdAt: Date.now(), recs: {}, updatedAt: Date.now() });
+export const newPlayer = (pid: string, token: string, name: string, sid: string, avatar: number, roundId: string): Player => ({ pid, token, roundId, revision: 0, name, sid, avatar, createdAt: Date.now(), recs: {}, updatedAt: Date.now() });
 export { ITEMS };

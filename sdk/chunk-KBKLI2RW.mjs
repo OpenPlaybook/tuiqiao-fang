@@ -1,0 +1,2 @@
+import * as hostReact from 'react';import * as hostReactDOM from 'react-dom';import * as hostJSX from 'react/jsx-runtime';import * as hostReactClient from 'react-dom/client';const require=(name)=>{const peers={'react':hostReact,'react-dom':hostReactDOM,'react/jsx-runtime':hostJSX,'react-dom/client':hostReactClient};if(!Object.hasOwn(peers,name))throw Error('Unknown browser peer: '+name);return peers[name];};
+function o(n){let t=n;try{for(;t.parent&&t.parent!==t&&t.parent.location.origin===n.location.origin;)t=t.parent}catch{}return t}export{o as a};

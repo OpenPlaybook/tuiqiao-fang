@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Volume2, VolumeX, WifiOff, X } from 'lucide-react';
+import { Volume2, VolumeX, X } from 'lucide-react';
 import { useGame, onFly, onToast, logout } from '../game/store';
 import { soundOn, setSound, sfx } from '../game/sound';
 import { sideOf, starsOf } from '../shared/adapt';
@@ -141,7 +141,6 @@ export const Modal = ({ open, onClose, children, width = 640 }: { open: boolean;
 
 export const TopBar = () => {
   const p = useGame((s) => s.player);
-  const online = useGame((s) => s.online);
   const [snd, setSnd] = useState(soundOn);
   if (!p) return null;
   return (
@@ -149,7 +148,6 @@ export const TopBar = () => {
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-3 px-4">
         <a href="#/" className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-zhu text-lg font-black text-white kai">字</span><span className="kai text-2xl font-bold tracking-widest">字里行间</span></a>
         <div className="ml-auto flex items-center gap-2.5">
-          {!online && <span className="flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-700" title="进度先存在这台电脑上，连上后自动同步"><WifiOff size={16} />离线中</span>}
           <StarCounter />
           <SideCounter />
           <button onClick={() => { setSound(!snd); setSnd(!snd); }} className="rounded-full border-2 border-[#E6DCC6] bg-white/90 p-2 text-ink2" title={snd ? '关闭声音' : '打开声音'}>{snd ? <Volume2 size={20} /> : <VolumeX size={20} />}</button>
