@@ -1,4 +1,5 @@
 // 播放式故事：画面（水墨 + 镜头推拉）+ 配音 + 字幕，一句一句往下播；播到题就停，题在画面里做。
+// 画面只在播放时动；停在题上、做拓展、暂停、看完时整个画面定住（不重画，题目底下没有东西在变，各种浏览器都不会闪）；画面上面不用毛玻璃（backdrop-blur）。
 // 画面尽量大：字幕、进度条都在画面里；右边窄栏是“台本”（播过的每一句，可点的字随时能点；做过的题、拓展入口挂在题下面），最下面可以问 AI。
 // 做过的题点进度条上的标记、或者台本里的题，就能回来看自己的答案；拓展在居中弹窗里，按“讲—例—练”往下走。
 import { Fragment, createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -266,7 +267,7 @@ export default function PlayerPage({ id }: { id: string }) {
             {/* 点了一下：中间闪一下播放 / 暂停的图标 */}
             <AnimatePresence>{flash && <motion.div key={flash.n} initial={{ opacity: 0.9, scale: 0.8 }} animate={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.6 }} className="pointer-events-none absolute left-1/2 top-1/2 z-30 -ml-9 -mt-9 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-black/45 text-white">{flash.play ? <PlayIcon size={34} /> : <Pause size={34} />}</motion.div>}</AnimatePresence>
             {line.shots
-              ? <Film shots={line.shots} lid={`${id}-${idx}`} running={phase !== 'pause'} fps={phase === 'play' ? 30 : 12} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
+              ? <Film shots={line.shots} lid={`${id}-${idx}`} running={phase === 'play'} fps={phase === 'play' ? 30 : 12} prog={() => (phase === 'play' ? (waiting.current ? 0 : (performance.now() - t0.current) / 1000 / lineDur(line)) : phase === 'task' || phase === 'end' ? 1 : phase === 'cover' ? 0 : elapsed / lineDur(line))} />
               : <Cam key={`${idx}-${phase === 'play' ? 'p' : 's'}`} cam={cam} dur={lineDur(line)} moving={phase === 'play'}>{scene && <Art spec={scene} className="h-full w-full" />}</Cam>}
             <AnimatePresence>
               {showCard && (
@@ -345,7 +346,7 @@ export default function PlayerPage({ id }: { id: string }) {
             )}
           </div>
           {/* 左上角：目录、回目（有黑边就在黑边里） */}
-          <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-white backdrop-blur-sm">
+          <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1 text-white">
             <button onClick={(e) => { e.stopPropagation(); go('/'); }} className="text-[13px] font-bold underline opacity-90">目录</button>
             <span className={en ? 'font-serif text-[16px] font-bold' : 'kai text-[17px]'}>{!en && NODE_BY_ID[play.id] && <span className="mr-1 text-[13px] opacity-80">{NODE_BY_ID[play.id].star ? '★' : laneName(NODE_BY_ID[play.id].lanes[0]) + '·'}</span>}{play.title}</span>
           </div>
@@ -484,7 +485,7 @@ function TaskView({ en, it, line, prev, stem, mode, color, bh, bottomEl, onCont,
       )}
       {bottomEl && createPortal(
         lay === 'card' ? (foot ? <div className="mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-3 shadow-xl [&>div]:mt-0 [&>div]:border-0 [&>div]:pt-0" style={{ maxHeight: bh * 0.4 }}>{foot}</div> : null) : (
-          <motion.div ref={ref} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} onClick={(e) => e.stopPropagation()} className="relative mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-2.5 shadow-xl backdrop-blur" style={{ maxHeight: bh * (lay === 'big' ? 0.86 : 0.62) }}>
+          <motion.div ref={ref} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} onClick={(e) => e.stopPropagation()} className="relative mx-2 mb-1.5 overflow-auto rounded-xl bg-[#FFFDF8]/96 px-4 py-2.5 shadow-xl" style={{ maxHeight: bh * (lay === 'big' ? 0.86 : 0.62) }}>
             {hintBtn && <div className="float-right ml-2">{hintBtn}</div>}
             {stem && <div className="mb-1.5 text-[17px] font-bold leading-relaxed">{stem.who && <span className={`mr-1.5 rounded-md px-1.5 py-0.5 align-middle text-[12px] text-white ${stem.voice === 'ai' ? 'bg-sky-600' : 'bg-[#8A6A2F]'}`}>{stem.voice === 'ai' ? <Glasses size={14} className="inline" /> : <Rich text={stem.who} />}</span>}<LineText l={stem} mode={mode} lock={!finished} min={2} /></div>}
             {body}

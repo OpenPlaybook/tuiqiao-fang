@@ -69,7 +69,7 @@ const learn = (c: number, now: number) => {
 /** 测速、比较帧率用（#/filmtest?bench=…、?lab=…）：paper = css（纸纹是盖在上面的图片，默认）| svg（纸纹是 SVG 滤镜，原来的做法）| none */
 export const FILM_OPT: { paper: 'css' | 'svg' | 'none'; blur: boolean; stats?: { draw: number[]; js: number[] } } = { paper: 'css', blur: true };
 
-/** running：false 时整个画面定住（暂停）——剧情进度和一直在动的环境（水、火、人的晃动）都停，继续时从停下的地方接着动
+/** running：false 时整个画面定住（暂停、停在题上）——剧情进度和一直在动的环境（水、火、人的晃动）都停、不重画，继续时从停下的地方接着动
  *  fps：最高帧率（做题时剧情已经停在结尾，只有环境在动，可以低一些）；fixed：固定帧率，不跟着机器变（比较帧率用） */
 export function Film({ shots, prog, lid = '', className = '', running = true, fps = 30, fixed = false }: { shots: ShotSpec[]; prog: () => number; lid?: string; className?: string; running?: boolean; fps?: number; fixed?: boolean }) {
   const cur = useRef<HTMLDivElement>(null), prev = useRef<HTMLDivElement>(null), paper = useRef<HTMLDivElement>(null);
@@ -85,7 +85,7 @@ export function Film({ shots, prog, lid = '', className = '', running = true, fp
     return () => { alive = false; };
   }, []);
   useEffect(() => {
-    let raf = 0, last = 0, prevNow = 0, pend = 0, busy = 0, skip = 0, key = '', id = '', svgEl: SVGSVGElement | null = null, fgEl: SVGGElement | null = null, seenLid = '', hold = false, g = 0, lastU = -1;
+    let fades = 0, raf = 0, last = 0, prevNow = 0, pend = 0, busy = 0, skip = 0, key = '', id = '', svgEl: SVGSVGElement | null = null, fgEl: SVGGElement | null = null, seenLid = '', hold = false, g = 0, lastU = -1;
     const mc = new MessageChannel(); // 画完发一条消息：消息到的时候，这一帧浏览器的活（排版、上色）已经干完
     mc.port1.onmessage = (e) => { busy = performance.now() - (e.data as number); };
     const tick = (now: number) => {
@@ -114,6 +114,8 @@ export function Film({ shots, prog, lid = '', className = '', running = true, fp
           prev.current.innerHTML = cur.current.innerHTML;
           prev.current.style.transition = 'none'; prev.current.style.opacity = '1';
           requestAnimationFrame(() => { if (prev.current) { prev.current.style.transition = 'opacity .35s ease'; prev.current.style.opacity = '0'; } });
+          // 淡出完就清掉旧画面，不留一整张看不见的画在那一层里
+          const n = ++fades; setTimeout(() => { if (n === fades && prev.current) prev.current.innerHTML = ''; }, 500);
         }
         key = k; id = `f${++uidN}_`;
         cur.current.innerHTML = `<svg viewBox="${camAt(d, u)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">${defs(id)}<g>${d.bg(id)}</g><g data-fg></g>${finish(id, FILM_OPT.paper === 'svg')}</svg>`;

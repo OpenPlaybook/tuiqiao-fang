@@ -1,4 +1,5 @@
 // 核对题目本身（npm run check:content）：每一道主线题、支线题和它们的拓展，答案都对得上、能做完。
+//   连线一对一（几项归到同一个是分类题），分类每格不止一张（一格一张是连线题）；
 //   选择：有正确答案，序号不越界，选项不重复；填空：每句一个空，答案在词库里，词库不重复（同一个词可以填两处）；分类、连线、排序、挑错、改错：序号不越界；
 //   每道题、每段拓展里的步骤 key 不重复；题都挂在句子上，一道题不挂两处；原文（wy）不用“……”省略；节点里不写默认阅读顺序的话。
 import { PLAYS } from '../src/shared/play';
@@ -30,10 +31,14 @@ const checkStep = (s: Sub, where: string) => {
       break;
     case 'sort':
       if (s.cards.some((c) => c.bin < 0 || c.bin >= s.bins.length)) err(`${w}：卡片的格子序号越界`);
+      // 分类是“好几张归到同一格”；每格只放一张，那是一对一，应该做连线
+      if (s.bins.every((_, i) => s.cards.filter((c) => c.bin === i).length <= 1)) err(`${w}：每个格子只有一张卡片——这是一对一，应该做连线`);
       break;
     case 'match':
-      // 右边可以多几个干扰项，也可以几项连到同一个
+      // 右边可以多几个干扰项
       if (s.pairs.length !== s.left.length || s.pairs.some((j) => j < 0 || j >= s.right.length)) err(`${w}：连线的配对不对`);
+      // 连线是一对一；几项连到同一个，那是分类，应该做分类题
+      if (new Set(s.pairs).size !== s.pairs.length) err(`${w}：有几项连到同一个——这是分类，应该做分类题`);
       break;
     case 'order':
       if (s.items.length < 2) err(`${w}：排序少于两项`);
