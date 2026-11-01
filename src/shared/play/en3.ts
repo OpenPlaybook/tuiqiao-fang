@@ -245,7 +245,7 @@ const EXT_FIND: Ext[] = [
       ['What are you ___? — My notebook.', 'looking for', '线索：are you ___——正在找，还没找到：looking for。只填 looking 不行：“找”要说 look for，for 不能丢。'],
       ['I ___ my notebook under the bed yesterday.', 'found', '线索：under the bed yesterday——找到了，过去的事：found。'],
       ['Let’s ___ what really happened at 2:15.', 'find out', '线索：what really happened——查明一件事的真相：find out。'],
-      ['Look! We ___ the Golden Panda!', 'have found', '线索：Look!——刚找到，熊猫就在眼前：have found。'],
+      ['Look! We ___ the Golden Panda!', 'have found', '线索：Look!——刚找到，熊猫就在眼前：have found。填 found 也算对：美国人常这样说；英国人更爱用 have found，强调东西现在就在眼前。', ['found']],
     ]),
     C('d', '找出用错的一句：', [
       ['*I’m finding my keys. Can you help me?', '对，这句错了：正在找要说 I’m looking for my keys.'],

@@ -300,18 +300,6 @@ const EXT_KAN: Ext[] = [
     Mt('b', '填进去的是哪一种看？', ['___野有麦场（《狼》：屠户回头一看，野地里有个麦场）', '释担而立，___之，久而不去（《卖油翁》：卖油的老头放下担子站着，斜着眼看）', '___镜而自视（《邹忌讽齐王纳谏》：照着镜子看自己）'],
       ['顾：回头看', '睨：斜着眼看', '窥：照镜子看', '望：往远处看'], [0, 1, 2], '顾：屠户被狼追着，回头一看，看见麦场；睨：卖油翁斜着眼看陈尧咨射箭，带着点不以为然；窥：邹忌照着镜子端详自己。“望”是往远处看，这三句都用不上。古人一个字就把怎么看说清楚了。', { lh: '句子', rh: '哪一种看' }),
   ] },
-  { id: 'x3', title: '英语里的“看”', need: 'opt', steps: [
-    T('t1', '', '**see**：看见（眼睛碰到了）。**watch**：盯着看一段时间（比赛、电视）。**glance**：瞥一眼。**gaze**：凝视。**glare**：生气地瞪。'),
-    C('a', '“Look! I can ___ a rainbow!”（看见彩虹）', [
-      ['*see', '对，是 see：眼睛碰到了。'],
-      ['watch', 'watch 是盯着看一段时间，比如看比赛。'],
-    ], { keep: true }),
-    Mt('b', 'Match each sentence with the right word.', ['He ___ at his watch and ran out.（瞥）', 'She ___ at the old photo for a long time.（凝视）', 'We ___ the match on TV.（看比赛）'],
-      ['glanced', 'gazed', 'watched'], [0, 1, 2], 'glance：瞥；gaze：凝视；watch：盯着看一段时间。', { lh: 'Sentence', rh: 'Word' }),
-    C('c', '“Don’t ___ at me like that! I didn’t break your bike.”（别那样瞪着我！）', [
-      ['*glare', '对，是 glare：生气地瞪。'], ['glance', 'glance 是瞥一眼，没有生气。'], ['gaze', 'gaze 是专注地看很久，没有生气。'],
-    ]),
-  ] },
 ];
 
 const EXT_BB: Ext[] = [
