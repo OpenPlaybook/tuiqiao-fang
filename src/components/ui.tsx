@@ -7,6 +7,8 @@ import { sideOf, starsOf } from '../shared/adapt';
 import { renderArt } from '../art/ink';
 import type { Art as ArtSpec } from '../shared/types';
 import { DEMO } from '../game/demo';
+import { useOperation } from '@/src/shared/grain-flow/react';
+import { DataWriteStateRenderer } from '@/src/shared/grain-flow/data-write-state-renderer';
 
 // ---------------- 文字：**加粗**、*斜体*、___ 空、\n 换行；⟦词⟧ 可点（AI 眼镜释义）、⟪字⟫ 注拼音、⟨1⟩ 题的位置、〔原文｜白话〕点一下看白话 ----------------
 import { createContext, useContext } from 'react';
@@ -154,14 +156,20 @@ export const Modal = ({ open, onClose, children, width = 640 }: { open: boolean;
 export const TopBar = () => {
   const p = useGame((s) => s.player);
   const [snd, setSnd] = useState(soundOn);
+  const synchronization = useOperation('tuiqiao.sync');
   if (!p) return null;
   return (
     <div className="sticky top-0 z-40 border-b-2 border-[#E6DCC6] bg-[#FBF7EE]/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-3 px-4">
         <a href="#/" className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-zhu text-lg font-black text-white kai">字</span><span className="kai text-2xl font-bold tracking-widest">字里行间</span></a>
         <div className="ml-auto flex items-center gap-2.5">
-          <StarCounter />
-          <SideCounter />
+          {/* 保存反馈只作用于成绩；播放器、题目和台本保持原透明度。 */}
+          <DataWriteStateRenderer result={synchronization} renderData={({ contentProps }) => (
+            <div {...contentProps} className={`flex items-center gap-2.5 ${contentProps.className ?? ''}`}>
+              <StarCounter />
+              <SideCounter />
+            </div>
+          )} />
           <button onClick={() => { setSound(!snd); setSnd(!snd); }} className="rounded-full border-2 border-[#E6DCC6] bg-white/90 p-2 text-ink2" title={snd ? '关闭声音' : '打开声音'}>{snd ? <Volume2 size={20} /> : <VolumeX size={20} />}</button>
           {DEMO ? <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-800" title="不用登录、不保存记录；刷新页面就从头开始">演示版</span> : <>
           <a href="#/me" className="flex items-center gap-2 pl-1"><Avatar i={p.avatar} size={40} /><div className="leading-tight"><div className="font-black">{p.name}</div><div className="text-xs text-ink2">{p.sid}</div></div></a>
