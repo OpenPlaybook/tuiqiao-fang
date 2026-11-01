@@ -46,10 +46,26 @@ export const LOOKS: Record<string, Look> = {
   zhaoSoldier: { robe: '#8A7650', robe2: '#76643F', pants: '#4A3E2A', hair: 'helmet', armor: true, sleeve: 'tight' },
   chenyu: { robe: '#4A5A7A', robe2: '#3C4A66', pants: '#262E3E', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, sword: true, belt: '#262E3E' },
   lizuoche: { robe: '#5A5A4A', robe2: '#4A4A3C', pants: '#33332A', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#33332A' },
+  liyiji: { robe: '#7A5A3A', robe2: '#5E442C', pants: '#3A2C20', hair: 'scholar', hairC: '#B8B0A4', beard: 'long', sleeve: 'wide', long: true, belt: '#3A2C20' }, // 郦食其：爱喝酒的老儒生
+  chenping: { robe: '#5E5470', robe2: '#4C4460', pants: '#2E2A3A', hair: 'scholar', sleeve: 'wide', long: true, belt: '#2E2A3A' }, // 陈平
+  hougong: { robe: '#6A6458', robe2: '#58534A', pants: '#38342E', hair: 'scholar', hairC: '#C8C0B4', beard: 'long', sleeve: 'wide', long: true, belt: '#38342E' }, // 侯公
+  baosheng: { robe: '#4E6A6A', robe2: '#3E5656', pants: '#2A3A3A', hair: 'scholar', beard: 'stub', sleeve: 'wide', long: true, belt: '#2A3A3A' }, // 鲍生
   zhanger: { robe: '#5A4A3A', robe2: '#3E342A', pants: '#2E2622', hair: 'knot', sleeve: 'tight', armor: true, sword: true, beard: 'long', tall: 1.02 },
   zhonglimo: { robe: '#3A3436', robe2: '#2A2527', pants: '#221E1E', hair: 'helmet', armor: true, cape: '#5A2A22', sword: true, beard: 'stub', sleeve: 'tight', tall: 1.06 },
   lvhou: { robe: '#5A1E28', robe2: '#46161F', pants: '#3A1218', hair: 'bun', long: true, sleeve: 'wide', trim: GOLD, belt: GOLD, tall: 0.96 },
   simaqian: { robe: '#4E5A5E', robe2: '#3E4A4E', pants: '#2A3236', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#2A3236' },
+  // ---------- 五条故事线新增的人 ----------
+  liuji: { robe: '#7A6A52', robe2: '#655741', pants: '#3A342C', hair: 'cap', beard: 'long', sleeve: 'tight', belt: '#3A342C', tall: 1.04 }, // 当亭长时的刘季
+  liubangGen: { robe: '#7A2A22', robe2: '#5E201A', pants: '#2E2622', hair: 'cap', beard: 'long', sleeve: 'tight', armor: true, cape: '#5E201A', sword: true, tall: 1.04 }, // 起兵以后的沛公
+  xiangyuYoung: { robe: '#4A4044', robe2: '#3A3234', pants: '#262022', hair: 'knot', sleeve: 'tight', sword: true, belt: '#8E2B22', tall: 1.12, wide: 1.08 },
+  qinshihuang: { robe: '#1E1C22', robe2: '#141218', pants: '#141218', hair: 'crown', sleeve: 'wide', trim: GOLD, beard: 'long', long: true, belt: GOLD, tall: 1.04 },
+  wuguang: { robe: '#5A5040', robe2: '#4A4234', pants: '#3A332C', hair: 'kerchief', hairC: '#7A3A2E', sleeve: 'tight', belt: '#7A3A2E' },
+  songyi: { robe: '#4A5060', robe2: '#3A4050', pants: '#262A34', hair: 'scholar', beard: 'long', sleeve: 'wide', long: true, belt: '#262A34', tall: 0.98 },
+  lishi: { robe: '#4A3E34', robe2: '#3A3028', pants: '#2A231E', hair: 'messy', sleeve: 'bare', beard: 'stub', belt: '#2A231E', tall: 1.14, wide: 1.32 },
+  laofu: { robe: '#7E7462', robe2: '#6A604E', pants: '#4A4238', hair: 'kerchief', hairC: '#E6E0D4', beard: 'long', sleeve: 'tight', long: true, belt: '#4A4238', tall: 0.92 },
+  zhangliangYoung: { robe: '#8A9A88', robe2: '#768674', pants: '#4A5048', hair: 'knot', sleeve: 'wide', long: true, belt: '#4A5048', tall: 0.98 },
+  caocan: { robe: '#4E5560', robe2: '#3E4450', pants: '#2A2E36', hair: 'cap', beard: 'stub', sleeve: 'tight', belt: '#2A2E36' },
+  lvgong: { robe: '#6A5A44', robe2: '#5A4C38', pants: '#3A3228', hair: 'scholar', hairC: '#D9D2C4', beard: 'long', sleeve: 'wide', long: true, belt: '#3A3228', tall: 0.96 },
   kuaitong: { robe: '#4E4A5E', robe2: '#3E3A4E', pants: '#2A2836', hair: 'scholar', beard: 'stub', sleeve: 'wide', long: true, belt: '#2A2836' },
   // ---------- 英文故事：学校里的人 ----------
   you: { robe: '#2F5DA8', robe2: '#26508F', pants: '#2F5DA8', hair: 'short', modern: true, stripe: '#F4F4F0', sleeve: 'tight', shoe: '#F2F0EA', belt: '#2F5DA8' },
@@ -95,7 +111,7 @@ const add = (p: number[], d: number[], l: number) => [p[0] + d[0] * l, p[1] + d[
 const pt = (p: number[]) => `${f(p[0])},${f(p[1])}`;
 const darker = (c: string, k = 0.78) => { const n = parseInt(c.slice(1), 16); const r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k); return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`; };
 
-export interface PersonOpts { x: number; y: number; s?: number; face?: 1 | -1; who: string; pose: Pose; g?: number; a?: number; hold?: 'rod' | 'bowl' | 'cup' | 'spear' | 'basket' | 'reins' | 'brush' | 'torch' | 'pole' | 'scroll' | 'punt' | 'phone' | 'mooncake' | 'notebook' | 'note' | 'camera' | 'pen' | 'paper'; detail?: boolean; mood?: 'calm' | 'sneer' | 'sad' | 'shock' | 'laugh' }
+export interface PersonOpts { x: number; y: number; s?: number; face?: 1 | -1; who: string; pose: Pose; g?: number; a?: number; hold?: 'rod' | 'bowl' | 'cup' | 'spear' | 'basket' | 'reins' | 'brush' | 'torch' | 'pole' | 'scroll' | 'punt' | 'phone' | 'mooncake' | 'notebook' | 'note' | 'camera' | 'pen' | 'paper' | 'blade'; detail?: boolean; mood?: 'calm' | 'sneer' | 'sad' | 'shock' | 'laugh' }
 /** 画一个人。x、y 是两脚中间落地的点 */
 export const person = (o: PersonOpts) => {
   const L = LOOKS[o.who] ?? LOOKS.crowd1, s = o.s ?? 1, fc = o.face ?? 1, g = o.g ?? 0, p = o.pose;
@@ -180,6 +196,7 @@ export const person = (o: PersonOpts) => {
   if (hold === 'camera') out += `<rect x="${f(wrF[0] - 14)}" y="${f(wrF[1] - 20)}" width="30" height="20" rx="4" fill="#1E2028" stroke="${INK}" stroke-width="1.2"/><circle cx="${f(wrF[0] + 1)}" cy="${f(wrF[1] - 10)}" r="6.5" fill="#3A4A5A" stroke="#9AA8B4" stroke-width="1.5"/><rect x="${f(wrF[0] - 10)}" y="${f(wrF[1] - 24)}" width="8" height="4" fill="#1E2028"/>`;
   if (hold === 'pen') out += `<line x1="${f(wrF[0] - 2)}" y1="${f(wrF[1] + 2)}" x2="${f(wrF[0] + 10)}" y2="${f(wrF[1] - 18)}" stroke="#2F5DA8" stroke-width="3" stroke-linecap="round"/>`;
   if (hold === 'paper') out += `<rect x="${f(wrF[0] - 4)}" y="${f(wrF[1] - 26)}" width="26" height="34" fill="#F4F1E8" stroke="${INK}" stroke-width="1"/><path d="M${f(wrF[0])},${f(wrF[1] - 18)} h16 M${f(wrF[0])},${f(wrF[1] - 12)} h16" stroke="#C9A23A" stroke-width="1.5"/>`;
+  if (hold === 'blade') { const d = [wrF[0] - elF[0], wrF[1] - elF[1]], n = Math.hypot(d[0], d[1]) || 1, u2 = [d[0] / n, d[1] / n], tip = add(wrF, u2, 78), gd = [-u2[1] * 9, u2[0] * 9]; out += `<path d="M${pt(add(wrF, u2, 6))} L${pt(tip)}" stroke="#D8DCE0" stroke-width="4" stroke-linecap="round"/><path d="M${f(wrF[0] + u2[0] * 6 + gd[0])},${f(wrF[1] + u2[1] * 6 + gd[1])} L${f(wrF[0] + u2[0] * 6 - gd[0])},${f(wrF[1] + u2[1] * 6 - gd[1])}" stroke="${GOLD}" stroke-width="4" stroke-linecap="round"/>`; } // 拔出来的剑
   if (hold === 'scroll') out += `<rect x="${f(wrF[0] - 3)}" y="${f(wrF[1] - 16)}" width="34" height="22" fill="#EFE3C6" stroke="#8A6A3A"/>`;
   out += arm(elF, wrF, robe, true);
   if (L.stripe && L.modern) out += `<path d="M${pt(sh)} L${pt(elF)} L${pt(add(wrF, [elF[0] - wrF[0], elF[1] - wrF[1]], 0.18))}" stroke="${L.stripe}" stroke-width="2.4" fill="none" opacity=".85" stroke-linejoin="round"/>`;
@@ -273,6 +290,13 @@ const FACE_X = {
   hanxinKing: { col: '#6B2E28', hair: 'crown', hc: GOLD, beard: 'thin', bc: '#1E1A18' },
   lizuoche: { col: '#5A5A4A', hair: 'scholar', hc: '#3A3A30', beard: 'long', bc: '#4A4440' },
   zhonglimo: { col: '#3A3436', hair: 'helmet', hc: '#3A3330', beard: 'full', bc: '#1E1A18' },
+  liuji: { col: '#7A6A52', hair: 'tallcap', hc: '#8A6A3A', beard: 'long', bc: '#2A2420' },
+  xiangyuYoung: { col: '#4A4044', hair: 'scholar', hc: '#1E1A18' },
+  qinshihuang: { col: '#1E1C22', hair: 'crown', hc: GOLD, beard: 'long', bc: '#1E1A18' },
+  laofu: { col: '#7E7462', hair: 'kerchief', hc: '#E6E0D4', beard: 'long', bc: '#ECE6DA', old: true },
+  zhangliangYoung: { col: '#8A9A88', hair: 'scholar', hc: '#1E1A18' },
+  wuguang: { col: '#5A5040', hair: 'kerchief', hc: '#7A3A2E', beard: 'stub' },
+  songyi: { col: '#4A5060', hair: 'scholar', hc: '#3A3A40', beard: 'long', bc: '#5A5450' },
 } as const;
 export const faceCU = (o: FaceOpts) => {
   const s = o.s ?? 1, fc = o.face ?? 1, g = o.g ?? 0, open = o.open ?? 1, brow = o.brow ?? 0, mo = o.mouth ?? 0;

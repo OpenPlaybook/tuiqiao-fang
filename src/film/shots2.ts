@@ -1,5 +1,5 @@
 // 第二回　执戟郎中：每一镜怎么画、怎么动（对照 第六堂课/分镜/第二回_执戟郎中.md）
-import { GOLD, INK, PAPER, RED, banner, campfire, cityWall, f, flame, glow, lerp, mist, rain, ridge, river, rng, seg, sky, sunDisc, tent, torch, vtext, wav } from './core';
+import { GOLD, INK, PAPER, RED, banner, bareTree, campfire, cityWall, f, flame, glow, lerp, mist, rain, ridge, river, rng, seg, sky, soundRings, sunDisc, tent, torch, vtext, wav } from './core';
 import { P, faceCU, horse, person } from './rig';
 import { deskBg, glasses, slips } from './shots1';
 import type { ShotDef } from './Film';
@@ -69,6 +69,18 @@ export const deskShot = (text: string): ShotDef => ({
   cam: [[800, 520, 1300], [820, 520, 1150]],
 });
 
+/** 田垄：一行行的土垄（种地的地方） */
+const furrows = (y0: number, n = 7) => Array.from({ length: n }, (_, i) => `<path d="M-200,${y0 + i * 46} Q800,${y0 - 14 + i * 46} 1800,${y0 + i * 46}" stroke="#8A7656" stroke-width="${6 + i}" fill="none" opacity=".55"/>`).join('');
+/** 一只燕子（小、低）或天鹅（大、高）：翅膀随 g 扇动 */
+const bird = (x: number, y: number, s: number, g: number, ph = 0, c = INK) => { const w = wav(g, 0.6, ph) * 14; return `<path d="M${f(x - 30 * s)},${f(y - w * s)} Q${f(x - 12 * s)},${f(y - 8 * s)} ${f(x)},${f(y)} Q${f(x + 12 * s)},${f(y - 8 * s)} ${f(x + 30 * s)},${f(y - w * s)}" stroke="${c}" stroke-width="${f(3 * s)}" fill="none" stroke-linecap="round"/>`; };
+/** 鱼（侧面朝右）；cut 0—1 肚子剖开、露出红绸 */
+const fish = (x: number, y: number, s: number, cut = 0, g = 0) => `<g transform="translate(${f(x)},${f(y)}) scale(${s})"><path d="M-120,0 Q-40,-56 70,-10 L120,-40 L110,0 L120,40 L70,10 Q-40,56 -120,0 Z" fill="#9AA6A0" stroke="${INK}" stroke-width="3"/><circle cx="-80" cy="-8" r="6" fill="${INK}"/>` +
+  (cut > 0 ? `<path d="M-60,10 Q0,${f(10 + 26 * cut)} 50,8" stroke="${INK}" stroke-width="3" fill="#6A2E26"/><path d="M-20,${f(14 + 10 * cut)} q${f(40 * cut)},${f(30 * cut + wav(g, 1.2) * 4)} ${f(110 * cut)},${f(40 * cut)} l0,22 q-60,-6 ${f(-110 * cut)},-36 z" fill="${RED}" opacity="${f(cut)}"/>` + (cut > 0.6 ? `<text x="${f(30 + 40 * cut)}" y="${f(48 + 26 * cut)}" font-size="22" fill="#F4E6C8" style="font-family:KaiTi, STKaiti, serif" opacity="${f((cut - 0.6) / 0.4)}">陈胜王</text>` : '') : '') + '</g>';
+/** 树林里的小破庙（丛祠） */
+const shrine = (x: number, y: number, s = 1) => `<g transform="translate(${x},${y}) scale(${s})"><path d="M-110,0 L-110,-120 L110,-120 L110,0 Z" fill="#3A3430" stroke="#1A1716" stroke-width="4"/><path d="M-150,-120 L0,-200 L150,-120 Z" fill="#2A2522" stroke="#1A1716" stroke-width="4"/><rect x="-34" y="-80" width="68" height="80" fill="#141210"/></g>`;
+/** 竹笼罩着的火（篝火：火外面罩一个竹笼） */
+const cageFire = (id: string, x: number, y: number, s: number, g: number) => glow(id, x, y - 30 * s, 220 * s, g, 0, 0.6) + flame(x, y, 1.5 * s, g) + `<g transform="translate(${x},${y}) scale(${s})">${Array.from({ length: 7 }, (_, i) => `<path d="M${-46 + i * 15},4 Q${-30 + i * 10},-70 ${-6 + i * 2},-96" stroke="#8A6A3A" stroke-width="4" fill="none" opacity=".85"/>`).join('')}<ellipse cx="0" cy="4" rx="50" ry="10" fill="none" stroke="#8A6A3A" stroke-width="4"/></g>`;
+
 export const SHOTS2: Record<string, ShotDef> = {
   // ---------- 0 翻开《史记》，大泽乡 ----------
   'c.slips': {
@@ -117,6 +129,89 @@ export const SHOTS2: Record<string, ShotDef> = {
     cam: [[800, 440, 1300], [800, 460, 1150]],
   },
   // ---------- 2 陈胜召集大家 ----------
+  // ---------- 大泽乡（扩写）：陈胜年轻时、鱼腹丹书、篝火狐鸣、激怒将尉、张楚 ----------
+  'c.plow': {
+    bg: (id) => sky(id, '#D9CFBC', PAPER) + ridge({ y: 380, amp: 60, seed: 61, a: 0.18 }) + `<path d="M-200,470 Q800,450 1800,470 L1800,1100 L-200,1100 Z" fill="#B8A57E"/>` + furrows(500),
+    fg: (u, g) => {
+      let o = '';
+      for (let i = 0; i < 4; i++) o += person({ x: 260 + i * 170, y: 640 + (i % 2) * 30, s: 1.2, who: i % 2 ? 'crowd4' : 'crowd2', pose: P.kneelWash(g * 0.5 + i * 0.3), g, face: 1 });
+      const k = seg(u, 0.15, 0.55);
+      // 田埂：一道隆起的土垄，陈胜停下活，站到上面望着远处
+      o += `<path d="M960,612 Q1150,560 1360,612 Z" fill="#9C8662"/>`;
+      o += person({ x: lerp(1100, 1160, k), y: lerp(640, 592, k), s: 1.4, who: 'chensheng', pose: P.mix(P.kneelWash(0), { ...P.stand(), head: 16, aF: 10, eF: 30 }, k), g, face: -1, detail: true, mood: k > 0.5 ? 'sad' : 'calm' });
+      return o;
+    },
+    cam: [[800, 540, 1500], [1020, 540, 1100]],
+  },
+  'c.birds': {
+    bg: (id) => sky(id, '#C9D4D8', '#EDE6D4') + ridge({ y: 640, amp: 50, seed: 62, a: 0.2 }) + `<path d="M-200,760 Q800,740 1800,760 L1800,1100 L-200,1100 Z" fill="#B8A57E"/>`,
+    fg: (u, g) => {
+      let o = '';
+      for (let i = 0; i < 5; i++) o += bird(((200 + i * 260 + g * 60) % 1800) - 100, 640 + Math.sin(g * 2 + i) * 20, 0.8, g, i * 0.3); // 燕雀：贴着地面飞
+      for (let i = 0; i < 3; i++) o += bird(((300 + i * 380 + g * 30) % 1900) - 150, 160 + i * 40, 2.4, g * 0.5, i * 0.4, '#3A3A3A'); // 鸿鹄：高高在天上
+      return o + person({ x: 1200, y: 820, s: 1.3, who: 'chensheng', pose: P.mix(P.stand(), P.point(1), seg(u, 0.3, 0.7)), g, face: -1, detail: true });
+    },
+    cam: [[800, 470, 1600], [800, 430, 1450]],
+  },
+  'c.plot': {
+    bg: (id) => tentIn(id),
+    fg: (u, g, id) => campfire(id, 800, 760, 0.9, g) +
+      person({ x: 620, y: 720, s: 1.5, who: 'chensheng', pose: { ...P.sitCross(), head: 6, aF: 60, eF: 40 }, g, face: 1, detail: true, mood: 'calm' }) +
+      person({ x: 980, y: 720, s: 1.5, who: 'wuguang', pose: { ...P.sitCross(), head: 10 }, g, face: -1, detail: true }),
+    cam: [[800, 600, 1300], [800, 620, 1000]],
+  },
+  'c.diviner': {
+    bg: (id) => tentIn(id, true),
+    fg: (u, g, id) => {
+      const k = seg(u, 0.2, 0.7);
+      // 占卜：龟甲、蓍草
+      return glow(id, 800, 600, 220, g, 0, 0.5) + `<ellipse cx="800" cy="720" rx="70" ry="34" fill="#8A6A44" stroke="${INK}" stroke-width="3"/><path d="M750,712 l40,-10 l30,16 l-26,12 z" stroke="${INK}" stroke-width="2" fill="none" opacity="${f(k)}"/>` +
+        person({ x: 600, y: 730, s: 1.4, who: 'chensheng', pose: P.sitCross(), g, face: 1, detail: true }) + person({ x: 690, y: 740, s: 1.3, who: 'wuguang', pose: P.sitCross(), g, face: 1 }) +
+        person({ x: 1000, y: 730, s: 1.4, who: 'lvgong', pose: { ...P.sitCross(), aF: lerp(50, 80, k), eF: lerp(30, 0, k) }, g, face: -1, detail: true });
+    },
+    cam: [[800, 600, 1200], [800, 620, 1050]],
+  },
+  'c.fish': {
+    bg: (id) => tentIn(id) + `<rect x="300" y="700" width="1000" height="40" fill="#5A4434"/>`,
+    fg: (u, g, id) => { const k = seg(u, 0.3, 0.8); return glow(id, 800, 600, 260, g, 0, 0.5) + fish(800, 640, 2.4, k, g) + person({ x: 380, y: 860, s: 1.8, who: 'rebel', pose: P.mix(P.stand(), P.point(1), k), g, face: 1, detail: true, mood: k > 0.6 ? 'shock' : 'calm' }); },
+    cam: [[800, 600, 1200], [820, 640, 950]],
+  },
+  'c.foxcry': {
+    bg: (id) => sky(id, '#14161E', '#2A2C36') + ridge({ y: 520, amp: 60, seed: 63, a: 0.7, color: '#0E1016' }) + `<path d="M-200,700 L1800,700 L1800,1100 L-200,1100 Z" fill="#1E1E24"/>` + bareTree(64, 1180, 700, 1.6, 0.9) + bareTree(65, 1420, 700, 1.3, 0.9) + shrine(1300, 700, 1.3),
+    fg: (u, g, id) => {
+      let o = cageFire(id, 1080, 690, 1, g);
+      o += person({ x: 1170, y: 700, s: 1.2, who: 'wuguang', pose: { ...P.sing(g), lean: 20, head: -30 }, g, face: -1 });
+      o += soundRings(1120, 560, g, { dir: -1, n: 4, r0: 30 });
+      for (let i = 0; i < 5; i++) o += tent(160 + i * 150, 760, 0.7, '#3A3630', 0.9);
+      return o;
+    },
+    cam: [[800, 560, 1600], [1000, 600, 1100]],
+  },
+  'c.point': {
+    bg: (id) => plainBg(id),
+    fg: (u, g) => {
+      let o = person({ x: 1180, y: 760, s: 1.4, who: 'chensheng', pose: P.stand(), g, face: -1, detail: true, mood: 'calm' });
+      for (let i = 0; i < 9; i++) { const x = 180 + i * 90, r = (i * 37) % 5; o += person({ x, y: 780 + (i % 3) * 26, s: 1.25, who: 'rebel', pose: i % 2 ? P.point(0.7 + 0.3 * Math.sin(g + r)) : P.mix(P.stand(), P.laugh(g), 0.15), g, face: 1 }); }
+      return o;
+    },
+    cam: [[800, 600, 1500], [880, 620, 1250]],
+  },
+  'c.drunk': {
+    bg: (id) => plainBg(id, { dark: true }) + tent(400, 640, 1.1, '#3A3630'),
+    fg: (u, g, id) => {
+      const k = seg(u, 0.3, 0.9);
+      return campfire(id, 760, 780, 1.1, g) +
+        person({ x: 1000, y: 780, s: 1.5, who: 'qinguan', pose: P.mix({ ...P.sitCross(), lean: 18 + 6 * Math.sin(g * 1.3), head: 20 }, { ...P.stand(), aF: 70, eF: 10, lean: -6 }, k), g, face: -1, detail: true, mood: k > 0.5 ? 'sneer' : 'calm', hold: 'cup' }) +
+        person({ x: 600, y: 790, s: 1.45, who: 'wuguang', pose: P.mix(P.stand(), P.point(0.8), 0.6 + 0.4 * Math.sin(g * 2)), g, face: 1, detail: true });
+    },
+    cam: [[800, 620, 1300], [820, 640, 1050]],
+  },
+  'c.throneCS': {
+    bg: (id) => tentIn(id, true) + dais(),
+    fg: (u, g, id) => glow(id, 1200, 520, 300, g, 0, 0.5) + banner(1380, 420, 1.1, g, RED, '张', 0) + person({ x: 1200, y: 640, s: 1.45, who: 'chensheng', pose: P.sitCross(), g, face: -1, detail: true }) +
+      Array.from({ length: 4 }, (_, i) => person({ x: 400 + i * 130, y: 820, s: 1.3, who: 'rebel', pose: P.bow(0.5), g, face: 1 })).join(''),
+    cam: [[900, 560, 1400], [1000, 560, 1200]],
+  },
   'c.gather': {
     bg: (id) => plainBg(id, { dark: true }),
     fg: (u, g, id) => {
