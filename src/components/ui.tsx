@@ -73,7 +73,7 @@ export const Avatar = ({ i, size = 40 }: { i: number; size?: number }) => (
 
 // ---------------- 星星计数器、飞星星 ----------------
 let counterEl: HTMLElement | null = null;
-/** 支线“探索”分：问 AI 自己想出后一半、看字的别的用法 */
+/** 探索分：AI 追问和释义练习；支线任务另计星星。 */
 const SideCounter = () => {
   const p = useGame((s) => s.player);
   const n = p ? sideOf(p) : 0;
