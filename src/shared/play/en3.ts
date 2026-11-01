@@ -79,10 +79,9 @@ const EXT_GREEN: Ext[] = [
 const EXT_MEANT: Ext[] = [
   { id: 'x1', title: '一个词，翻转整个案子', need: 'always', steps: [
     T('t1', '', '纸条上写的是 **Lent**（借出去）。如果是真的，写纸条的人是熊猫的主人。可 Green 老师说她没借——那这个词就是写错了：写纸条的人其实是**借进来**的人。'),
-    C('a', '写纸条的人本来想写——', [
-      ['*Borrowed the panda.（我借走了熊猫）', '对。M 借走了熊猫，三点还回来。'],
-      ['Lend the panda.', '还是“借出去”，只是时态变了。'],
-      ['Stole the panda.', '偷，不会留条子说三点回来。'],
+    C('a', '要是纸条写对了，这个案子会怎样？', [
+      ['*一看就知道有人借走了熊猫、三点还回来，Green 老师就不会以为它被偷了', '对：一个词用反，整个案子就跑偏了。'],
+      ['还是没人知道熊猫去哪儿了', '写对了，大家就知道是借走的，三点会还回来。'],
     ], { keep: true }),
     T('t2', '', '中文“借”一个字管两个方向，英语分成两个词。所以学英语的人最容易把它们用反：“Can you borrow me your pen?” 就是这样来的。'),
     fill('b', '同样分方向的词，填一填。', ['borrow', 'lend', 'learn', 'teach'], [
@@ -182,9 +181,9 @@ const EXT_MIX: Ext[] = [
 const EXT_PROOF: Ext[] = [
   { id: 'x1', title: '线索 → 证据 → 证明', need: 'always', steps: [
     T('t1', '', '第一章 Ben 说过：We need to write down every clue. 现在，线索一条条对上了：同样的黄纸、同样带小卷的 M。线索对上了，就成了 **evidence**（证据）。'),
-    C('a', '两张纸条一样，对“M 是 Mia”来说，是——', [
-      ['*evidence：支持这个说法的证据', '对。'],
-      ['proof：已经百分之百证明了', '很有把握，可还没听 Mia 自己说，算不上 proof。'],
+    C('a', '下面哪一样，能算 proof（百分之百的证明）？', [
+      ['*一张照片：两点十二分，Mia 正拿着熊猫走出礼堂', '对：直接拍到了她拿熊猫——不只是“支持”，而是“证明”。'],
+      ['又找到一张同样的黄纸', '黄纸再多，也只是更多的 evidence：别人也可能用黄纸。'],
     ], { keep: true }),
     C('b', 'Ben 说 It must be Mia! 用 must，是因为——', [
       ['*证据很多，他非常有把握', '对：must be 是推出来的、很有把握的结论。'],
@@ -207,9 +206,9 @@ const EXT_PROOF: Ext[] = [
 const EXT_GUESS: Ext[] = [
   { id: 'x1', title: '有多大把握', need: 'always', steps: [
     T('t1', '', '“I bet she’s there!”——**I bet …**：我敢说……，很有把握。说话人有几分把握，英语用不同的说法：', undefined, viz('meter', { items: [['Maybe …', 0.15], ['I guess …', 0.3], ['I think …', 0.5], ['I bet …', 0.75], ['It must be …', 0.88], ['I’m sure …', 0.96]] })),
-    C('a', 'Ben 说 I bet she’s there! 他是——', [
-      ['*很有把握：她一定在那儿', '对：I bet 不是真的打赌，是“我敢说”。'],
-      ['要和你打赌，赢点钱', '口语里的 I bet 只是表示有把握。'],
+    C('a', 'Ben 凭什么这么有把握？', [
+      ['*Mia 说过两点一刻在花园拍照，她又想给熊猫拍照登头版', '对：两条线索对在一起，他才敢说 I bet。'],
+      ['他看见 Mia 去了花园', '他没看见。是推出来的。'],
     ], { keep: true }),
     C('b', '你只有一点点把握，最合适的是——', [
       ['*I guess she’s in the garden.', '对：I guess：我猜（不太确定）。'],

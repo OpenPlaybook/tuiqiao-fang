@@ -506,9 +506,9 @@ const EXT_NERVOUS: Ext[] = [
 const EXT_NOTICE: Ext[] = [
   { id: 'x1', title: '没注意到 ≠ 没去看', need: 'always', steps: [
     T('t1', '', '刘师傅说：“Sorry, I didn’t notice anyone.”——**notice**：注意到。本来没特意去看，可是发现了；或者，没发现。'),
-    C('a', '“I didn’t notice anyone.” 是说刘师傅——', [
-      ['*没留意到有人经过（他在看手机）', '对：人从旁边过去，他没发现。'],
-      ['不认识任何人', '不认识是 I don’t know anyone.'],
+    C('a', '换一个场景：你在专心写作业，妈妈进了房间你都不知道。你会说——', [
+      ['*Sorry, Mum. I didn’t notice you.', '对：专心做别的事，没察觉到——notice。'],
+      ['Sorry, Mum. I didn’t look you.', 'look 后面要加 at，而且说的是“特意去看”。'],
     ], { keep: true }),
     C('b', '和 look、see 比一比：“I looked, but I didn’t see anything.” 是——', [
       ['*我去看了，可什么也没看见', '对：look 是去看，see 是看见。notice 是“没特意去看，却发现了”。'],

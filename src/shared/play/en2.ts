@@ -325,9 +325,9 @@ const EXT_SAY: Ext[] = [
 const EXT_MEAN: Ext[] = [
   { id: 'x1', title: 'mean：意思是', need: 'always', steps: [
     T('t1', '', 'Ben 笑着说：“You mean, ‘Can you lend me your pen?’”——**You mean …**：你的意思是……。帮别人把话说对，又不让人难堪，常这么说。'),
-    C('a', 'Ben 这句话是在——', [
-      ['*客气地帮 Mia 改正：你想说的是 lend', '对：没说“你错了”，只说“你的意思是……”。'],
-      ['生气地批评 Mia', '他是笑着说的。'],
+    C('a', 'You mean … 还能用来确认自己没听错。同学说：“See you at the gate at three!”学校有两个门，你可以问——', [
+      ['*You mean the front gate?', '对：把你理解的说一遍，请对方确认。'],
+      ['You are wrong.', '对方没说错，你只是想确认是哪个门。'],
     ], { keep: true }),
     T('t2', '', 'mean 还有几种常见用法：**What does “lend” mean?**（lend 是什么意思？）；**I didn’t mean it.**（我不是故意的。）mean 的过去式是 **meant**（读 /ment/）。'),
     C('b', '问“这个词是什么意思”，哪一句对？', [

@@ -1,7 +1,7 @@
 // 核对题目本身（npm run check:content）：每一道主线题、支线题和它们的拓展，答案都对得上、能做完。
 //   连线一对一（几项归到同一个是分类题），分类每格不止一张（一格一张是连线题）；
 //   选择：有正确答案，序号不越界，选项不重复；填空：每句一个空，答案在词库里，词库不重复（同一个词可以填两处）；分类、连线、排序、挑错、改错：序号不越界；
-//   每道题、每段拓展里的步骤 key 不重复；题都挂在句子上，一道题不挂两处；原文（wy）不用“……”省略；节点里不写默认阅读顺序的话。
+//   每道题、每段拓展里的步骤 key 不重复；拓展紧接着把正题再问一遍的，提醒出来；题都挂在句子上，一道题不挂两处；原文（wy）不用“……”省略；节点里不写默认阅读顺序的话。
 import { PLAYS } from '../src/shared/play';
 import { ITEM_BY_ID } from '../src/shared/bank';
 import type { Item, Sub } from '../src/shared/types';
@@ -104,5 +104,15 @@ for (const play of PLAYS) {
   });
 }
 for (const it of Object.values(ITEM_BY_ID)) if (!it.id.endsWith('-log') && !used.has(it.id)) err(`${it.id}：没有挂在任何句子上`);
+// 拓展里有没有把正题原样再问一遍（问法和正确答案都很像）：只提醒，不算错——换个地方回扣是好的，紧接着再考同一题是重复
+const clean = (t: string) => t.replace(/[⟦⟧*“”"‘’'（）()——，。、：；？！!?,.:;\s\-—_]/g, '').toLowerCase();
+const grams = (t: string) => { const c = clean(t); const g = new Set<string>(); for (let i = 0; i < c.length - 1; i++) g.add(c.slice(i, i + 2)); return g; };
+const sim = (a: string, b: string) => { const A = grams(a), B = grams(b); if (!A.size || !B.size) return 0; let n = 0; A.forEach((x) => B.has(x) && n++); return n / Math.min(A.size, B.size); };
+const okOf = (c: Extract<Sub, { kind: 'choice' }>) => c.ok.map((i) => c.opts[i].t).join('/');
+for (const id of used.keys()) {
+  const it = ITEM_BY_ID[id];
+  for (const m of it.steps) if (m.kind === 'choice') for (const e of it.ext ?? []) for (const x of e.steps)
+    if (x.kind === 'choice' && sim(okOf(m), okOf(x)) >= 0.6 && sim(m.q, x.q) >= 0.45) console.log(`· ${id}/${e.id} ${x.key}：拓展里又问了一遍正题（“${x.q.slice(0, 20)}”）`);
+}
 console.log(bad ? `\n题目：${bad} 处要改` : `题目：${used.size} 道题（含拓展）全部对得上`);
 if (bad) process.exit(1);

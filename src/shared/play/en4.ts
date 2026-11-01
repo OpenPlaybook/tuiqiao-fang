@@ -75,9 +75,9 @@ export const PLAY_EN4: Play = {
 const EXT_STEAL: Ext[] = [
   { id: 'x1', title: 'steal、borrow、take', need: 'always', steps: [
     T('t1', '', '**steal**：偷——没经过同意，拿走了不打算还；**borrow**：借——经过同意，用完还回来；**take**：拿走——只说动作，不管同不同意。', ['Someone has taken it!（Green 老师：不知道是偷还是借）', 'I didn’t steal it. I borrowed it.（Mia：我是借的）']),
-    C('a', 'Mia 说 I didn’t steal it! I borrowed it. 她想说明——', [
-      ['*她问过、得到了同意，还打算还回来', '对：borrow 是经过同意、要还的。'],
-      ['她没有拿熊猫', '她拿了，只是说不是偷。'],
+    C('a', '从 Green 老师那边看，她能说 Someone borrowed it 吗？', [
+      ['*不能：她根本没听清 Mia 在问什么，不知道有人借——她只能说 Someone has taken it.', '对：borrow 要对方知道、同意。Green 老师当时在打电话，随口说了“好”。'],
+      ['能：她说过“好”', '她是没听清就说了“好”，并不知道借给了谁。'],
     ], { keep: true }),
     fill('b', '填 steal、borrow 或 take（注意形式）。', ['stole', 'borrowed', 'took'], [
       ['The thief ___ a phone from the shop and ran away.', 'stole', '没经过同意：偷。'],
@@ -157,10 +157,9 @@ const EXT_EVER: Ext[] = [
   { id: 'x1', title: 'the most … I’ve ever …', need: 'always', steps: [
     T('t1', '', '“我（到现在为止）……过的最……”：**the + 最高级 + 名词 + I’ve ever + 过去分词**。ever 是“曾经、从来”，和 have done 搭配，说的是到现在为止。', ['It’s the best story I’ve ever read.', 'He is the funniest person I’ve ever met.']),
     T('t2', '', '这也是第一章的老朋友：Ben **has eaten** nine mooncakes，Someone **has taken** it!——have / has + 过去分词，说的都是“到现在为止”。Mia 这句加了 ever：到现在为止拍过的所有照片里。'),
-    C('a', 'Mia 说 It’s the most beautiful photo I’ve ever taken! 意思是——', [
-      ['*这是我拍过的最美的一张照片', '对：到现在为止拍过的所有照片里，这张最美。'],
-      ['我永远拍不出这么美的照片', 'ever 在这里是“曾经”，说的是到现在为止。'],
-      ['这张照片是我第一次拍', '没说是第一次。'],
+    C('a', '“She is the kindest teacher I’ve ever had.” 是说——', [
+      ['*到现在为止遇到的老师里，她最和善', '对：the + 最高级 + I’ve ever + 过去分词。'],
+      ['她以后会成为最和善的老师', 'I’ve ever 说的是到现在为止，不是以后。'],
     ], { keep: true }),
     fill('b', '把句子补全。', ['eaten', 'read', 'seen', 'met'], [
       ['This is the best mooncake I’ve ever ___! — Ben', 'eaten', 'eat — ate — eaten。'],
@@ -211,9 +210,9 @@ const EXT_CLEARLY: Ext[] = [
 const EXT_FAULT: Ext[] = [
   { id: 'x1', title: '谁的错', need: 'always', steps: [
     T('t1', '', '“It was my fault too.”——**fault**：（某人的）过错、责任。It’s my fault. = 怪我。'),
-    C('a', 'Green 老师说 It was my fault too，是——', [
-      ['*主动承认：这件事我也有责任', '对：她当时太忙，没好好听 Mia 说话。'],
-      ['怪 Mia 做错了', '她是在说自己也有错。'],
+    C('a', 'Green 老师为什么说 too（也）？', [
+      ['*她觉得不全是 Mia 的错：自己当时只顾打电话，没听清就说了“好”', '对：主动把一部分责任揽到自己身上。'],
+      ['她自己也弄丢了东西', 'fault 说的是该怪谁，不是丢东西。'],
     ], { keep: true }),
     T('t2', '', '“错”还有两个词：**mistake**（做错的事、错误：make a mistake）；**wrong**（不对的：the wrong word）。fault 说的是“该怪谁”，mistake 说的是“错在哪儿”。'),
     fill('b', '放进句子。', ['fault', 'mistake', 'wrong'], [
@@ -235,9 +234,9 @@ const EXT_FAULT: Ext[] = [
 const EXT_INTIME: Ext[] = [
   { id: 'x1', title: 'in time 和 on time', need: 'always', steps: [
     T('t1', '', '“You found our panda just in time!”——**in time**：及时，赶得上（再晚一点就来不及了）；**just in time**：正好赶上。'),
-    C('a', 'Green 老师说 just in time，是因为——', [
-      ['*三点就要颁奖，你们正好在颁奖前找到了熊猫', '对：再晚一点就来不及了。'],
-      ['你们准时到了礼堂', '“准时”是 on time。'],
+    C('a', '要是三点零五分才找到熊猫，Green 老师会说——', [
+      ['*Oh no, you’re too late!', '对：三点就开始颁奖，晚了五分钟，就来不及了——不是 in time。'],
+      ['You found it just in time!', 'just in time 是正好赶上，三点零五分已经晚了。'],
     ], { keep: true }),
     T('t2', '', '**on time**：准时，按规定的时间（The bus came on time.）。in time 盯着“来不来得及”，on time 盯着“准不准”。'),
     fill('b', '填 in time 或 on time。', ['in time', 'on time'], [
