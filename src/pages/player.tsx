@@ -20,6 +20,7 @@ import { Bubble, ChoiceChat, ChoiceQ, PlayStep, SaveCtx, TeachBody, ansOf, layou
 import { DEMO } from '../game/demo';
 import { loadVoice, planVoices, unlockAudio, voiceIndex, voiceReady, voiceSrc } from './voiceLoad';
 import { Film } from '../film/Film';
+import { LANES, NODE_BY_ID, laneName, lanesOf, nextOnLane } from '../shared/play/storymap';
 
 export const go = (path: string) => { window.location.hash = path; };
 const EST = (t: string) => Math.max(2.2, Array.from(t.replace(/[⟦⟧⟪⟫*]/g, '')).length / 5.2 + 0.5);
@@ -293,7 +294,7 @@ export default function PlayerPage({ id }: { id: string }) {
             {phase === 'end' && (
               // 看完了也能接着探索：最后那句话（字可以点），几个可以直接问 AI 眼镜的问题
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-auto bg-black/60 px-6 py-4 text-white">
-                <div className={en ? 'font-serif text-3xl font-black' : 'kai text-4xl'}>这一回看完了</div>
+                <div className={en ? 'font-serif text-3xl font-black' : 'kai text-4xl'}>{en ? '这一章看完了' : '这一段看完了'}</div>
                 <div className={`max-w-[80%] rounded-xl bg-white/95 px-5 py-2.5 text-center leading-relaxed text-[#2B2722] ${en ? 'font-serif text-[19px]' : 'kai text-[21px]'}`}><LineText l={lines[n - 1]} mode={mode} min={2} /></div>
                 {(play.endAsk?.length ?? 0) > 0 && aiOn && (
                   <div className="max-w-[86%] text-center">
@@ -301,8 +302,9 @@ export default function PlayerPage({ id }: { id: string }) {
                     <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">{play.endAsk!.map((q) => <button key={q} onClick={() => { sfx('click'); setAskPreset((x) => ({ q, n: (x?.n ?? 0) + 1 })); }} className="rounded-full bg-sky-50 px-3 py-1 text-[14px] font-bold text-sky-900 hover:bg-white">🔎 {q}</button>)}</div>
                   </div>
                 )}
+                <NextStops play={play} />
                 <div className="mt-1 flex items-center gap-3">
-                  {play.next && PLAY_BY_ID[play.next] ? <Btn color={play.color} onClick={() => go(`/c/${play.next}`)}>翻到下一回 ›</Btn> : <Btn color={play.color} onClick={() => go('/')}>合上书</Btn>}
+                  {en && play.next && PLAY_BY_ID[play.next] ? <Btn color={play.color} onClick={() => go(`/c/${play.next}`)}>下一章 ›</Btn> : <Btn color={play.color} onClick={() => go('/')}>回到{en ? '目录' : '故事线图'}</Btn>}
                   <button onClick={() => { setIdx(0); setPhase('play'); }} className="flex items-center gap-1 text-sm font-bold underline opacity-85"><RotateCcw size={14} />从头再看</button>
                 </div>
                 {play.nextNote && <div className="text-sm opacity-80">{play.nextNote}</div>}
@@ -312,7 +314,7 @@ export default function PlayerPage({ id }: { id: string }) {
           {/* 左上角：目录、回目（有黑边就在黑边里） */}
           <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-white backdrop-blur-sm">
             <button onClick={(e) => { e.stopPropagation(); go('/'); }} className="text-[13px] font-bold underline opacity-90">目录</button>
-            <span className={en ? 'font-serif text-[16px] font-bold' : 'kai text-[17px]'}>{play.title}</span>
+            <span className={en ? 'font-serif text-[16px] font-bold' : 'kai text-[17px]'}>{!en && NODE_BY_ID[play.id] && <span className="mr-1 text-[13px] opacity-80">{NODE_BY_ID[play.id].star ? '★' : laneName(NODE_BY_ID[play.id].lanes[0]) + '·'}</span>}{play.title}</span>
           </div>
           {retTo && PLAY_BY_ID[retTo[0]] && <button onClick={(e) => { e.stopPropagation(); go(`/c/${retTo[0]}?at=${retTo[1]}`); }} className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-black text-[#2B2722] shadow"><CornerUpLeft size={15} />回到{PLAY_BY_ID[retTo[0]].title.split('　')[0]}</button>}
           {/* 最下面一摞：答题区（从字幕的位置展开，有黑边就往黑边里长）→ 控制条（播放区最下面） */}
@@ -681,6 +683,23 @@ function Ask({ play, item, line, before, hint, preset }: { play: Play; item: Ite
       <div className="flex gap-1.5"><input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) ask(); }} maxLength={120} placeholder={`比如：${hint}`} className="min-w-0 flex-1 rounded-lg border-2 border-[#E6DCC6] bg-white px-2.5 py-1 text-[14px] outline-none focus:border-sky-300" /><button disabled={!q.trim() || busy} onClick={() => ask()} className="rounded-lg bg-sky-600 px-2.5 text-white disabled:opacity-50">{busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}</button></div>
       {!q && !busy && <button onClick={() => ask(hint)} className="mt-1 text-left text-[13px] font-bold text-sky-700 underline">就问这个：{hint}</button>}
       {err && <div className="mt-1 text-sm text-rose-700">{err}</div>}
+    </div>
+  );
+}
+
+/** 楚汉：看完一个节点，顺着每条线往下走（★ 节点有好几条线） */
+function NextStops({ play }: { play: Play }) {
+  if (play.lang === 'en') return null;
+  const outs = lanesOf(play.id).map((l) => ({ l, n: nextOnLane(play.id, l) })).filter((x) => x.n);
+  if (!outs.length) return <div className="text-sm opacity-85">这条线走到头了。回到故事线图，看看别人的故事。</div>;
+  return (
+    <div className="flex max-w-[90%] flex-wrap justify-center gap-2">
+      {outs.map(({ l, n }) => { const L = LANES.find((x) => x.id === l)!, ok = !!PLAY_BY_ID[n!.id]; return (
+        <button key={l} disabled={!ok} onClick={() => { sfx('click'); go(`/c/${n!.id}`); }} className={`rounded-xl px-3 py-1.5 text-left ${ok ? 'bg-white text-[#2B2722] hover:shadow' : 'bg-white/40 text-white/80'}`}>
+          <div className="text-[12px] font-bold" style={ok ? { color: L.color } : {}}>跟着{L.name}往下走</div>
+          <div className="kai text-[18px]">{n!.star ? '★ ' : ''}{n!.title}{ok ? ' ›' : '（制作中）'}</div>
+        </button>
+      ); })}
     </div>
   );
 }

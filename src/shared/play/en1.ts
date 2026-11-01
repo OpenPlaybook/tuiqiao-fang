@@ -343,7 +343,7 @@ const EXT_WATCH: Ext[] = [
       ['Mr Liu likes to ___ football on his phone.', 'watch', '盯着看比赛：watch。'],
       ['I ___ Ben in the hall this morning.', 'saw', '早上看见了 Ben：see 的过去式 saw。'],
     ]),
-    T('t2', '', '还记得中文第一回的“五种看”吗？瞥、瞪、凝视……英语也分得一样细：glance（瞥一眼）、stare（盯着看）、glare（生气地瞪）、gaze（久久地凝视）。'),
+    T('t2', '', '还记得中文《淮阴少年》里的“五种看”吗？瞥、瞪、凝视……英语也分得一样细：glance（瞥一眼）、stare（盯着看）、glare（生气地瞪）、gaze（久久地凝视）。'),
     Mt('c', '这几种“看”，各是什么样子？', ['glance at the clock', 'stare at the empty table', 'glare at the noisy boy', 'gaze at the moon'], ['生气地瞪', '久久地凝视', '瞥一眼', '盯着看（愣住了）'], [2, 3, 0, 1], 'glance 一眼带过；stare 盯着看、愣住了；glare 生气地瞪；gaze 带着感情、久久地看。', { lh: '英语', rh: '怎么看' }),
   ] },
   { id: 'x2', title: '听也分两种', need: 'opt', steps: [
@@ -538,7 +538,7 @@ export const PLAY_EN1_ITEMS: Item[] = [
     id: 'e1-watch', st: 'en1', lv: 2, type: 'word', topic: 'look see watch', label: 'look / see / watch', intro: '', ask: 'look、see、watch 有什么不一样？',
     hints: ['看比赛，是看一眼，还是盯着看一段时间？'],
     explain: 'look：把眼睛转过去看（look at the clock）；see：看见（东西进了眼睛）；watch：盯着看一段时间（看比赛、看电视）。中文都是“看”，英语分得很细。',
-    back: [{ ch: 'zh1', line: 'kan', label: '中文第一回：五种“看”' }],
+    back: [{ ch: 'zh1', line: 'kan', label: '中文《淮阴少年》：五种“看”' }],
     lock: { words: ['was watching'] },
     ext: EXT_WATCH,
   }, C('a', '刘师傅说 I was watching the football match。为什么用 watch，不用 see 或 look？', [

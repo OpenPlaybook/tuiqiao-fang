@@ -21,7 +21,7 @@ export default function Teacher() {
   useEffect(() => { if (!pin) return; load(); const t = setInterval(() => load(), 4000); return () => clearInterval(t); }, [pin]);
   if (!pin || !st) return (
     <div className="flex min-h-full items-center justify-center p-6"><div className="card w-[420px] p-8">
-      <div className="kai text-3xl">推敲坊 · 教师后台</div>
+      <div className="kai text-3xl">字里行间 · 教师后台</div>
       <input type="password" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && setPin(input.trim())} placeholder="教师口令（data/teacher-pin.txt）" className="mt-5 w-full rounded-xl border-2 border-[#E6DCC6] px-4 py-2.5 text-lg outline-none" />
       {err && <div className="mt-2 text-rose-700">{err}</div>}
       <div className="mt-5"><Btn onClick={() => setPin(input.trim())}>进入</Btn></div>
@@ -33,7 +33,7 @@ export default function Teacher() {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-5">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="kai text-3xl">推敲坊 · 教师后台</div>
+        <div className="kai text-3xl">字里行间 · 教师后台</div>
         <span className="text-ink2">{st.players.length} 人，在线 {online} 人</span>
         <div className="ml-auto flex flex-wrap gap-2">
           <button onClick={() => setCfg({ attention: !c.attention })} className={`rounded-full px-4 py-2 font-black ${c.attention ? 'bg-rose-600 text-white' : 'bg-white chunky'}`}>{c.attention ? '取消“请看大屏幕”' : '请看大屏幕'}</button>
@@ -42,7 +42,7 @@ export default function Teacher() {
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white/70 px-4 py-2">
         <span className="font-black">开放关卡：</span>
-        {STATIONS.map((s) => <button key={s.id} onClick={() => setCfg({ open: { ...c.open, [s.id]: !c.open[s.id] } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open[s.id] ? 'text-white' : 'bg-white text-ink2'}`} style={c.open[s.id] ? { background: s.color, borderColor: s.color } : { borderColor: '#E6DCC6' }}>{s.emoji} {s.name}</button>)}
+        {([['zh', '📜 楚汉（五条故事线）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8']] as const).map(([k, t, col]) => <button key={k} onClick={() => setCfg({ open: { ...c.open, [k]: !c.open[k] } })} className={`rounded-full border-2 px-3 py-1 text-sm font-black ${c.open[k] ? 'text-white' : 'bg-white text-ink2'}`} style={c.open[k] ? { background: col, borderColor: col } : { borderColor: '#E6DCC6' }}>{t}</button>)}
         <button onClick={() => setCfg({ open: Object.fromEntries(STATION_IDS.map((s) => [s, true])) as typeof c.open })} className="text-sm underline">全部开放</button>
       </div>
 

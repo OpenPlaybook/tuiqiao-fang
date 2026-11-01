@@ -21,7 +21,7 @@ export const getState = () => state;
 
 // 离线 30 秒以上：所有关卡自动开放，进度先存在本机，连上后再同步
 export const OFFLINE_MS = 30000;
-export const isOpen = (s: State, st: StationId) => s.config.open[st] || Date.now() - s.lastOk > OFFLINE_MS;
+export const isOpen = (s: State, st: StationId) => s.config.open[/^en\d/.test(st) ? 'en' : 'zh'] || s.config.open[st] || Date.now() - s.lastOk > OFFLINE_MS;
 
 // ---------------- 飞星星、提示条 ----------------
 type Fly = { x: number; y: number; n: number; id: number };

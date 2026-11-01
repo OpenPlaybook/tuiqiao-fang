@@ -156,4 +156,5 @@ export interface GameConfig {
   aiReady?: boolean;
   aiLeft?: number;
 }
-export const STATION_IDS: StationId[] = ['zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];
+/** 老师按两条大线开放：中文（楚汉五条线）、英文（Golden Panda）。旧的按回开放的设置也还认 */
+export const STATION_IDS: StationId[] = ['zh', 'en'];

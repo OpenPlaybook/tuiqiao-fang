@@ -147,7 +147,7 @@ export const TopBar = () => {
   return (
     <div className="sticky top-0 z-40 border-b-2 border-[#E6DCC6] bg-[#FBF7EE]/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-3 px-4">
-        <a href="#/" className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-zhu text-lg font-black text-white kai">推</span><span className="kai text-2xl font-bold tracking-widest">推敲坊</span></a>
+        <a href="#/" className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-zhu text-lg font-black text-white kai">字</span><span className="kai text-2xl font-bold tracking-widest">字里行间</span></a>
         <div className="ml-auto flex items-center gap-2.5">
           {!online && <span className="flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-700" title="进度先存在这台电脑上，连上后自动同步"><WifiOff size={16} />离线中</span>}
           <StarCounter />

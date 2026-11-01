@@ -1,4 +1,4 @@
-// 推敲坊 · 服务器：只用 Node 自带模块。提供网页、学生进度同步、AI 评委转发、教师后台接口。
+// 字里行间（原名推敲坊）· 服务器：只用 Node 自带模块。提供网页、学生进度同步、AI 评委转发、教师后台接口。
 // 数据存在 DATA_DIR（默认 ./data）里的 JSON 文件中，每 5 分钟留一份备份。
 import http from 'node:http';
 import fs from 'node:fs';
@@ -38,6 +38,9 @@ const readJson = <T,>(f: string, d: T): T => { try { return JSON.parse(fs.readFi
 const players = new Map<string, Player>(Object.entries(readJson<Record<string, Player>>(PLAYERS_FILE, {})));
 const allOpen = (v: boolean) => Object.fromEntries(STATION_IDS.map((s) => [s, v])) as Record<StationId, boolean>;
 let config: GameConfig = { open: allOpen(false), attention: false, message: '', ai: true, ...readJson<Partial<GameConfig>>(CONFIG_FILE, {}) };
+// 旧设置是按回开放的（zh1、en1……）；现在按两条大线开放：中文哪一回开着，整个楚汉就开着，英文同理
+if (config.open.zh === undefined) config.open.zh = Object.entries(config.open).some(([k, v]) => /^zh\d/.test(k) && v);
+if (config.open.en === undefined) config.open.en = Object.entries(config.open).some(([k, v]) => /^en\d/.test(k) && v);
 const lastSeen = new Map<string, number>();
 const ai = createAi(DATA, players);
 
@@ -269,8 +272,8 @@ const server = http.createServer(async (req, res) => {
         saveConfig();
         return send(res, 200, config);
       }
-      if (r === 'export.csv') return send(res, 200, exportCsv(), 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('推敲坊-成绩.csv')}` });
-      if (r === 'export.json') return send(res, 200, JSON.stringify(Object.fromEntries(players), null, 1), 'application/json; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('推敲坊-全部记录.json')}` });
+      if (r === 'export.csv') return send(res, 200, exportCsv(), 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('字里行间-成绩.csv')}` });
+      if (r === 'export.json') return send(res, 200, JSON.stringify(Object.fromEntries(players), null, 1), 'application/json; charset=utf-8', { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('字里行间-全部记录.json')}` });
       if (r === 'delete' && req.method === 'POST') { const b = (await readBody(req)) as { pid?: string }; if (b.pid) { players.delete(b.pid); dirty = true; } return send(res, 200, { ok: true }); }
       if (r === 'reset' && req.method === 'POST') {
         const b = (await readBody(req)) as { confirm?: string };
@@ -290,7 +293,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i!.address);
-  console.log('\n  推敲坊 已启动');
+  console.log('\n  字里行间（推敲坊）已启动');
   console.log(`  学生打开：  ${ips.length ? ips.map((ip) => `http://${ip}:${PORT}/`).join('  或  ') : `http://localhost:${PORT}/`}`);
   console.log('  教师后台：  在上面的地址后加 #/teacher   口令在 data/teacher-pin.txt');
   console.log(`  数据保存在：${DATA}`);

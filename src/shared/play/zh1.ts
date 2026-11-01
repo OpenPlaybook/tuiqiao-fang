@@ -12,7 +12,7 @@ const type = (key: string, q: string, accept: string[], why: string, near: Recor
 const T = (key: string, q: string, t: string, ex?: string[], art?: Art): TeachSub => ({ kind: 'teach', key, q, t, ...(ex ? { ex } : {}), ...(art ? { art } : {}) });
 
 export const PLAY_ZH1: Play = {
-  id: 'zh1', no: 1, title: '第一回　淮阴少年', sub: '漂母分饭，胯下之辱', color: '#9A3B2E', next: 'zh2', endAsk: ['陈胜、吴广为什么要起兵？', '韩信离开淮阴，去投奔了谁？', '“胯下之辱”后来怎么用？'],
+  id: 'zh1', no: 1, title: '淮阴少年', sub: '漂母分饭，胯下之辱', color: '#9A3B2E', endAsk: ['陈胜、吴广为什么要起兵？', '韩信离开淮阴，去投奔了谁？', '“胯下之辱”后来怎么用？'],
   gloss: {
     诸母: { d: '几位老妇人。“诸”：众、各位。' },
     漂: { d: '在水里漂洗（丝絮）。读 piǎo。', py: 'piǎo' },
