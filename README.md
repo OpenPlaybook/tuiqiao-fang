@@ -1,5 +1,9 @@
 # 课程应用
 
+独立访问（包括 `pnpm dev`）会自动进入演示模式，无需从 Lesson 打开。全部关卡可浏览，不连接课堂后台或 AI，也不保存课堂记录。通过 Lesson 路径访问时仍使用正常课堂模式。
+
+需要双击打开时，运行 `node scripts/build-demo.mjs`，生成上一级目录的 `字里行间_演示版.html`（包含配音）。
+
 完整源码、教学内容、后端和固定宿主 SDK 都属于本课程仓库。正式工作区位于本 Lesson 的 NAS `workdir`。
 
 `pnpm test` 验证课堂业务；`pnpm typecheck` 检查类型；平台以干净 Git 提交调用 `pnpm build`，提供 `RDFZ_LESSON_ID` 与 `RDFZ_BUILD_ID`。发布配方在 `lesson.application.json`。构建失败不会切换正式版本。

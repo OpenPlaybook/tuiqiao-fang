@@ -1,4 +1,4 @@
-import {DEMO} from './demo';
+import {runtime} from './demo';
 import {localErrorMessage} from '@/src/shared/server-error';
 import type {AskOut,ZhJudge,EnJudge} from '../shared/ai';
 import type {Player,GameConfig} from '../shared/types';
@@ -10,9 +10,7 @@ import {AuthRequiredError} from '@/src/account/auth/auth-required';
 import {apiFetch} from '@/src/account/auth/client';
 import {z} from 'zod';
 import {playerSchema,configSchema} from '../../server/schema';
-const match=location.pathname.match(/^\/(?:api\/ensemble\/lesson|lesson|lesson-app)\/([^/]+)(?:\/|$)/);
-if(!match&&!DEMO)throw Error('请从 Lesson 打开此课件');
-export const lessonId=decodeURIComponent(match?.[1]??'demo'),base='/lesson-app/'+encodeURIComponent(lessonId)+'/api/';
+export const lessonId=runtime.lessonId,base='/lesson-app/'+encodeURIComponent(lessonId)+'/api/';
 export class ApiError extends RequestError{constructor(public statusCode:number,public payload:{error?:string;player?:Player}){super('http',payload.error||`请求失败（${statusCode}）`,statusCode);}}
 let participant:Player|null=null;
 export function setParticipant(player:Player|null){const changed=participant?.pid!==player?.pid||participant?.roundId!==player?.roundId;participant=player;if(changed)flow.store.invalidate(['tuiqiao.classroom']);}
