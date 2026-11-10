@@ -4,7 +4,7 @@
 //   改译文按段落长短和错处个数，打字 20 秒，写一句 75 秒；讲解（teach）不用点，只算读的时间。
 //   选做拓展、支线任务不算进合计（支线单列）。2026-11-01 按真实操作试做《泗水亭长》校正过（试做 5 分 50 秒）；有了学生的真实用时再校正。
 import { readFileSync, writeFileSync } from 'node:fs';
-import { PLAYS, voiceFile } from '../src/shared/play';
+import { PLAYS, PLAY_BY_ID, voiceFile } from '../src/shared/play';
 import { ITEM_BY_ID } from '../src/shared/bank';
 import { NODES } from '../src/shared/play/storymap';
 import { sideOnly } from '../src/shared/adapt';
@@ -67,7 +67,8 @@ if (di > 0) {
 const fmt = (s: number) => (s / 60).toFixed(1).padStart(5);
 console.log('站       故事  题   拓展  合计  支线（分钟；合计是主线：故事 + 题 + 必做拓展）');
 for (const r of rows) console.log(`${r.id.padEnd(5)} ${fmt(r.story)} ${fmt(r.q)} ${fmt(r.ext)} ${fmt(r.total)} ${fmt(r.side)}  ${r.title}${r.miss ? `（${r.miss} 句没有配音，按字数估）` : ''}`);
-const zh = rows.filter((r) => !r.id.startsWith('en')), en = rows.filter((r) => r.id.startsWith('en'));
+const isEn = (id: string) => PLAY_BY_ID[id]?.lang === 'en'; // 英文有两个故事（en、ec），按 lang 分
+const zh = rows.filter((r) => !isEn(r.id)), en = rows.filter((r) => isEn(r.id));
 const h = (rs: typeof rows, f: (r: (typeof rows)[number]) => number) => (rs.reduce((a, r) => a + f(r), 0) / 3600).toFixed(1);
 console.log(`主线：中文 ${h(zh, (r) => r.total)} 小时，英文 ${h(en, (r) => r.total)} 小时；支线（只算题，不算拓展）：中文 ${h(zh, (r) => r.side)} 小时，英文 ${h(en, (r) => r.side)} 小时`);
 if (process.argv.includes('--write')) {

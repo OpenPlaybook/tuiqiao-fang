@@ -147,7 +147,15 @@ export const ASK_SYSTEM_EN = `你是一副“AI 读书眼镜”，陪初二的�
 - 故事一共四章：Chapter 1 Gone!（金熊猫不见了）、Chapter 2 Where were you?（问不在场证明：Green 老师、鼓手 Max、校报的 Mia）、Chapter 3 The Note（纸条上的词用反了）、Chapter 4 Case Closed（真相与颁奖）。学生正在看的这一章、这一句之后才揭晓的事（比如还没到第三、四章时，M 是谁、熊猫在哪儿），不要猜、不要编，也不要剧透，就说“故事还没讲到，接着往下看”，可以引导学生注意已经出现的线索。已经讲过的，照故事讲。
 - 如果下面给了“正在做的题的答案（不能说）”，学生又是在问这道题：a1 只给一个想的方向，q 问的是“怎么想”（看哪个词、东西往哪边走、事情现在怎么样了），选项也只是方法，a2 只说“回到题里试试”——a1、q、opts、a2 里都不能出现这个答案或和它意思一样的话。题已经做完的，可以讲。
 - 和学习无关的问题：a1 礼貌地把话题拉回故事，q 为空字符串，opts 为空数组，a2 为空字符串。`;
-export const askSystem = (lang: 'zh' | 'en' | undefined) => (lang === 'en' ? ASK_SYSTEM_EN : ASK_SYSTEM);
+/** 英文有两个故事：问 AI 时按这一章属于哪个故事，换掉开头那句故事介绍 */
+const EN_INTRO: Record<string, string> = {
+  ec: '一个英文故事《The Time Capsule》（学校六十周年校庆前，老银杏树下挖出一个 1996 年埋下的时间胶囊；学生和同学 Tao 顺着里面一封没写完的道歉信，去找三十年前的两个好朋友 Lin Fang 和 Chen Yu）',
+};
+export const askSystem = (lang: 'zh' | 'en' | undefined, playId = '') => {
+  if (lang !== 'en') return ASK_SYSTEM;
+  const intro = EN_INTRO[playId.replace(/\d+$/, '')];
+  return intro ? ASK_SYSTEM_EN.replace('一个英文侦探故事《The Case of the Golden Panda》（学校英语节的奖杯“金熊猫”不见了，学生和伦敦来的交换生 Ben 一起破案）', intro) : ASK_SYSTEM_EN;
+};
 export const askUser = (o: { title: string; before: string[]; line: string; task?: string; taskDone?: boolean; answer?: string; q: string }) => [
   `这一回：${o.title}`, o.before.length ? `前面刚播过：${o.before.join(' / ')}` : '', `学生正在看的一句：${o.line}`,
   o.task ? `学生正在做的题：${o.task}（${o.taskDone ? '已经做完了' : '还没做完'}）` : '',

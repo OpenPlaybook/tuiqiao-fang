@@ -36,15 +36,26 @@ import { PLAY_EN1, PLAY_EN1_ITEMS } from './en1';
 import { PLAY_EN2, PLAY_EN2_ITEMS } from './en2';
 import { PLAY_EN3, PLAY_EN3_ITEMS } from './en3';
 import { PLAY_EN4, PLAY_EN4_ITEMS } from './en4';
+import { PLAY_EC1, PLAY_EC1_ITEMS } from './ec1';
+import { PLAY_EC2, PLAY_EC2_ITEMS } from './ec2';
+import { PLAY_EC3, PLAY_EC3_ITEMS } from './ec3';
+import { PLAY_EC4, PLAY_EC4_ITEMS } from './ec4';
 
-export const PLAYS: Play[] = [PLAY_ZH1, PLAY_DZ, PLAY_LB1, PLAY_XY1, PLAY_XH1, PLAY_ZL1, PLAY_ZL2, PLAY_LB2, PLAY_LB3, PLAY_XY2, PLAY_ZL3, PLAY_XH2, PLAY_XY3, PLAY_ZL4, PLAY_LB4, PLAY_XY4, PLAY_XH3, PLAY_ZL5, PLAY_LB5, PLAY_ZL6, PLAY_HX4, PLAY_SJ, PLAY_LB6, PLAY_XH4, PLAY_ZL7, PLAY_XH5, PLAY_ZH2, PLAY_ZH3, PLAY_ZH4, PLAY_ZH5, PLAY_ZH6, PLAY_ZH7, PLAY_EN1, PLAY_EN2, PLAY_EN3, PLAY_EN4];
+export const PLAYS: Play[] = [PLAY_ZH1, PLAY_DZ, PLAY_LB1, PLAY_XY1, PLAY_XH1, PLAY_ZL1, PLAY_ZL2, PLAY_LB2, PLAY_LB3, PLAY_XY2, PLAY_ZL3, PLAY_XH2, PLAY_XY3, PLAY_ZL4, PLAY_LB4, PLAY_XY4, PLAY_XH3, PLAY_ZL5, PLAY_LB5, PLAY_ZL6, PLAY_HX4, PLAY_SJ, PLAY_LB6, PLAY_XH4, PLAY_ZL7, PLAY_XH5, PLAY_ZH2, PLAY_ZH3, PLAY_ZH4, PLAY_ZH5, PLAY_ZH6, PLAY_ZH7, PLAY_EN1, PLAY_EN2, PLAY_EN3, PLAY_EN4, PLAY_EC1, PLAY_EC2, PLAY_EC3, PLAY_EC4];
 export const PLAY_BY_ID: Record<string, Play> = Object.fromEntries(PLAYS.map((p) => [p.id, p]));
+/** 英文的几个故事：每个故事是一个关卡（老师分开开放），一章一章往下读 */
+export const EN_STORIES: { id: string; title: string; sub: string; cover: string; blurb: string; chapters: string[] }[] = [
+  { id: 'en', title: 'The Golden Panda', sub: 'English', cover: 'e.panda', blurb: '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。', chapters: ['en1', 'en2', 'en3', 'en4'] },
+  { id: 'ec', title: 'The Time Capsule', sub: 'English', cover: 'tc.cover', blurb: '学校六十周年，老银杏树下挖出一个三十年前埋下的盒子，里面有一封没写完的道歉信。', chapters: ['ec1', 'ec2', 'ec3', 'ec4'] },
+];
+/** 一章属于哪个英文故事 */
+export const storyOf = (id: string) => EN_STORIES.find((s) => s.chapters.includes(id));
 /** 还没写好的回：目录上显示“制作中” */
 export const PLANNED: { id: string; lang: 'zh' | 'en'; title: string; sub: string }[] = [
 ];
 // 每一回一个“记录”条目：学生点了哪些字、问了 AI 什么，都记在这里（不是题，不计分）
 const logItem = (id: string): Item => ({ id: `${id}-log`, st: 'log', lv: 1, type: 'log', topic: `${id}-log`, label: '（记录）', intro: '', steps: [], hints: [], explain: '' });
-export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_DZ_ITEMS, ...PLAY_LB1_ITEMS, ...PLAY_XY1_ITEMS, ...PLAY_XH1_ITEMS, ...PLAY_ZL1_ITEMS, ...PLAY_ZL2_ITEMS, ...PLAY_LB2_ITEMS, ...PLAY_LB3_ITEMS, ...PLAY_XY2_ITEMS, ...PLAY_ZL3_ITEMS, ...PLAY_XH2_ITEMS, ...PLAY_XY3_ITEMS, ...PLAY_ZL4_ITEMS, ...PLAY_LB4_ITEMS, ...PLAY_XY4_ITEMS, ...PLAY_XH3_ITEMS, ...PLAY_ZL5_ITEMS, ...PLAY_LB5_ITEMS, ...PLAY_ZL6_ITEMS, ...PLAY_HX4_ITEMS, ...PLAY_SJ_ITEMS, ...PLAY_LB6_ITEMS, ...PLAY_XH4_ITEMS, ...PLAY_ZL7_ITEMS, ...PLAY_XH5_ITEMS, ...PLAY_ZH2_ITEMS, ...PLAY_ZH3_ITEMS, ...PLAY_ZH4_ITEMS, ...PLAY_ZH5_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAY_ZH7_ITEMS, ...PLAY_EN1_ITEMS, ...PLAY_EN2_ITEMS, ...PLAY_EN3_ITEMS, ...PLAY_EN4_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
+export const PLAY_ITEMS = [...PLAY_ZH1_ITEMS, ...PLAY_DZ_ITEMS, ...PLAY_LB1_ITEMS, ...PLAY_XY1_ITEMS, ...PLAY_XH1_ITEMS, ...PLAY_ZL1_ITEMS, ...PLAY_ZL2_ITEMS, ...PLAY_LB2_ITEMS, ...PLAY_LB3_ITEMS, ...PLAY_XY2_ITEMS, ...PLAY_ZL3_ITEMS, ...PLAY_XH2_ITEMS, ...PLAY_XY3_ITEMS, ...PLAY_ZL4_ITEMS, ...PLAY_LB4_ITEMS, ...PLAY_XY4_ITEMS, ...PLAY_XH3_ITEMS, ...PLAY_ZL5_ITEMS, ...PLAY_LB5_ITEMS, ...PLAY_ZL6_ITEMS, ...PLAY_HX4_ITEMS, ...PLAY_SJ_ITEMS, ...PLAY_LB6_ITEMS, ...PLAY_XH4_ITEMS, ...PLAY_ZL7_ITEMS, ...PLAY_XH5_ITEMS, ...PLAY_ZH2_ITEMS, ...PLAY_ZH3_ITEMS, ...PLAY_ZH4_ITEMS, ...PLAY_ZH5_ITEMS, ...PLAY_ZH6_ITEMS, ...PLAY_ZH7_ITEMS, ...PLAY_EN1_ITEMS, ...PLAY_EN2_ITEMS, ...PLAY_EN3_ITEMS, ...PLAY_EN4_ITEMS, ...PLAY_EC1_ITEMS, ...PLAY_EC2_ITEMS, ...PLAY_EC3_ITEMS, ...PLAY_EC4_ITEMS, ...PLAYS.map((p) => logItem(p.id))];
 import { plainText } from '../gloss';
 export { plainText };
 /** 配音念的文字：___ 不念（前后的标点并成一个）；念起来不顺的句子在 read 里另写 */
@@ -54,9 +65,10 @@ export const fnv = (t: string) => { let h = 2166136261; for (const ch of t) { h 
 export const VOICES: Record<VoiceId, string> = {
   n: 'zh-CN-XiaoxiaoNeural', m: 'zh-CN-YunxiNeural', ai: 'zh-CN-XiaoyiNeural',
   en: 'en-US-AvaNeural', ben: 'en-GB-RyanNeural', green: 'en-GB-SoniaNeural', liu: 'en-US-ChristopherNeural', max: 'en-US-AndrewNeural', mia: 'en-US-AnaNeural',
+  tao: 'en-CA-LiamNeural', hu: 'en-US-EmmaNeural', gao: 'en-US-RogerNeural', zhou: 'en-GB-ThomasNeural', fang: 'en-GB-MaisieNeural', yu: 'en-US-AnaNeural', fang2: 'en-US-MichelleNeural', yu2: 'en-GB-LibbyNeural',
 };
 /** 语速：中文 1.14 倍；英文给初二学生听，比正常稍慢 */
-export const VOICE_RATE: Record<VoiceId, string> = { n: '+14%', ai: '+14%', m: '+6%', en: '-6%', ben: '-4%', green: '-6%', liu: '-8%', max: '-6%', mia: '-4%' };
+export const VOICE_RATE: Record<VoiceId, string> = { n: '+14%', ai: '+14%', m: '+6%', en: '-6%', ben: '-4%', green: '-6%', liu: '-8%', max: '-6%', mia: '-4%', tao: '-4%', hu: '-6%', gao: '-8%', zhou: '-12%', fang: '-6%', yu: '-6%', fang2: '-6%', yu2: '-6%' };
 export const voiceFile = (l: { t: string; read?: string; voice?: VoiceId }) => `${l.voice ?? 'n'}-${fnv(readText(l))}.mp3`;
 /** 讲解模式。楚汉：白话（现代汉语）、文言（有原文的句子用《史记》原文）、对照（原文，下面是白话）。
  *  英文故事按听力水平分三档（en0—en2）：无字幕（只听）→ 部分字幕（长一点的词只露首字母）→ 英文字幕。

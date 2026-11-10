@@ -3,14 +3,14 @@ import {assessReward,repricePlayer,extensionTotal,recordTotal} from './reward-qu
 // 自适应：能力估计、选题的难度版本、星星与探索点。学生端和服务器共用，结果只取决于玩家记录。
 import type { Item, Line, Lv, Player, Rec, StationId, Track } from './types';
 import { ITEMS, ITEM_BY_ID } from './bank';
-import { PLAYS, PLAY_BY_ID } from './play';
+import { PLAYS, PLAY_BY_ID, storyOf } from './play';
 import { NODES, NODE_BY_ID, laneHas, lanesOf } from './play/storymap';
 
 export interface StationMeta { id: StationId; name: string; sub: string; n: number; track: Track; emoji: string; color: string; part: string }
 /** 一回里的题（每道题是几个难度版本） */
 export const slotsOf = (st: StationId): string[][] => PLAY_BY_ID[st]?.lines.filter((l) => l.task).map((l) => l.task!) ?? [];
 export const STATIONS: StationMeta[] = PLAYS.map((c) => c.lang === 'en'
-  ? { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'en' as Track, emoji: '🔎', color: c.color, part: 'English · The Golden Panda' }
+  ? { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'en' as Track, emoji: '🔎', color: c.color, part: `English · ${storyOf(c.id)?.title ?? ''}` }
   : { id: c.id, name: c.title, sub: c.sub, n: slotsOf(c.id).length, track: 'zh' as Track, emoji: '📜', color: c.color, part: '中文 · 逐鹿天下' });
 export const ST: Record<StationId, StationMeta> = Object.fromEntries(STATIONS.map((s) => [s.id, s]));
 export const TRACKS: { id: Track; name: string }[] = [{ id: 'zh', name: '中文' }, { id: 'en', name: '英语' }];
@@ -18,11 +18,13 @@ export const trackOf = (st: StationId): Track => ST[st]?.track ?? (/^e/.test(st)
 /** 老师给每个关卡（中文 zh、英文 en）分开设开放方式：closed 不开放；progress 按进度（读完一站，下一站才打开）；all 全部开放（哪一站都能点开）。
  *  存在 config.open 里：zh / en 是开不开，zhAll / enAll 是不是全部开放。旧设置里没有这些键时照旧推：某一回开着 = 这个关卡开着，all = 任意看 */
 export type OpenMode = 'closed' | 'progress' | 'all';
-export const openMode = (o: Record<string, boolean>, t: Track): OpenMode => {
+/** 一站属于哪个关卡：中文 zh；英文按故事分（en = The Golden Panda，ec = The Time Capsule） */
+export const gateOf = (st: StationId): string => storyOf(st)?.id ?? trackOf(st);
+export const openMode = (o: Record<string, boolean>, t: string): OpenMode => {
   const on = o[t] ?? Object.entries(o).some(([k, v]) => v && new RegExp('^' + t + '\\d').test(k));
   return !on ? 'closed' : (o[t + 'All'] ?? !!o.all) ? 'all' : 'progress';
 };
-export const openPatch = (t: Track, m: OpenMode): Record<string, boolean> => ({ [t]: m !== 'closed', [t + 'All']: m === 'all' });
+export const openPatch = (t: string, m: OpenMode): Record<string, boolean> => ({ [t]: m !== 'closed', [t + 'All']: m === 'all' });
 /** 一道题属于哪条线：看它所在的回 */
 export const lineOf = (it: Item): Track => trackOf(it.st);
 
@@ -126,14 +128,14 @@ export const prevOnLane = (id: string, lane: string) => {
 };
 /** 按自己的进度，这一站能不能看：每条线的第一站一开始就能看；后面的站要先读完这条线上的前一站（★ 汇合的站：哪条线的前一站读完都行）。英文一章一章往下 */
 export const progressOpen = (p: Player | null | undefined, id: string) => {
-  const en = /^en(\d)$/.exec(id);
-  if (en) return Number(en[1]) <= 1 || playComplete(p, `en${Number(en[1]) - 1}`);
+  const story = storyOf(id);
+  if (story) { const k = story.chapters.indexOf(id); return k <= 0 || playComplete(p, story.chapters[k - 1]); }
   if (!NODE_BY_ID[id]) return true;
   return lanesOf(id).some((lane) => { const prev = prevOnLane(id, lane); return !prev || playComplete(p, prev.id); });
 };
 /** 要先读完哪几站（给锁着的站写提示用） */
 export const needFirst = (id: string): string[] => {
-  const en = /^en(\d)$/.exec(id);
-  if (en) return Number(en[1]) > 1 ? [`en${Number(en[1]) - 1}`] : [];
+  const story = storyOf(id);
+  if (story) { const k = story.chapters.indexOf(id); return k > 0 ? [story.chapters[k - 1]] : []; }
   return [...new Set(lanesOf(id).map((lane) => prevOnLane(id, lane)?.id).filter((x): x is string => !!x))];
 };

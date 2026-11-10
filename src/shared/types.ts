@@ -119,7 +119,8 @@ export interface Line {
 /** endAsk：看完这一回，结束页上可以直接问 AI 眼镜的几个问题（看完了也能接着探索） */
 export interface Play { id: string; lang?: 'zh' | 'en'; no: number; title: string; sub: string; color: string; lines: Line[]; gloss: Record<string, Gloss>; next?: string; nextNote?: string; endAsk?: string[] }
 /** 中文：旁白（女）、男声、AI 眼镜；英文：旁白、Ben、Green 老师、刘师傅 */
-export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu' | 'max' | 'mia';
+export type VoiceId = 'n' | 'm' | 'ai' | 'en' | 'ben' | 'green' | 'liu' | 'max' | 'mia'
+  | 'tao' | 'hu' | 'gao' | 'zhou' | 'fang' | 'yu' | 'fang2' | 'yu2'; // 后八个是《时间胶囊》：Tao、胡老师、高老师（图书馆）、周老师；少年的 Fang、Yu（1996），长大的 Fang、Yu（2026）
 
 
 // ---------------- 竹简故事（旧版） ----------------
@@ -164,4 +165,4 @@ export interface GameConfig {
   aiLeft?: number;
 }
 /** 老师按关卡开放：中文（逐鹿天下）、英文（Golden Panda）各设一种方式（见 adapt.ts 的 openMode）：zh / en 开不开，zhAll / enAll 全部开放。all 和后面按回的键是旧设置里的，要能通过校验 */
-export const STATION_IDS: StationId[] = ['zh', 'en', 'zhAll', 'enAll', 'all', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];
+export const STATION_IDS: StationId[] = ['zh', 'en', 'ec', 'zhAll', 'enAll', 'ecAll', 'all', 'zh1', 'zh2', 'zh3', 'zh4', 'zh5', 'zh6', 'zh7', 'en1', 'en2', 'en3', 'en4'];

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Lock, Star } from 'lucide-react';
-import { PLAYS, PLAY_BY_ID } from '../shared/play';
+import { EN_STORIES, PLAYS, PLAY_BY_ID } from '../shared/play';
 import { LANES, NODES, ROWS, laneHas, type Lane, type MapNode } from '../shared/play/storymap';
 import { maxStarsOf, needFirst, openMode, playComplete, stationSide, stationStars } from '../shared/adapt';
 import { frameSvg } from '../film/Film';
@@ -13,33 +13,34 @@ import { DEMO } from '../game/demo';
 
 export const go = (path: string) => { window.location.hash = path; };
 const tabKey = 'tq-map-tab';
-const readTab = () => { try { return localStorage.getItem(tabKey) === 'en' ? 'en' : 'zh'; } catch { return 'zh'; } };
+type Tab = 'zh' | 'en' | 'ec';
+const readTab = (): Tab => { try { const t = localStorage.getItem(tabKey); return t === 'en' || t === 'ec' ? t : 'zh'; } catch { return 'zh'; } };
 
 export function StoryMap() {
-  const [tab, setTab] = useState<'zh' | 'en'>(readTab);
+  const [tab, setTab] = useState<Tab>(readTab);
   const st = useGame((s) => s);
-  const pick = (t: 'zh' | 'en') => { sfx('click'); setTab(t); try { localStorage.setItem(tabKey, t); } catch { /* 无痕模式 */ } };
+  const pick = (t: Tab) => { sfx('click'); setTab(t); try { localStorage.setItem(tabKey, t); } catch { /* 无痕模式 */ } };
   return (
     <div className="mx-auto max-w-[1320px] px-4 py-5">
       {DEMO && <div className="mb-4 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-3 text-amber-900">这是演示版：不用登录，也不保存记录（刷新页面就从头开始）。课堂版里，AI 会回答学生的提问、给写的句子评分；演示版里这些不连 AI。</div>}
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        {([['zh', '逐鹿天下', '《史记》里的秦末汉初'], ['en', 'The Golden Panda', 'English']] as const).map(([t, a, b]) => (
+        {([['zh', '逐鹿天下', '《史记》里的秦末汉初'], ...EN_STORIES.map((s) => [s.id as Tab, s.title, s.sub] as const)] as const).map(([t, a, b]) => (
           <button key={t} onClick={() => pick(t)} className={`rounded-2xl border-2 px-5 py-2 text-left ${tab === t ? 'border-[#2B2722] bg-white shadow' : 'border-[#E6DCC6] bg-white/60 text-ink2'}`}>
             <div className={t === 'zh' ? 'kai text-3xl' : 'font-serif text-2xl font-black'}>{a}</div><div className="text-sm font-bold">{b}</div>
           </button>
         ))}
-        <div className="pb-1 text-ink2">{tab === 'zh' ? '“秦失其鹿，天下共逐之。”戴上 AI 读书眼镜走进《史记》：选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。' : '英语节的奖杯不见了。和伦敦来的交换生 Ben 一起破案——用词和时态就是线索。'}{{ closed: '老师还没开放这一关。', progress: '读完一站，下一站才打开。', all: '哪一站都可以直接点开。' }[openMode(st.config.open, tab)]}</div>
+        <div className="pb-1 text-ink2">{tab === 'zh' ? '“秦失其鹿，天下共逐之。”戴上 AI 读书眼镜走进《史记》：选一个人，顺着他的线往下读；★ 处几个人的故事碰到了一起。' : EN_STORIES.find((s) => s.id === tab)?.blurb}{{ closed: '老师还没开放这一关。', progress: '读完一站，下一站才打开。', all: '哪一站都可以直接点开。' }[openMode(st.config.open, tab)]}</div>
       </div>
       <Tally tab={tab} />
-      {tab === 'zh' ? <ZhMap /> : <EnList />}
+      {tab === 'zh' ? <ZhMap /> : <EnList story={tab} />}
     </div>
   );
 }
 
 // ---------------- 星星、探索点：这一边一共得了多少、满分多少 ----------------
-function Tally({ tab }: { tab: 'zh' | 'en' }) {
+function Tally({ tab }: { tab: Tab }) {
   const p = useGame((s) => s.player)!;
-  const ids = PLAYS.filter((c) => (tab === 'en') === (c.lang === 'en')).map((c) => c.id);
+  const ids = tab === 'zh' ? PLAYS.filter((c) => c.lang !== 'en').map((c) => c.id) : EN_STORIES.find((s) => s.id === tab)?.chapters.filter((id) => PLAY_BY_ID[id]) ?? [];
   const got = ids.reduce((a, id) => a + stationStars(p, id), 0), max = ids.reduce((a, id) => a + maxStarsOf(id,p), 0);
   const side = ids.reduce((a, id) => a + stationSide(p, id), 0), done = ids.filter((id) => playComplete(p, id)).length;
   return (
@@ -47,7 +48,7 @@ function Tally({ tab }: { tab: 'zh' | 'en' }) {
       <div className="flex items-center gap-1.5"><Star size={22} className={got>0?"fill-amber-400 text-amber-500":"text-amber-500"} /><span className="text-2xl font-black text-amber-700">{got}</span><span className="text-ink2">/ 最多 {max} 颗星</span></div>
       <div className="h-2.5 min-w-[120px] flex-1 overflow-hidden rounded-full bg-[#EFE6D2]"><div className="h-full rounded-full bg-amber-400" style={{ width: `${max ? (got / max) * 100 : 0}%` }} /></div>
       <div className="flex items-center gap-1"><span className="text-xl">💎</span><span className="text-xl font-black text-sky-700">{side}</span><span className="text-ink2">探索点</span></div>
-      <div className="text-ink2">读完 <b className="text-ink">{done}</b> / {ids.length} {tab === 'en' ? '章' : '站'}</div>
+      <div className="text-ink2">读完 <b className="text-ink">{done}</b> / {ids.length} {tab === 'zh' ? '站' : '章'}</div>
     </div>
   );
 }
@@ -119,18 +120,19 @@ function NodeCard({ n, style, dim, open, lock, stars, max, side, full }: { n: Ma
 }
 
 // ---------------- 英文：四章 ----------------
-function EnList() {
+function EnList({ story }: { story: string }) {
+  const S = EN_STORIES.find((s) => s.id === story)!;
   const p = useGame((s) => s.player)!;
   const st = useGame((s) => s);
   return (
     <div className="card overflow-hidden p-0">
       <div className="relative aspect-[16/5] overflow-hidden bg-[#1C1916]">
-        <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: frameSvg('e.panda', 0.6, 2) }} />
+        <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: frameSvg(S.cover, 0.6, 2) }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-        <div className="absolute bottom-4 left-5 text-white"><div className="text-sm font-bold opacity-80">English</div><div className="font-serif text-3xl font-black">The Case of the Golden Panda</div></div>
+        <div className="absolute bottom-4 left-5 text-white"><div className="text-sm font-bold opacity-80">English</div><div className="font-serif text-3xl font-black">{S.id === 'en' ? 'The Case of the Golden Panda' : S.title}</div></div>
       </div>
       <div className="grid gap-2 p-5 md:grid-cols-2">
-        {PLAYS.filter((x) => x.lang === 'en').map((c) => {
+        {S.chapters.map((id) => PLAY_BY_ID[id]).filter(Boolean).map((c) => {
           const open = isOpen(st, c.id), full = playComplete(p, c.id), side = stationSide(p, c.id);
           return (
             <motion.button key={c.id} whileHover={open ? { y: -2 } : {}} disabled={!open} onClick={() => { sfx('click'); go(`/c/${c.id}`); }}

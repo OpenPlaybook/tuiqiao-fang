@@ -10,7 +10,7 @@ import type {Classroom} from './schema';
 import type {WriteSub} from '../src/shared/types';
 import {ITEM_BY_ID} from '../src/shared/bank';
 import {PLAY_BY_ID,plainText} from '../src/shared/play';
-import {openMode,trackOf} from '../src/shared/adapt';
+import {openMode,gateOf} from '../src/shared/adapt';
 import {askSystem,askUser,cleanAsk,EN_SYSTEM,ZH_SYSTEM,judgeUser,cleanZh,cleanEn,type AskOut} from '../src/shared/ai';
 export const aiReady=()=>process.env.RDFZ_MODEL_ACCESS==='1';
 export const aiLeft=(s:Classroom,pid:string)=>Math.max(0,s.ai.quota+(s.ai.extra[pid]??0)-(s.ai.usage[pid]??0));
@@ -34,8 +34,8 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
   const p=authenticate(s,b.pid,b.token);
   if(!s.config.ai)throw new ToolError(403,'老师暂时关闭了 AI');
   // 按关卡开放（中文 / 英文）：关卡关着、也没有单独开这一回（旧设置）才拦
-  if(it&&openMode(s.config.open,trackOf(it.st))==='closed'&&!s.config.open[it.st])throw new ToolError(403,'老师尚未开放这一关');
-  if(play&&openMode(s.config.open,trackOf(play.id))==='closed'&&!s.config.open[play.id])throw new ToolError(403,'老师尚未开放这一关');
+  if(it&&openMode(s.config.open,gateOf(it.st))==='closed'&&!s.config.open[it.st])throw new ToolError(403,'老师尚未开放这一关');
+  if(play&&openMode(s.config.open,gateOf(play.id))==='closed'&&!s.config.open[play.id])throw new ToolError(403,'老师尚未开放这一关');
   s.ai.leases=Object.fromEntries(Object.entries(s.ai.leases).filter(([,l])=>l.expires>Date.now()));
   if(Object.values(s.ai.leases).some(l=>l.pid===b.pid))throw new ToolError(429,'上一个问题还在回答中');
   if(Object.keys(s.ai.leases).length>=30)throw new ToolError(429,'同时提问人数较多，请稍后再试');
@@ -65,7 +65,7 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
   const s0=it?.steps[0];const answer=s0?.kind==='choice'?s0.opts[s0.ok[0]].t.replace(/[⟦⟧*]/g,''):s0?.kind==='spot'&&s0.fix?s0.fix.opts[s0.fix.ok[0]].t:'';
   const before=(b.before??[]).map(s=>plainText(s).slice(0,120)).slice(-2);
   const prompt=askUser({title:play.title,before,line:plainText(b.line??''),task:it?`${it.label}：${step?.q??''}`:undefined,taskDone:done,answer,q:b.q!});
-  let out=cleanAsk(await complete(askSystem(play.lang),prompt));
+  let out=cleanAsk(await complete(askSystem(play.lang,play.id),prompt));
   const normalize=(s:string)=>s.replace(/[\s，。、“”‘’！？…（）()：:；;——-]/g,'');
   const leaks=async(o:AskOut)=>{
    if(!it||done||!answer)return false;
@@ -74,7 +74,7 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
    if(typeof verdict.leak!=='boolean')throw new ToolError(502,'AI 回答检查未完成');return verdict.leak;
   };
   if(await leaks(out)){
-   out=cleanAsk(await complete(askSystem(play.lang),prompt+`\n上次回答泄露答案，不能说出或暗示“${answer}”。只给思路。`));
+   out=cleanAsk(await complete(askSystem(play.lang,play.id),prompt+`\n上次回答泄露答案，不能说出或暗示“${answer}”。只给思路。`));
    if(await leaks(out))out={a1:`给你一个方向：${it.hints[0]??'回到原文，一个字一个字地看。'}`,q:'',opts:[],a2:''};
   }
   if(!out.a1)throw new ToolError(502,'AI 未返回有效回答');

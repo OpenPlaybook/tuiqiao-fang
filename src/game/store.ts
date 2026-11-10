@@ -2,7 +2,7 @@ import {DEMO} from './demo';
 import { useSyncExternalStore } from 'react';
 import { RequestError } from '@/src/shared/http';
 import {STATION_IDS,type Player,type GameConfig,type Item,type LogEntry,type Rec,type StationId} from '../shared/types';
-import {newPlayer,progressOpen,openMode,trackOf,resultOf,normalizeRewards} from '../shared/adapt';
+import {newPlayer,progressOpen,openMode,gateOf,resultOf,normalizeRewards} from '../shared/adapt';
 import { api,ApiError,lessonId,flow,setParticipant } from './api';
 import { mergeProgress } from '../shared/sync';
 import { playerSchema,configSchema } from '../../server/schema';
@@ -36,10 +36,10 @@ export const getState = () => state;
 export const OFFLINE_MS = 30000;
 export const isOfflineTeaching=()=>{const read=flow.view('tuiqiao.classroom').getSnapshot();return !!read.networkRecoveringSince&&Date.now()-read.networkRecoveringSince>OFFLINE_MS;};
 /** 老师开了这个关卡（中文 / 英文）没有：不开放、按进度、全部开放三种，各关卡分开设（openMode） */
-export const trackIsOpen=(s:State,lv:StationId)=>openMode(s.config.open,trackOf(lv))!=='closed';
+export const trackIsOpen=(s:State,lv:StationId)=>openMode(s.config.open,gateOf(lv))!=='closed';
 /** 学生能不能看这一站：老师开了这条线，再看是不是“任意看”；不是的话按学生自己的进度一站一站往下（progressOpen）。
  *  旧设置里没有 zh / en 两个键时，按回开着的那一回照旧能看 */
-export const isOpen=(s:State,lv:StationId)=>{const o=s.config.open;if(isOfflineTeaching())return true;if(o[trackOf(lv)]===undefined&&o[lv])return true;const m=openMode(o,trackOf(lv));return m==='all'||(m==='progress'&&progressOpen(s.player,lv));};
+export const isOpen=(s:State,lv:StationId)=>{const o=s.config.open;if(isOfflineTeaching())return true;if(o[gateOf(lv)]===undefined&&o[lv])return true;const m=openMode(o,gateOf(lv));return m==='all'||(m==='progress'&&progressOpen(s.player,lv));};
 /** 锁着的原因：teacher 老师还没开这条线；progress 要先读完前一站 */
 export const lockReason=(s:State,lv:StationId):'teacher'|'progress'|null=>isOpen(s,lv)?null:trackIsOpen(s,lv)?'progress':'teacher';
 

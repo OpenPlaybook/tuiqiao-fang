@@ -30,7 +30,7 @@ function TeacherBody({st}:{st:TeacherState}){
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white/70 px-4 py-2">
         <span className="font-black">开放关卡：</span>
-        {([['zh', '📜 逐鹿天下（《史记》）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8']] as const).map(([k, t, col]) => { const m = openMode(c.open, k); return (
+        {([['zh', '📜 逐鹿天下（《史记》）', '#9A3B2E'], ['en', '🔎 The Golden Panda（英文）', '#2F5DA8'], ['ec', '🕰 The Time Capsule（英文）', '#2E7D6B']] as const).map(([k, t, col]) => { const m = openMode(c.open, k); return (
           <div key={k} className="flex items-center gap-1.5">
             <span className="text-sm font-black" style={{ color: col }}>{t}</span>
             <div className="flex overflow-hidden rounded-full border-2" style={{ borderColor: col }}>
