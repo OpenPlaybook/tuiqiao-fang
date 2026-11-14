@@ -1,12 +1,12 @@
 import {taskBudget} from '../src/shared/reward-budget';
-import type {Classroom} from './schema';
+import type {ClassroomView} from './schema';
 import type {Player,Rec,StationId} from '../src/shared/types';
 import {ITEMS} from '../src/shared/bank';
 import {sideOf,STATIONS,TRACKS,avgLvOf,bonusOf,doneRecs,stationDone,stationStars,starsOf,thetaLv,thetaOf,unsureOf} from '../src/shared/adapt';
 import {aiLeft,aiStatus,aiReady} from './ai';
-export function classroomStats(state:Classroom){
+export function classroomStats(state:ClassroomView){
 const players=new Map(Object.entries(state.players)),lastSeen=new Map(Object.entries(state.lastSeen)),config=state.config;
-const ai={left:(pid:string)=>aiLeft(state,pid),ready:aiReady,status:()=>aiStatus(state),asks:()=>state.ai.logs.filter(l=>l.role==='ask'&&l.ok),goodTexts:()=>state.ai.logs.filter(l=>l.ok&&l.out&&(l.out.grade===3||l.out.verdict==='perfect')).reverse()};
+const ai={left:(pid:string)=>aiLeft(state.ai,pid),ready:aiReady,status:()=>aiStatus(state.ai),asks:()=>state.ai.logs.filter(l=>l.role==='ask'&&l.ok),goodTexts:()=>state.ai.logs.filter(l=>l.ok&&l.out&&(l.out.grade===3||l.out.verdict==='perfect')).reverse()};
 const currentOf = (p: Player) => {
   let best: { st: StationId; t: number } | null = null;
   for (const r of Object.values(p.recs)) { const t = r.log.length ? r.log[r.log.length - 1].t : r.t0; if (!best || t > best.t) best = { st: r.st, t }; }

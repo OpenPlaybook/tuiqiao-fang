@@ -9,7 +9,7 @@ import {RequestError} from '@/src/shared/http';
 import {AuthRequiredError} from '@/src/account/auth/auth-required';
 import {apiFetch} from '@/src/account/auth/client';
 import {z} from 'zod';
-import {playerSchema,configSchema} from '../../server/schema';
+import {playerSchema,configSchema,type JoinInput,type JoinResult} from '../../server/schema';
 export const lessonId=runtime.lessonId,base='/lesson-app/'+encodeURIComponent(lessonId)+'/api/';
 export class ApiError extends RequestError{constructor(public statusCode:number,public payload:{error?:string;player?:Player}){super('http',payload.error||`请求失败（${statusCode}）`,statusCode);}}
 let participant:Player|null=null;
@@ -43,7 +43,7 @@ flow.register({
 function write<T>(route:string,body:unknown){return flow.operation<unknown,T>('tuiqiao.'+route.replaceAll('/','.')).run(body);}
 export const visibleError=(e:unknown)=>localErrorMessage(e,'操作失败，请重试');
 export const api={
- join:(name:string,sid:string,avatar:number,roundId?:string)=>write<{player:Player}>('join',{name,sid,avatar,roundId}),
+ join:(input:JoinInput)=>write<JoinResult>('join',input),
  sync:(player:Player)=>write<{player:Player}>('sync',{player}),
  ask:(b:{pid:string;token:string;play:string;item:string;line:string;before:string[];q:string})=>write<AskOut&{left:number}>('ai/ask',{...b,roundId:participant?.roundId}),
  judge:(b:{pid:string;token:string;item:string;step:string;text:string})=>write<{out:ZhJudge|EnJudge;left:number}>('ai/judge',{...b,roundId:participant?.roundId}),

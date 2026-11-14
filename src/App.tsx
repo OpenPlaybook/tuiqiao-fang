@@ -6,7 +6,7 @@ import {DataReadStateRenderer} from '@/src/shared/grain-flow/data-read-state-ren
 import type {ClassroomConfig,ToolContext} from './game/api';
 import {useGame,observeClassroom,isOfflineTeaching,isOpen,getState} from './game/store';
 import {TopBar,FlyLayer,Toasts,AttentionOverlay} from './components/ui';
-import {JoinPage,MePage} from './pages/pages';
+import {JoinPage,MePage,PendingJoin} from './pages/pages';
 import {StoryMap} from './pages/story';
 import Teacher from './teacher/Teacher';
 import {PLAY_BY_ID} from './shared/play';
@@ -18,10 +18,12 @@ function useHash(){
 }
 function Game(){
  const route=useHash(),player=useGame(s=>s.player),isTeacher=!DEMO&&route.startsWith('/teacher');
+ const recovery=useGame(s=>s.recovery);
  const classroom=useData<ClassroomConfig>(isTeacher||DEMO?null:'tuiqiao.classroom');
  useEffect(()=>isTeacher?undefined:observeClassroom(),[isTeacher]);
  if(isTeacher)return <Teacher/>;
  if(!player)return <JoinPage/>;
+ if(recovery)return <PendingJoin recovery={recovery}/>;
  const parts=route.split('/').filter(Boolean),cid=(parts[1]??'').split('?')[0];
  const playing=parts[0]==='c'&&PLAY_BY_ID[cid];
  const page=playing&&isOpen(getState(),cid)?<PlayerPage key={route} id={cid}/>:parts[0]==='me'?<MePage/>:<StoryMap/>;

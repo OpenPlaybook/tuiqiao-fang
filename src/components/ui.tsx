@@ -160,7 +160,7 @@ export const TopBar = () => {
           <button onClick={() => { setSound(!snd); setSnd(!snd); }} className="rounded-full border-2 border-[#E6DCC6] bg-white/90 p-2 text-ink2" title={snd ? '关闭声音' : '打开声音'}>{snd ? <Volume2 size={20} /> : <VolumeX size={20} />}</button>
           {DEMO ? <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-800" title="不用登录、不保存记录；刷新页面就从头开始">演示版</span> : <>
           <a href="#/me" className="flex items-center gap-2 pl-1"><Avatar i={p.avatar} size={40} /><div className="leading-tight"><div className="font-black">{p.name}</div><div className="text-xs text-ink2">{p.sid}</div></div></a>
-          <button className="ml-1 text-xs text-ink2 underline" onClick={() => { if (confirm('确定要退出吗？进度已经保存，用同样的姓名和学校可以重新进入。')) logout(); }}>退出</button></>}
+          <button className="ml-1 text-xs text-ink2 underline" onClick={() => { if (confirm('确定要退出吗？进度已经保存，用同样的全名可以找回进度。')) logout(); }}>退出</button></>}
         </div>
       </div>
     </div>

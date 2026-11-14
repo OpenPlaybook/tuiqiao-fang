@@ -4,21 +4,19 @@ import type {EnsembleApiRequest} from '@/src/ensemble';
 import {runOpusTask} from '@/src/ensemble/opus-lifecycle';
 import {ToolError} from '../common/store';
 import {readToolBody} from '../common/request';
-import {withClassroom} from './store';
-import {authenticate} from './server';
-import type {Classroom} from './schema';
+import {authenticate, type ClassroomStore} from './store';
+import type {AiState} from './schema';
 import type {WriteSub} from '../src/shared/types';
 import {ITEM_BY_ID} from '../src/shared/bank';
 import {PLAY_BY_ID,plainText} from '../src/shared/play';
 import {openMode,gateOf} from '../src/shared/adapt';
 import {askSystem,askUser,cleanAsk,EN_SYSTEM,ZH_SYSTEM,judgeUser,cleanZh,cleanEn,type AskOut} from '../src/shared/ai';
 export const aiReady=()=>process.env.RDFZ_MODEL_ACCESS==='1';
-export const aiLeft=(s:Classroom,pid:string)=>Math.max(0,s.ai.quota+(s.ai.extra[pid]??0)-(s.ai.usage[pid]??0));
-export const aiStatus=(s:Classroom)=>({ready:aiReady(),mock:false,model:'平台 DeepSeek',quota:s.ai.quota,active:Object.values(s.ai.leases).filter(l=>l.expires>Date.now()).length,used:Object.values(s.ai.usage).reduce((a,b)=>a+b,0)});
-export function participantAiLeft(s:Classroom,r:Request){const q=new URL(r.url).searchParams;return q.has('pid')?aiLeft(s,authenticate(s,q.get('pid'),r.headers.get('x-participant')).pid):undefined;}
+export const aiLeft=(ai:AiState,pid:string)=>Math.max(0,ai.quota+(ai.extra[pid]??0)-(ai.usage[pid]??0));
+export const aiStatus=(ai:AiState)=>({ready:aiReady(),mock:false,model:'平台 DeepSeek',quota:ai.quota,active:Object.values(ai.leases).filter(l=>l.expires>Date.now()).length,used:Object.values(ai.usage).reduce((a,b)=>a+b,0)});
 const json=(v:unknown)=>Response.json(v,{headers:{'Cache-Control':'private, no-store'}});
 const body=z.object({pid:z.string().uuid(),token:z.string().min(16).max(100),roundId:z.string().uuid(),item:z.string().max(100),step:z.string().max(100).optional(),text:z.string().trim().max(400).optional(),play:z.string().max(100).optional(),line:z.string().max(1000).optional(),before:z.array(z.string().max(1000)).max(20).optional(),q:z.string().trim().max(120).optional()}).strict();
-export async function handleAi(input:EnsembleApiRequest,route:string,payload:unknown){
+export async function handleAi(input:EnsembleApiRequest,route:string,payload:unknown,store:ClassroomStore){
  if(input.request.method!=='POST')throw new ToolError(405,'请求方式不支持');
  if(!['ai/judge','ai/ask'].includes(route))throw new ToolError(404,'接口不存在');
  const b=body.parse(payload),it=ITEM_BY_ID[b.item],play=PLAY_BY_ID[b.play??''];
@@ -29,26 +27,26 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
  if(route==='ai/ask'&&(!play||!b.q||(b.item&&!play.lines.some(l=>l.task?.includes(b.item)))))throw new ToolError(400,'问题或当前故事无效');
  if(!aiReady())throw new ToolError(503,'平台 DeepSeek 暂不可用');
  const lease=randomUUID(),start=Date.now();
- const p=await withClassroom(input.context.opusRootDir,s=>{
+ const p=await store.editAi(async (s,ai)=>{
   if(s.roundId!==b.roundId)throw new ToolError(410,'课堂已清空，请重新加入');
-  const p=authenticate(s,b.pid,b.token);
+  const p=authenticate(await store.student(s,b.pid),b.token).player;
   if(!s.config.ai)throw new ToolError(403,'老师暂时关闭了 AI');
   // 按关卡开放（中文 / 英文）：关卡关着、也没有单独开这一回（旧设置）才拦
   if(it&&openMode(s.config.open,gateOf(it.st))==='closed'&&!s.config.open[it.st])throw new ToolError(403,'老师尚未开放这一关');
   if(play&&openMode(s.config.open,gateOf(play.id))==='closed'&&!s.config.open[play.id])throw new ToolError(403,'老师尚未开放这一关');
-  s.ai.leases=Object.fromEntries(Object.entries(s.ai.leases).filter(([,l])=>l.expires>Date.now()));
-  if(Object.values(s.ai.leases).some(l=>l.pid===b.pid))throw new ToolError(429,'上一个问题还在回答中');
-  if(Object.keys(s.ai.leases).length>=30)throw new ToolError(429,'同时提问人数较多，请稍后再试');
-  if(aiLeft(s,b.pid)<=0)throw new ToolError(429,'这节课的 AI 次数已用完');
-  const day=new Date().toISOString().slice(0,10);if(s.ai.day!==day){s.ai.day=day;s.ai.calls=0;}
-  if(s.ai.calls>=3000)throw new ToolError(429,'本课堂今日 AI 调用已达上限');
-  s.ai.calls++;s.ai.leases[lease]={pid:b.pid,expires:Date.now()+120000};return {value:p,changed:true};
+  ai.leases=Object.fromEntries(Object.entries(ai.leases).filter(([,l])=>l.expires>Date.now()));
+  if(Object.values(ai.leases).some(l=>l.pid===b.pid))throw new ToolError(429,'上一个问题还在回答中');
+  if(Object.keys(ai.leases).length>=30)throw new ToolError(429,'同时提问人数较多，请稍后再试');
+  if(aiLeft(ai,b.pid)<=0)throw new ToolError(429,'这节课的 AI 次数已用完');
+  const day=new Date().toISOString().slice(0,10);if(ai.day!==day){ai.day=day;ai.calls=0;}
+  if(ai.calls>=3000)throw new ToolError(429,'本课堂今日 AI 调用已达上限');
+  ai.calls++;ai.leases[lease]={pid:b.pid,expires:Date.now()+120000};return {value:p,changed:true};
  });
- const finish=async(out:Record<string,unknown>|null,ok:boolean)=>withClassroom(input.context.opusRootDir,s=>{
-  if(s.roundId!==b.roundId||!s.players[b.pid]||!s.ai.leases[lease]){if(ok)throw new ToolError(410,'课堂或学生记录已删除');return {value:0,changed:false};}
-  delete s.ai.leases[lease];if(ok)s.ai.usage[b.pid]=(s.ai.usage[b.pid]??0)+1;
-  s.ai.logs.push({t:Date.now(),pid:b.pid,name:p.name,item:b.item,step:route==='ai/ask'?b.play!:b.step!,role:route==='ai/ask'?'ask':write!.role,text:b.text??b.q??'',out,ms:Date.now()-start,ok});s.ai.logs=s.ai.logs.slice(-3000);
-  return {value:aiLeft(s,b.pid),changed:true};
+ const finish=async(out:Record<string,unknown>|null,ok:boolean)=>store.editAi(async (s,ai)=>{
+  if(s.roundId!==b.roundId||!Object.hasOwn(s.roster,b.pid)||!ai.leases[lease]){if(ok)throw new ToolError(410,'课堂或学生记录已删除');return {value:0,changed:false};}
+  delete ai.leases[lease];if(ok)ai.usage[b.pid]=(ai.usage[b.pid]??0)+1;
+  ai.logs.push({t:Date.now(),pid:b.pid,name:p.name,item:b.item,step:route==='ai/ask'?b.play!:b.step!,role:route==='ai/ask'?'ask':write!.role,text:b.text??b.q??'',out,ms:Date.now()-start,ok});ai.logs=ai.logs.slice(-3000);
+  return {value:aiLeft(ai,b.pid),changed:true};
  });
  try{return json(await runOpusTask(input.context.opusRootDir,async lifecycle=>{
   const signal=AbortSignal.any([lifecycle,input.request.signal,AbortSignal.timeout(90000)]);
@@ -81,11 +79,11 @@ export async function handleAi(input:EnsembleApiRequest,route:string,payload:unk
   signal.throwIfAborted();const left=await finish({...out,a:[out.a1,out.q,out.a2].filter(Boolean).join(' / ')},true);return {...out,left};
  }));}catch(e){await finish(null,false).catch(()=>undefined);throw e instanceof ToolError?e:new ToolError(502,'AI 回复未完成，请主动重试');}
 }
-export async function handleTeacherAi(input:EnsembleApiRequest,route:string){
- if(route==='teacher/ai/logs'&&input.request.method==='GET')return withClassroom(input.context.opusRootDir,s=>({value:json(s.ai.logs),changed:false}));
+export async function handleTeacherAi(input:EnsembleApiRequest,route:string,store:ClassroomStore){
+ if(route==='teacher/ai/logs'&&input.request.method==='GET')return json((await store.ai((await store.classroom()).roundId)).logs);
  if(route==='teacher/ai/settings'&&input.request.method==='POST'){
   const b=z.object({quota:z.number().int().min(0).max(500).optional(),addFor:z.string().uuid().optional(),add:z.number().int().min(0).max(500).optional()}).strict().parse(await readToolBody(input.request));
-  return withClassroom(input.context.opusRootDir,s=>{if(b.quota!==undefined)s.ai.quota=b.quota;if(b.addFor){if(!s.players[b.addFor])throw new ToolError(404,'学生不存在');s.ai.extra[b.addFor]=Math.min(500,(s.ai.extra[b.addFor]??0)+(b.add??10));}return {value:json(aiStatus(s)),changed:true};});
+  return store.editAi(async (s,ai)=>{if(b.quota!==undefined)ai.quota=b.quota;if(b.addFor){if(!Object.hasOwn(s.roster,b.addFor))throw new ToolError(404,'学生不存在');ai.extra[b.addFor]=Math.min(500,(ai.extra[b.addFor]??0)+(b.add??10));}return {value:json(aiStatus(ai)),changed:true};});
  }
  throw new ToolError(404,'接口不存在');
 }

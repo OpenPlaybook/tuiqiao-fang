@@ -5,11 +5,13 @@ import {STATION_IDS,type Player,type GameConfig,type Item,type LogEntry,type Rec
 import {newPlayer,progressOpen,openMode,gateOf,resultOf,normalizeRewards} from '../shared/adapt';
 import { api,ApiError,lessonId,flow,setParticipant } from './api';
 import { mergeProgress } from '../shared/sync';
-import { playerSchema,configSchema } from '../../server/schema';
+import { playerSchema,configSchema,type JoinInput,type JoinResult } from '../../server/schema';
 
 
 // ---------------- 小型全局状态 ----------------
+export type Recovery = Extract<JoinResult,{matches:unknown}> & {input:JoinInput};
 interface State {
+  recovery?: Recovery;
   player: Player | null;
   config: GameConfig;
 }
@@ -63,7 +65,7 @@ const same=(p:Player)=>state.player?.pid===p.pid&&state.player?.roundId===p.roun
 const save=()=>{if(DEMO)return;setParticipant(pendingJoin?null:state.player);try{if(state.player)localStorage.setItem(LS_KEY,JSON.stringify({player:state.player,confirmed,config:state.config,roundId,pendingJoin,dirty}));else localStorage.removeItem(LS_KEY);}catch{}};
 const schedule=()=>{if(DEMO)return;queueMicrotask(()=>void syncNow());};
 const commit=(p:Player)=>{p.updatedAt=Date.now();dirty=true;set({player:{...p}});save();schedule();};
-function invalidated(message:string){dirty=false;pendingJoin=false;confirmed=undefined;set({player:null});save();toast({emoji:'ℹ️',title:message});}
+function invalidated(message:string){dirty=false;pendingJoin=false;confirmed=undefined;set({player:null,recovery:undefined});save();toast({emoji:'ℹ️',title:message});}
 function accept(remote:Player,base?:Player){
  const local=state.player;if(!local||!same(remote))return;
  if(confirmed&&remote.revision<confirmed.revision)return;
@@ -75,9 +77,12 @@ export const syncNow=():Promise<void>=>{if(DEMO)return Promise.resolve();
   let p=state.player;if(!p||!dirty)return;
   try{
    if(pendingJoin){
-    const joined=await api.join(p.name,p.sid,p.avatar,roundId);if(!same(p))return;
-    const local=state.player!;roundId=joined.player.roundId;pendingJoin=false;confirmed=joined.player;
-    set({player:mergeProgress(joined.player,{...local,pid:joined.player.pid,token:joined.player.token,roundId:joined.player.roundId})});save();p=state.player!;
+    if(state.recovery)return;
+    const input={name:p.name,sid:p.sid,avatar:p.avatar,roundId};
+    const joined=await api.join(input);if(!same(p))return;
+    if('matches' in joined){set({recovery:{...joined,input}});return;}
+    finishPendingJoin(joined.player);
+    p=state.player!;
    }
    const sent=p;
    const result=await api.sync(sent);if(!same(sent))return;
@@ -111,18 +116,44 @@ export function observeClassroom(){if(DEMO)return ()=>{};
  const stop=view.subscribe(update);update();return stop;
 }
 export const setAiLeft=(n:number)=>set({config:{...state.config,aiLeft:n}});
-// 姓名与学校恢复服务端进度；断网时保持原版的本地入社方式。
-export const join=async(name:string,sid:string,avatar:number)=>{
+function finishPendingJoin(player:Player){
+ const local=state.player!;
+ const merged=mergeProgress(player,{...local,pid:player.pid,token:player.token,roundId:player.roundId});
+ roundId=player.roundId;pendingJoin=false;confirmed=player;
+ set({player:merged,recovery:undefined});save();
+}
+
+export async function confirmPendingJoin(recovery:Recovery,choice:string){
+ const local=state.player;
+ if(!local||!pendingJoin||state.recovery!==recovery)return;
+ try {
+  const result=await api.join({...recovery.input,roundId:recovery.roundId,choice});
+  if(!same(local)||state.recovery!==recovery)return;
+  if('matches' in result){set({recovery:{...result,input:recovery.input}});return;}
+  finishPendingJoin(result.player);
+  await syncNow();
+ } catch(error) {
+  if(error instanceof ApiError&&error.statusCode===410&&same(local)){
+   set({recovery:undefined});await syncNow();return;
+  }
+  throw error;
+ }
+}
+
+export async function join(input:JoinInput):Promise<Recovery|undefined>{
  let player:Player;
+ const name=input.name.trim(),sid=input.sid.trim();
  try{
-  const result=await api.join(name,sid,avatar,roundId);player=result.player;roundId=player.roundId;confirmed=player;pendingJoin=false;dirty=false;
+  const result=await api.join({...input,name,sid,roundId:input.roundId??roundId});
+  if('matches' in result)return {...result,input:{...input,name,sid}};
+  player=result.player;roundId=player.roundId;confirmed=player;pendingJoin=false;dirty=false;
  }catch(e){
-  if(!(e instanceof RequestError)||e.kind!=='network')throw e;
-  player=newPlayer(crypto.randomUUID(),crypto.randomUUID(),name,sid,avatar,roundId??crypto.randomUUID());pendingJoin=true;dirty=true;confirmed=undefined;
+  if(input.choice||!(e instanceof RequestError)||e.kind!=='network')throw e;
+  player=newPlayer(crypto.randomUUID(),crypto.randomUUID(),name,sid,input.avatar,roundId??crypto.randomUUID());pendingJoin=true;dirty=true;confirmed=undefined;
  }
  set({player});save();if(dirty)void syncNow();
-};
-export const logout=()=>{dirty=false;pendingJoin=false;confirmed=undefined;set({player:null});save();};
+}
+export const logout=()=>{dirty=false;pendingJoin=false;confirmed=undefined;set({player:null,recovery:undefined});save();};
 window.addEventListener('storage',event=>{
  if(event.key!==LS_KEY||!state.player)return;
  const cache=load();if(!cache||cache.player.pid!==state.player.pid||cache.player.roundId!==state.player.roundId)return;

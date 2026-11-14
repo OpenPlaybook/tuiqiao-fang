@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {randomUUID} from 'node:crypto';
-import {mkdtemp,rm,writeFile} from 'node:fs/promises';
+import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {withStoreWriteLock} from '@openplaybook/json-store';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {handleApplicationApi} from './request';
@@ -13,7 +14,13 @@ import type {EnsembleApiRequest} from '../sdk/types/src/ensemble';
 async function fixture(t:{after(f:()=>Promise<void>):void}){
  const root=await mkdtemp(join(tmpdir(),'tuiqiao-test-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const request=(route:string,method='GET',data?:unknown,user:string|null=null,headers:Record<string,string>={},trusted=true,runtimeServices:unknown={})=>handleApplicationApi({context:{opusRootDir:root,opusId:'l_test',index:{authorId:'owner'},viewer:user?{userId:user}:null},request:new Request('http://localhost/api/'+route,{method,headers,...(data===undefined?{}:{body:JSON.stringify(data)})}),pathSegments:['api',...route.split('?')[0].split('/')],security:{isTrustedOrigin:trusted},runtimeServices} as EnsembleApiRequest);
- const enter=async(name='学生',sid='测试学校')=>(await(await request('join','POST',{name,sid,avatar:0})).json()).player as Player;
+ const enter=async(name='学生',sid='测试学校')=>{
+  const input={name,sid,avatar:0};
+  const found=await(await request('join','POST',input)).json();
+  if(found.player)return found.player as Player;
+  const match=found.matches.find((item:{sid:string})=>item.sid===sid);
+  return (await(await request('join','POST',{...input,roundId:found.roundId,choice:match?.pid??'new'})).json()).player as Player;
+ };
  return {root,request,enter};
 }
 function answer(p:Player):Player{const it=ITEMS[0],play=Object.keys(PLAY_BY_ID)[0];return {...p,recs:{[it.id]:{id:it.id,st:it.st,status:'done',data:{scores:[1]},stars:3,perf:1,unsure:0,tries:{first:1},bonus:1,log:[{id:randomUUID(),q:'first',v:'回答',ok:true,t:Date.now()}],t0:Date.now(),t1:Date.now()},[play+'-log']:{id:play+'-log',st:'p',prac:true,status:'doing',stars:0,perf:0,unsure:0,tries:{},bonus:0,log:[{id:randomUUID(),q:'gloss',v:'之',ok:null,t:Date.now()}],t0:Date.now()}}};}
@@ -28,4 +35,58 @@ test('real sync rechecks reward from evidence and resists late completed snapsho
  const late=structuredClone(saved);late.recs[it.id].stars=3;late.recs[it.id].data!.scores=[.34];response=await request('sync','POST',{player:late});assert.equal(response.status,200);assert.equal((await response.json()).player.recs[it.id].stars,5);
  const st=await(await request('teacher/state','GET',undefined,'owner')).json();assert.equal(st.players[0].stars,5);assert.equal('weighted' in st.players[0],false);assert.equal(st.items.find((x:{id:string})=>x.id===it.id).maxStars,5);
  const csv=await(await request('teacher/export.csv','GET',undefined,'owner')).text();assert.equal(csv.includes('加权分'),false);
+});
+
+test('blocking one student file does not delay classmates or rewrite their records', async t => {
+ const {root,request,enter}=await fixture(t);
+ const [first,second,third]=await Promise.all([
+  enter('同学甲'),enter('同学乙'),enter('同学丙'),
+ ]);
+ const base=join(root,'tools','tuiqiao-fang','progress');
+ const studentDir=(p:Player)=>join(base,'rounds',p.roundId,p.pid);
+ const studentFile=(p:Player)=>join(studentDir(p),'record.json');
+ const firstBefore=await readFile(studentFile(first),'utf8');
+ const classroomBefore=await readFile(join(base,'classroom.json'),'utf8');
+ let delayed!:Promise<Response>;
+ await withStoreWriteLock(studentDir(first),async()=>{
+  delayed=request('sync','POST',{player:answer(first)});
+  const results=await Promise.all([
+   request('sync','POST',{player:answer(second)}),
+   request('sync','POST',{player:answer(third)}),
+   request('teacher/state','GET',undefined,'owner'),
+  ]);
+  assert.deepEqual(results.map(response=>response.status),[200,200,200]);
+  assert.equal(await readFile(studentFile(first),'utf8'),firstBefore);
+  assert.equal(await readFile(join(base,'classroom.json'),'utf8'),classroomBefore);
+ });
+ assert.equal((await delayed).status,200);
+ for (const player of [first,second,third]) {
+  const restored=await request(`player?roundId=${player.roundId}&pid=${player.pid}`,'GET',undefined,null,{'x-participant':player.token});
+  assert.equal(restored.status,200);
+  assert.equal((await restored.json()).player.revision,1);
+ }
+});
+
+test('recovery requires confirmation and matches the full trimmed name across school spellings', async t => {
+ const {request,enter}=await fixture(t);
+ const original=answer(await enter('王小明','人大附中'));
+ const saved=(await(await request('sync','POST',{player:original})).json()).player as Player;
+ const other=await enter('王小明','另一所学校');
+ const input={name:'  王小明  ',sid:'人大附',avatar:4};
+ for(const school of [input.sid,original.sid]){
+  const queried=await(await request('join','POST',{...input,sid:school})).json();
+  assert.deepEqual(new Set(queried.matches.map((match:{pid:string})=>match.pid)),new Set([original.pid,other.pid]));
+  assert.equal('player' in queried,false);
+  assert.equal(JSON.stringify(queried).includes(original.token),false);
+ }
+ const picked=await(await request('join','POST',{...input,choice:original.pid,roundId:original.roundId})).json();
+ assert.equal(picked.player.token,original.token);
+ assert.equal(picked.player.sid,original.sid);
+ assert.equal(picked.player.revision,saved.revision);
+ assert.deepEqual(picked.player.recs,saved.recs);
+ const misspelled=await request('join','POST',{...input,name:'王晓明',choice:original.pid,roundId:original.roundId});
+ assert.equal(misspelled.status,410);
+ const fresh=await(await request('join','POST',{...input,name:'王晓明'})).json();
+ assert.notEqual(fresh.player.pid,original.pid);
+ assert.deepEqual(fresh.player.recs,{});
 });
