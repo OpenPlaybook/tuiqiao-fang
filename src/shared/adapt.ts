@@ -109,7 +109,7 @@ export const requiredExts = (it: Item, r: { perf?: number; unsure?: number; stat
   const struggled = (r.perf ?? 1) < 0.99 || (r.unsure ?? 0) > 0;
   return (it.ext ?? []).filter((e) => e.need === 'always' || (e.need === 'wrong' && struggled));
 };
-/** 这一站做完了：每一句的题（按难度挑出的那一道）都做完，必做的拓展也做完——和播放页“做完才能往下”是同一个标准（支线任务不算） */
+/** 这一站做完了：每一句的题（按难度挑出的那一道）都做完，必做的拓展也做完（仅用于完成统计，不限制播放；支线任务不算） */
 export const playComplete = (p: Player | null | undefined, id: string) => {
   const play = PLAY_BY_ID[id];
   if (!p || !play) return false;
